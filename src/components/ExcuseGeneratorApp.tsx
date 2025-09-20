@@ -91,6 +91,9 @@ export default function ExcuseGeneratorApp() {
   // Beta feedback form state
   const [showBetaFeedback, setShowBetaFeedback] = useState(false);
   
+  // Admin mode state (hidden from beta testers)
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  
   // Ad system states
   const [showAd, setShowAd] = useState(false);
   const [adType, setAdType] = useState<'banner' | 'interstitial'>('banner');
@@ -2769,6 +2772,40 @@ ${t.date || 'Date'}: ${currentDate}`
     setDailyExcuse(randomExcuse);
   }, [selectedLanguage]); // Removed sampleExcuses to prevent infinite loop
 
+  // Admin mode activation (secret key combination: Ctrl + Shift + A + D + M)
+  useEffect(() => {
+    let keySequence = '';
+    let lastKeyTime = 0;
+    
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const currentTime = Date.now();
+      
+      // Reset sequence if too much time passed
+      if (currentTime - lastKeyTime > 2000) {
+        keySequence = '';
+      }
+      lastKeyTime = currentTime;
+      
+      // Check for Ctrl + Shift + A combination
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'a') {
+        keySequence += 'a';
+      } else if (keySequence === 'a' && event.key.toLowerCase() === 'd') {
+        keySequence += 'd';
+      } else if (keySequence === 'ad' && event.key.toLowerCase() === 'm') {
+        keySequence += 'm';
+        // Activate admin mode
+        setIsAdminMode(prev => !prev);
+        console.log(isAdminMode ? 'Admin mode disabled' : 'Admin mode enabled');
+        keySequence = '';
+      } else if (!event.ctrlKey || !event.shiftKey) {
+        keySequence = '';
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isAdminMode]);
+
   // Onboarding screen for first-time users
   if (onboarding) {
     return (
@@ -3251,20 +3288,35 @@ ${t.date || 'Date'}: ${currentDate}`
                     Reset to Free
                   </button>
                 )}
-                <button 
-                  onClick={resetDailyUsage}
-                  className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
-                >
-                  Reset Daily Usage ({subscriptionData.usage.excusesToday})
-                </button>
-                <button 
-                  onClick={() => setExcusesSinceAd(0)}
-                  className="px-2 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600"
-                >
-                  Reset Ad Counter ({excusesSinceAd})
-                </button>
+                
+                {/* Admin Controls - Only visible in admin mode */}
+                {isAdminMode && (
+                  <>
+                    <button 
+                      onClick={resetDailyUsage}
+                      className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                    >
+                      Reset Daily Usage ({subscriptionData.usage.excusesToday})
+                    </button>
+                    <button 
+                      onClick={() => setExcusesSinceAd(0)}
+                      className="px-2 py-1 bg-purple-500 text-white rounded text-xs hover:bg-purple-600"
+                    >
+                      Reset Ad Counter ({excusesSinceAd})
+                    </button>
+                  </>
+                )}
               </div>
             </div>
+
+            {/* Admin Mode Indicator */}
+            {isAdminMode && (
+              <div className="mt-4 p-2 bg-red-100 border border-red-300 rounded-lg text-center">
+                <p className="text-xs text-red-700">
+                  🔧 Admin Mode Active - Press Ctrl+Shift+A+D+M to toggle
+                </p>
+              </div>
+            )}
 
             {/* Banner Ad for Free Users */}
             {shouldShowBannerAd() && !adDismissed && (
