@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beta Feedback Monitor - Excuses, Excuses!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">🧪 Beta Feedback Monitor</h1>
+            <p class="text-gray-600 mb-4">Monitor feedback from your Excuses, Excuses! beta testers</p>
+            
+            <div class="mb-4">
+                <button onclick="loadFeedback()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mr-2">
+                    🔄 Refresh Feedback
+                </button>
+                <button onclick="exportCSV()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mr-2">
+                    📊 Export CSV
+                </button>
+                <button onclick="exportJSON()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    📋 Export JSON
+                </button>
+            </div>
+
+            <div class="text-sm text-gray-500 mb-6">
+                <p><strong>How to use:</strong></p>
+                <p>1. Open your Excuses, Excuses! app in another tab</p>
+                <p>2. Open browser dev tools (F12) and go to Application > Local Storage</p>
+                <p>3. Find 'betaFeedback' key and copy the value</p>
+                <p>4. Paste it in the text area below and click "Load Feedback"</p>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Paste feedback data (from localStorage):
+                </label>
+                <textarea 
+                    id="feedbackData" 
+                    class="w-full h-32 border border-gray-300 rounded px-3 py-2 text-sm"
+                    placeholder='Paste the betaFeedback localStorage value here (should start with [{"id":"feedback_...)...'
+                ></textarea>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats" class="hidden grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="text-2xl font-bold text-blue-600" id="totalCount">0</div>
+                <div class="text-sm text-gray-600">Total Feedback</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="text-2xl font-bold text-yellow-600" id="avgRating">0</div>
+                <div class="text-sm text-gray-600">Average Rating</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="text-2xl font-bold text-red-600" id="bugCount">0</div>
+                <div class="text-sm text-gray-600">Bug Reports</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <div class="text-2xl font-bold text-green-600" id="featureCount">0</div>
+                <div class="text-sm text-gray-600">Feature Requests</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div id="filters" class="hidden bg-white p-4 rounded-lg shadow mb-6">
+            <div class="flex flex-wrap gap-4 items-center">
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mr-2">Type:</label>
+                    <select id="typeFilter" onchange="filterFeedback()" class="border border-gray-300 rounded px-2 py-1">
+                        <option value="all">All</option>
+                        <option value="general">General</option>
+                        <option value="bug">Bug</option>
+                        <option value="feature">Feature</option>
+                        <option value="usability">Usability</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mr-2">Rating:</label>
+                    <select id="ratingFilter" onchange="filterFeedback()" class="border border-gray-300 rounded px-2 py-1">
+                        <option value="all">All</option>
+                        <option value="5">5 Stars</option>
+                        <option value="4">4 Stars</option>
+                        <option value="3">3 Stars</option>
+                        <option value="2">2 Stars</option>
+                        <option value="1">1 Star</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-700 mr-2">Sort:</label>
+                    <select id="sortBy" onchange="filterFeedback()" class="border border-gray-300 rounded px-2 py-1">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="rating">By Rating</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback List -->
+        <div id="feedbackList" class="space-y-4"></div>
+    </div>
+
+    <script>
+        let allFeedback = [];
+        let filteredFeedback = [];
+
+        function loadFeedback() {
+            const data = document.getElementById('feedbackData').value.trim();
+            
+            if (!data) {
+                alert('Please paste the feedback data first!');
+                return;
+            }
+
+            try {
+                allFeedback = JSON.parse(data);
+                updateStats();
+                filterFeedback();
+                document.getElementById('stats').classList.remove('hidden');
+                document.getElementById('filters').classList.remove('hidden');
+                
+                if (allFeedback.length === 0) {
+                    document.getElementById('feedbackList').innerHTML = `
+                        <div class="bg-white p-8 rounded-lg shadow text-center text-gray-500">
+                            <p>No feedback data found. Make sure beta testers have submitted feedback!</p>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                alert('Invalid JSON data. Make sure you copied the complete localStorage value.');
+                console.error('Parse error:', e);
+            }
+        }
+
+        function updateStats() {
+            const total = allFeedback.length;
+            const avgRating = total > 0 ? 
+                (allFeedback.reduce((sum, f) => sum + (f.rating || 0), 0) / total).toFixed(1) : '0';
+            const bugCount = allFeedback.filter(f => f.type === 'bug').length;
+            const featureCount = allFeedback.filter(f => f.type === 'feature').length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('avgRating').textContent = avgRating + '/5';
+            document.getElementById('bugCount').textContent = bugCount;
+            document.getElementById('featureCount').textContent = featureCount;
+        }
+
+        function filterFeedback() {
+            const typeFilter = document.getElementById('typeFilter').value;
+            const ratingFilter = document.getElementById('ratingFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+
+            filteredFeedback = allFeedback.filter(f => {
+                const typeMatch = typeFilter === 'all' || f.type === typeFilter;
+                const ratingMatch = ratingFilter === 'all' || f.rating == ratingFilter;
+                return typeMatch && ratingMatch;
+            });
+
+            // Sort
+            filteredFeedback.sort((a, b) => {
+                switch (sortBy) {
+                    case 'newest':
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    case 'oldest':
+                        return new Date(a.timestamp) - new Date(b.timestamp);
+                    case 'rating':
+                        return (b.rating || 0) - (a.rating || 0);
+                    default:
+                        return 0;
+                }
+            });
+
+            renderFeedback();
+        }
+
+        function renderFeedback() {
+            const container = document.getElementById('feedbackList');
+            
+            if (filteredFeedback.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-8 rounded-lg shadow text-center text-gray-500">
+                        <p>No feedback matches your filters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredFeedback.map(feedback => {
+                const date = new Date(feedback.timestamp);
+                const typeColor = {
+                    'bug': 'bg-red-100 text-red-700',
+                    'feature': 'bg-green-100 text-green-700',
+                    'usability': 'bg-blue-100 text-blue-700',
+                    'general': 'bg-purple-100 text-purple-700'
+                }[feedback.type] || 'bg-gray-100 text-gray-700';
+
+                const stars = '★'.repeat(feedback.rating || 0) + '☆'.repeat(5 - (feedback.rating || 0));
+
+                return `
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-l-blue-500">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="px-2 py-1 text-xs rounded-full ${typeColor}">
+                                    ${feedback.type}
+                                </span>
+                                ${feedback.rating ? `<span class="text-yellow-500">${stars}</span>` : ''}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
+                            </div>
+                        </div>
+                        
+                        <h3 class="font-semibold text-lg mb-2">${feedback.subject}</h3>
+                        <p class="text-gray-600 mb-3">${feedback.message}</p>
+                        
+                        ${feedback.reproductionSteps ? `
+                            <div class="bg-gray-50 p-3 rounded mb-3">
+                                <strong class="text-sm">Steps to reproduce:</strong>
+                                <p class="text-sm mt-1">${feedback.reproductionSteps}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex flex-wrap gap-4 text-xs text-gray-500">
+                            <span>Language: ${feedback.language}</span>
+                            ${feedback.excuseStyle ? `<span>Style: ${feedback.excuseStyle}</span>` : ''}
+                            ${feedback.email ? `<span>Contact: ${feedback.email}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function exportCSV() {
+            if (allFeedback.length === 0) {
+                alert('No feedback data to export!');
+                return;
+            }
+
+            const headers = ['ID', 'Timestamp', 'Type', 'Rating', 'Subject', 'Message', 'Language', 'Style', 'Email', 'Reproduction Steps'];
+            const csvContent = [
+                headers.join(','),
+                ...allFeedback.map(f => [
+                    f.id,
+                    f.timestamp,
+                    f.type,
+                    f.rating || '',
+                    `"${(f.subject || '').replace(/"/g, '""')}"`,
+                    `"${(f.message || '').replace(/"/g, '""')}"`,
+                    f.language,
+                    f.excuseStyle || '',
+                    f.email || '',
+                    `"${(f.reproductionSteps || '').replace(/"/g, '""')}"`
+                ].join(','))
+            ].join('\\n');
+
+            downloadFile(csvContent, 'excuses-excuses-feedback.csv', 'text/csv');
+        }
+
+        function exportJSON() {
+            if (allFeedback.length === 0) {
+                alert('No feedback data to export!');
+                return;
+            }
+            
+            const jsonContent = JSON.stringify(allFeedback, null, 2);
+            downloadFile(jsonContent, 'excuses-excuses-feedback.json', 'application/json');
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
