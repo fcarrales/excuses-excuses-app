@@ -1359,14 +1359,19 @@ export default function ExcuseGeneratorApp() {
   };
 
   const generateExcuse = async () => {
+    console.log('generateExcuse called - isGenerating:', isGenerating);
     if (isGenerating) return; // Prevent multiple simultaneous generations
     
     // Check subscription limits
-    if (!checkSubscriptionLimits('generate')) {
+    const canGenerate = checkSubscriptionLimits('generate');
+    console.log('Can generate:', canGenerate, 'subscriptionData:', subscriptionData);
+    if (!canGenerate) {
+      console.log('Subscription limits exceeded, showing subscription modal');
       setShowSubscription(true);
       return;
     }
     
+    console.log('Starting excuse generation...');
     setIsGenerating(true);
     setAnimateExcuse(false);
     
@@ -3117,7 +3122,10 @@ ${t.date || 'Date'}: ${currentDate}`
 
             <Button 
               className="w-full flex items-center justify-center space-x-2" 
-              onClick={generateExcuse}
+              onClick={() => {
+                console.log('Generate button clicked on mobile/desktop');
+                generateExcuse();
+              }}
               disabled={isGenerating}
               aria-label={isGenerating ? t.generating : t.generateAriaLabel}
               aria-describedby="excuse-help-text"
@@ -3228,29 +3236,6 @@ ${t.date || 'Date'}: ${currentDate}`
                 <span className="font-medium">
                   {subscriptionData.usage.excusesToday}/{subscriptionData.features.dailyExcuseLimit === -1 ? '∞' : subscriptionData.features.dailyExcuseLimit} excuses
                 </span>
-              </div>
-            </div>
-
-            {/* Debug: Show subscription tier */}
-            <div className="mt-2 p-2 bg-red-100 rounded text-xs text-center">
-              Debug: Subscription Tier = {subscriptionTier} | Ad Dismissed = {adDismissed.toString()}
-              <div className="mt-2 space-x-2">
-                {subscriptionTier !== 'free' && (
-                  <button 
-                    onClick={() => {
-                      setSubscriptionTier('free');
-                      setSubscriptionData(prev => ({
-                        ...prev,
-                        tier: 'free',
-                        features: subscriptionTiers.free.features,
-                      }));
-                      localStorage.setItem('subscriptionTier', 'free');
-                    }}
-                    className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                  >
-                    Reset to Free
-                  </button>
-                )}
               </div>
             </div>
 
