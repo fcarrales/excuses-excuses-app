@@ -1359,106 +1359,124 @@ export default function ExcuseGeneratorApp() {
   };
 
   const generateExcuse = async () => {
-    console.log('generateExcuse called - isGenerating:', isGenerating);
-    if (isGenerating) return; // Prevent multiple simultaneous generations
-    
-    // Check subscription limits
-    const canGenerate = checkSubscriptionLimits('generate');
-    console.log('Can generate:', canGenerate, 'subscriptionData:', subscriptionData);
-    if (!canGenerate) {
-      console.log('Subscription limits exceeded, showing subscription modal');
-      setShowSubscription(true);
-      return;
-    }
-    
-    console.log('Starting excuse generation...');
-    setIsGenerating(true);
-    setAnimateExcuse(false);
-    
-    // Small delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Combine sample excuses with custom excuses
-    const situationExcuses = sampleExcuses[situation as keyof typeof sampleExcuses];
-    const customSituationExcuses = customExcuses[situation] || {};
-    
-    if (!situationExcuses) {
-      setIsGenerating(false);
-      return; // Handle case where situation doesn't exist
-    }
-    
-    const toneExcuses = situationExcuses[tone as keyof typeof situationExcuses] as string[];
-    const customToneExcuses = customSituationExcuses[tone] || [];
-    
-    if (!toneExcuses && customToneExcuses.length === 0) {
-      setIsGenerating(false);
-      return; // Handle case where no excuses exist
-    }
-    
-    // Combine all available excuses
-    const allExcuses = [...(toneExcuses || []), ...customToneExcuses];
-    
-    // Get recently used excuses (last 10 or within last hour)
-    const recentExcuses = excuseHistory
-      .filter(entry => {
-        const timeDiff = Date.now() - entry.timestamp.getTime();
-        return timeDiff < 3600000; // 1 hour in milliseconds
-      })
-      .map(entry => entry.excuse);
-    
-    // Filter out recently used excuses
-    let availableExcuses = allExcuses.filter((excuse: string) => !recentExcuses.includes(excuse));
-    
-    // If all excuses were recently used, use all excuses (reset the pool)
-    if (availableExcuses.length === 0) {
-      availableExcuses = [...allExcuses];
-    }
-    
-    // Weight excuses based on ratings (highly rated excuses are more likely to be chosen)
-    const weightedExcuses: string[] = [];
-    for (const excuse of availableExcuses) {
-      const rating = getExcuseRating(excuse);
-      if (rating === 'up') {
-        // Add highly-rated excuses 3 times to increase their chances
-        weightedExcuses.push(excuse, excuse, excuse);
-      } else if (rating === 'down') {
-        // Add poorly-rated excuses only once (reduce their chances)
-        weightedExcuses.push(excuse);
-      } else {
-        // Add unrated excuses twice (normal chance)
-        weightedExcuses.push(excuse, excuse);
+    try {
+      console.log('generateExcuse called - isGenerating:', isGenerating);
+      if (isGenerating) return; // Prevent multiple simultaneous generations
+      
+      // Check subscription limits
+      const canGenerate = checkSubscriptionLimits('generate');
+      console.log('Can generate:', canGenerate, 'subscriptionData:', subscriptionData);
+      if (!canGenerate) {
+        console.log('Subscription limits exceeded, showing subscription modal');
+        setShowSubscription(true);
+        return;
       }
+      
+      console.log('Starting excuse generation...');
+      setIsGenerating(true);
+      setAnimateExcuse(false);
+      
+      // Small delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      console.log('Current situation:', situation, 'Current tone:', tone);
+      
+      // Combine sample excuses with custom excuses
+      const situationExcuses = sampleExcuses[situation as keyof typeof sampleExcuses];
+      const customSituationExcuses = customExcuses[situation] || {};
+      
+      console.log('situationExcuses:', situationExcuses);
+      console.log('customSituationExcuses:', customSituationExcuses);
+      
+      if (!situationExcuses) {
+        console.error('No situation excuses found for situation:', situation);
+        setIsGenerating(false);
+        return; // Handle case where situation doesn't exist
+      }
+      
+      const toneExcuses = situationExcuses[tone as keyof typeof situationExcuses] as string[];
+      const customToneExcuses = customSituationExcuses[tone] || [];
+      
+      console.log('toneExcuses:', toneExcuses);
+      console.log('customToneExcuses:', customToneExcuses);
+      
+      if (!toneExcuses && customToneExcuses.length === 0) {
+        console.error('No excuses found for tone:', tone);
+        setIsGenerating(false);
+        return; // Handle case where no excuses exist
+      }
+      
+      // Combine all available excuses
+      const allExcuses = [...(toneExcuses || []), ...customToneExcuses];
+      console.log('allExcuses length:', allExcuses.length);
+      
+      // Get recently used excuses (last 10 or within last hour)
+      const recentExcuses = excuseHistory
+        .filter(entry => {
+          const timeDiff = Date.now() - entry.timestamp.getTime();
+          return timeDiff < 3600000; // 1 hour in milliseconds
+        })
+        .map(entry => entry.excuse);
+      
+      // Filter out recently used excuses
+      let availableExcuses = allExcuses.filter((excuse: string) => !recentExcuses.includes(excuse));
+      
+      // If all excuses were recently used, use all excuses (reset the pool)
+      if (availableExcuses.length === 0) {
+        availableExcuses = [...allExcuses];
+      }
+      
+      // Weight excuses based on ratings (highly rated excuses are more likely to be chosen)
+      const weightedExcuses: string[] = [];
+      for (const excuse of availableExcuses) {
+        const rating = getExcuseRating(excuse);
+        if (rating === 'up') {
+          // Add highly-rated excuses 3 times to increase their chances
+          weightedExcuses.push(excuse, excuse, excuse);
+        } else if (rating === 'down') {
+          // Add poorly-rated excuses only once (reduce their chances)
+          weightedExcuses.push(excuse);
+        } else {
+          // Add unrated excuses twice (normal chance)
+          weightedExcuses.push(excuse, excuse);
+        }
+      }
+      
+      // Select random excuse from weighted pool
+      const randomExcuse = weightedExcuses[Math.floor(Math.random() * weightedExcuses.length)];
+      console.log('Generated excuse:', randomExcuse);
+      
+      // Add to history
+      const newHistoryEntry = {
+        excuse: randomExcuse,
+        timestamp: new Date(),
+        situation: situation,
+        tone: tone
+      };
+      
+      setExcuseHistory(prev => [newHistoryEntry, ...prev].slice(0, 50)); // Keep last 50 excuses
+      setExcuse(randomExcuse);
+      setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
+      
+      // Track usage analytics
+      trackUsageAnalytics(situation, tone, randomExcuse);
+      
+      // Increment usage counter for subscription tracking
+      incrementUsage('generate');
+      
+      // Track ad views and show ads for free users
+      if (subscriptionTier === 'free') {
+        setExcusesSinceAd(prev => prev + 1);
+        showAdAfterExcuses(3); // Show interstitial ad every 3 excuses for free users
+      }
+      
+      console.log('Excuse generation completed successfully');
+      setIsGenerating(false);
+      setAnimateExcuse(true);
+    } catch (error) {
+      console.error('Error in generateExcuse:', error);
+      setIsGenerating(false);
     }
-    
-    // Select random excuse from weighted pool
-    const randomExcuse = weightedExcuses[Math.floor(Math.random() * weightedExcuses.length)];
-    
-    // Add to history
-    const newHistoryEntry = {
-      excuse: randomExcuse,
-      timestamp: new Date(),
-      situation: situation,
-      tone: tone
-    };
-    
-    setExcuseHistory(prev => [newHistoryEntry, ...prev].slice(0, 50)); // Keep last 50 excuses
-    setExcuse(randomExcuse);
-    setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
-    
-    // Track usage analytics
-    trackUsageAnalytics(situation, tone, randomExcuse);
-    
-    // Increment usage counter for subscription tracking
-    incrementUsage('generate');
-    
-    // Track ad views and show ads for free users
-    if (subscriptionTier === 'free') {
-      setExcusesSinceAd(prev => prev + 1);
-      showAdAfterExcuses(3); // Show interstitial ad every 3 excuses for free users
-    }
-    
-    setIsGenerating(false);
-    setAnimateExcuse(true);
   };
 
   const saveFavorite = () => {
