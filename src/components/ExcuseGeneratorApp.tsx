@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Crown, Share2, Zap, Settings, Star, Calendar, Copy, Check, History, Trash2, MessageCircle, Mail, Twitter, Facebook, ThumbsUp, ThumbsDown, TrendingUp, Camera, FileText, MapPin, Cloud, MessageSquare } from "lucide-react";
+import { Sparkles, Crown, Share2, Zap, Settings, Star, Calendar, Copy, Check, History, Trash2, MessageCircle, Mail, Twitter, Facebook, ThumbsUp, ThumbsDown, TrendingUp, Camera, FileText, MapPin, Cloud, MessageSquare, TestTube } from "lucide-react";
+import { BetaFeedbackForm } from "./BetaFeedbackForm";
 
 export default function ExcuseGeneratorApp() {
   const [situation, setSituation] = useState("work");
@@ -86,6 +87,9 @@ export default function ExcuseGeneratorApp() {
   // Language selection states
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'ja'>('en');
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
+  
+  // Beta feedback form state
+  const [showBetaFeedback, setShowBetaFeedback] = useState(false);
   
   // Ad system states
   const [showAd, setShowAd] = useState(false);
@@ -2955,6 +2959,31 @@ ${t.date || 'Date'}: ${currentDate}`
     );
   }
 
+  // Helper functions for beta feedback
+  const getLanguageName = (langCode: string): string => {
+    const languageNames = {
+      'en': 'English',
+      'es': 'Spanish',
+      'fr': 'French', 
+      'de': 'German',
+      'it': 'Italian',
+      'pt': 'Portuguese',
+      'ru': 'Russian',
+      'ja': 'Japanese'
+    };
+    return languageNames[langCode as keyof typeof languageNames] || 'English';
+  };
+
+  const getCurrentStyleName = (): string => {
+    const styleNames = {
+      'funny': 'Sneaky & Funny',
+      'professional': 'Smooth & Professional',
+      'believable': 'Realistic & Believable',
+      'dramatic': 'Dramatic & Theatrical'
+    };
+    return styleNames[tone as keyof typeof styleNames] || tone;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-pink-100 flex flex-col items-center justify-center p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Main Excuses, Excuses! App */}
@@ -2962,9 +2991,21 @@ ${t.date || 'Date'}: ${currentDate}`
         <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-xl sm:text-2xl font-bold">🎭 {t.appTitle}</h1>
-            <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
-              <Settings className="w-5 h-5" />
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowBetaFeedback(true)}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                title="Give beta feedback"
+              >
+                <TestTube className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1 text-xs">Beta</span>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
+                <Settings className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
 
           {/* Daily Excuse Widget */}
@@ -4179,6 +4220,14 @@ ${t.date || 'Date'}: ${currentDate}`
           </CardContent>
         </Card>
       )}
+      
+      {/* Beta Feedback Form */}
+      <BetaFeedbackForm 
+        isOpen={showBetaFeedback}
+        onClose={() => setShowBetaFeedback(false)}
+        currentLanguage={getLanguageName(selectedLanguage)}
+        currentStyle={getCurrentStyleName()}
+      />
     </div>
   );
 }
