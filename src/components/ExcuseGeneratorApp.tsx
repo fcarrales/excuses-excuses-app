@@ -3313,7 +3313,7 @@ ${t.date || 'Date'}: ${currentDate}`
                       value={userPhoneNumber}
                       onChange={(e) => setUserPhoneNumber(e.target.value)}
                       placeholder="(555) 123-4567"
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                       maxLength={20}
                     />
                   </div>
