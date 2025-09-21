@@ -1066,6 +1066,32 @@ export default function ExcuseGeneratorApp() {
           "My entire morning has been a series of catastrophic events!",
           "The powers that be have decided today is not my day to shine!"
         ]
+      },
+      social: {
+        funny: [
+          "My social battery died and I can't find the charger.",
+          "I'm having a deep philosophical crisis about pants.",
+          "My couch and I are in the middle of important negotiations.",
+          "I just remembered I'm allergic to small talk."
+        ],
+        professional: [
+          "I have a family commitment that requires my immediate attention.",
+          "I'm experiencing some personal circumstances that prevent my attendance.",
+          "I need to handle an urgent personal matter this evening.",
+          "I have a prior engagement that I cannot reschedule."
+        ],
+        believable: [
+          "I'm not feeling well and don't want to risk getting others sick.",
+          "I have a family member visiting unexpectedly.",
+          "My babysitter canceled last minute and I can't find a replacement.",
+          "I'm dealing with a home maintenance emergency."
+        ],
+        dramatic: [
+          "I'm currently trapped in a web of social obligations beyond my control!",
+          "The very fabric of my evening has been torn asunder by chaos!",
+          "I'm battling forces that seek to prevent my social participation!",
+          "My presence would only bring darkness to this joyous occasion!"
+        ]
       }
     },
     es: {
@@ -1094,6 +1120,32 @@ export default function ExcuseGeneratorApp() {
           "¡Toda mi mañana ha sido una serie de eventos catastróficos!",
           "¡Los poderes superiores han decidido que hoy no es mi día para brillar!"
         ]
+      },
+      social: {
+        funny: [
+          "Mi batería social murió y no encuentro el cargador.",
+          "Estoy teniendo una crisis filosófica profunda sobre los pantalones.",
+          "Mi sofá y yo estamos en medio de negociaciones importantes.",
+          "Acabo de recordar que soy alérgico a la charla trivial."
+        ],
+        professional: [
+          "Tengo un compromiso familiar que requiere mi atención inmediata.",
+          "Estoy experimentando algunas circunstancias personales que impiden mi asistencia.",
+          "Necesito manejar un asunto personal urgente esta noche.",
+          "Tengo un compromiso previo que no puedo reprogramar."
+        ],
+        believable: [
+          "No me siento bien y no quiero arriesgar contagiar a otros.",
+          "Tengo un miembro de la familia visitando inesperadamente.",
+          "Mi niñera canceló a último minuto y no puedo encontrar reemplazo.",
+          "Estoy lidiando con una emergencia de mantenimiento del hogar."
+        ],
+        dramatic: [
+          "¡Actualmente estoy atrapado en una red de obligaciones sociales fuera de mi control!",
+          "¡La misma tela de mi noche ha sido desgarrada por el caos!",
+          "¡Estoy luchando contra fuerzas que buscan impedir mi participación social!",
+          "¡Mi presencia solo traería oscuridad a esta ocasión alegre!"
+        ]
       }
     },
     fr: {
@@ -1121,6 +1173,32 @@ export default function ExcuseGeneratorApp() {
           "Je suis pris au piège dans un labyrinthe de déviations sans issue !",
           "Toute ma matinée a été une série d'événements catastrophiques !",
           "Les forces supérieures ont décidé qu'aujourd'hui n'est pas mon jour de briller !"
+        ]
+      },
+      social: {
+        funny: [
+          "Ma batterie sociale est morte et je ne trouve pas le chargeur.",
+          "J'ai une crise philosophique profonde à propos des pantalons.",
+          "Mon canapé et moi sommes au milieu de négociations importantes.",
+          "Je viens de me rappeler que je suis allergique aux bavardages."
+        ],
+        professional: [
+          "J'ai un engagement familial qui nécessite mon attention immédiate.",
+          "Je traverse des circonstances personnelles qui empêchent ma présence.",
+          "Je dois gérer une affaire personnelle urgente ce soir.",
+          "J'ai un engagement préalable que je ne peux pas reprogrammer."
+        ],
+        believable: [
+          "Je ne me sens pas bien et ne veux pas risquer de contaminer les autres.",
+          "J'ai un membre de la famille qui visite de manière inattendue.",
+          "Ma baby-sitter a annulé à la dernière minute et je ne trouve pas de remplaçant.",
+          "Je gère une urgence d'entretien de maison."
+        ],
+        dramatic: [
+          "Je suis actuellement pris au piège dans une toile d'obligations sociales hors de mon contrôle !",
+          "Le tissu même de ma soirée a été déchiré par le chaos !",
+          "Je combats des forces qui cherchent à empêcher ma participation sociale !",
+          "Ma présence ne ferait qu'apporter des ténèbres à cette joyeuse occasion !"
         ]
       }
     },
@@ -1382,7 +1460,14 @@ export default function ExcuseGeneratorApp() {
       console.log('Current situation:', situation, 'Current tone:', tone);
       
       // Combine sample excuses with custom excuses
-      const situationExcuses = sampleExcuses[situation as keyof typeof sampleExcuses];
+      let situationExcuses = sampleExcuses[situation as keyof typeof sampleExcuses];
+      
+      // Fallback mechanism for missing situations
+      if (!situationExcuses && situation === 'social') {
+        console.log('Social situation not found, falling back to work');
+        situationExcuses = sampleExcuses['work'];
+      }
+      
       const customSituationExcuses = customExcuses[situation] || {};
       
       console.log('situationExcuses:', situationExcuses);
