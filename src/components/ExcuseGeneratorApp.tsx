@@ -2944,6 +2944,23 @@ ${t.date || 'Date'}: ${currentDate}`
             <h1 className="text-3xl font-bold mb-2">🎉 Welcome to Excuses, Excuses!</h1>
             <p className="text-gray-600">Pick your style and let's craft your perfect excuse persona!</p>
 
+            {/* Language Selector */}
+            <div className="mb-4">
+              <label htmlFor="onboarding-language-select" className="block mb-2 text-sm font-medium text-gray-700">🌍 Choose Your Language</label>
+              <Select onValueChange={(val: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'ja') => setSelectedLanguage(val)} value={selectedLanguage}>
+                <SelectTrigger id="onboarding-language-select" aria-label="Choose language for excuses" className="w-full">
+                  <SelectValue placeholder="Select language" />
+                </SelectTrigger>
+                <SelectContent role="listbox" aria-label="Language options">
+                  {Object.entries(availableLanguages).map(([code, lang]) => (
+                    <SelectItem key={code} value={code} role="option">
+                      {lang.flag} {lang.nativeName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-1 gap-3 mt-6">
               <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white" onClick={() => { setTone("funny"); setOnboarding(false); }}>
                 😂 Sneaky & Funny
@@ -3239,22 +3256,6 @@ ${t.date || 'Date'}: ${currentDate}`
                   <SelectItem value="professional" role="option">{t.tones.professional}</SelectItem>
                   <SelectItem value="believable" role="option">{t.tones.believable}</SelectItem>
                   <SelectItem value="dramatic" role="option">{t.tones.dramatic}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label htmlFor="language-select" className="block mb-1 text-sm font-medium">{t.language}</label>
-              <Select onValueChange={(val: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'ja') => setSelectedLanguage(val)} value={selectedLanguage}>
-                <SelectTrigger id="language-select" aria-label="Choose language for excuses">
-                  <SelectValue placeholder={t.languagePlaceholder} />
-                </SelectTrigger>
-                <SelectContent role="listbox" aria-label="Language options">
-                  {Object.entries(availableLanguages).map(([code, lang]) => (
-                    <SelectItem key={code} value={code} role="option">
-                      {lang.flag} {lang.nativeName}
-                    </SelectItem>
-                  ))}
                 </SelectContent>
               </Select>
             </div>
