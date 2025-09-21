@@ -68,7 +68,7 @@ export default function ExcuseGeneratorApp() {
   const [currentExcuseRated, setCurrentExcuseRated] = useState<'up' | 'down' | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [showProofGenerator, setShowProofGenerator] = useState(false);
-  const [proofFormat, setProofFormat] = useState<'document' | 'sms'>('document');
+  const [proofFormat, setProofFormat] = useState<'document' | 'sms' | 'email'>('document');
   const [userPhoneNumber, setUserPhoneNumber] = useState('');
   const [generatedProof, setGeneratedProof] = useState<{type: string, content: string} | null>(null);
   
@@ -3082,7 +3082,7 @@ Reply STOP to opt out.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
           };
-        } else {
+        } else if (proofFormat === 'email') {
           // Professional email format for medical excuse
           const emailSubject = {
             en: 'Medical Excuse Documentation - Patient Restriction Notice',
@@ -3170,6 +3170,48 @@ CONFIDENTIALITY NOTICE: This email contains privileged and confidential informat
 ${currentLangTexts.verification}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+          };
+        } else {
+          // Traditional document/certificate format
+          return {
+            type: (t.medical || 'Medical') + ' Certificate',
+            content: `🏥 ${currentLangTexts.certificate}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${clinic.toUpperCase()}
+${t.medicalServices || 'COMPREHENSIVE MEDICAL SERVICES'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${t.documentId || 'Document #'}: MC${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${alertId}
+
+${t.patientInfo || 'PATIENT INFORMATION'}:
+${t.patient || 'Patient'}: [PATIENT NAME]
+${t.serviceDate || 'Date of Service'}: ${currentDate}
+${t.time || 'Time'}: ${currentTime}
+
+${t.physician || 'ATTENDING PHYSICIAN'}:
+${doctor}
+${t.license || 'Medical License'}: MD${Math.floor(Math.random() * 90000) + 10000}
+
+CLINICAL ASSESSMENT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Primary Diagnosis: ${selectedSymptom.condition}
+Chief Complaint: ${selectedSymptom.symptoms}
+Treatment Duration: ${selectedSymptom.duration}
+
+WORK/SCHOOL RESTRICTION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Due to ${selectedSymptom.condition} presenting with ${selectedSymptom.symptoms}, 
+patient is medically restricted from work/school activities for ${durationDays} ${durationDays === 1 ? (t.day || 'day') : (t.days || 'days')}.
+
+${t.returnDate || 'Patient may return to normal activities on'}:
+${new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+
+${currentLangTexts.verification}
+
+${doctor}
+${clinic}
+${t.date || 'Date'}: ${currentDate}`
           };
         }
       }
@@ -3917,6 +3959,16 @@ ${currentLangTexts.verification}
                       }`}
                     >
                       📄 Document
+                    </button>
+                    <button
+                      onClick={() => setProofFormat('email')}
+                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                        proofFormat === 'email' 
+                          ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      📧 Email
                     </button>
                     <button
                       onClick={() => setProofFormat('sms')}
