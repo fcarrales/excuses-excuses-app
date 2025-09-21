@@ -1409,26 +1409,34 @@ export default function ExcuseGeneratorApp() {
       // Combine all available excuses
       const allExcuses = [...(toneExcuses || []), ...customToneExcuses];
       console.log('allExcuses length:', allExcuses.length);
+      console.log('allExcuses sample:', allExcuses.slice(0, 3));
       
-      // Get recently used excuses (last 10 or within last hour)
+      // Get recently used excuses (last 10 or within last 10 minutes - reduced from 1 hour)
       const recentExcuses = excuseHistory
         .filter(entry => {
           const timeDiff = Date.now() - entry.timestamp.getTime();
-          return timeDiff < 3600000; // 1 hour in milliseconds
+          return timeDiff < 600000; // 10 minutes in milliseconds (reduced from 1 hour)
         })
         .map(entry => entry.excuse);
       
+      console.log('recentExcuses:', recentExcuses);
+      
       // Filter out recently used excuses
       let availableExcuses = allExcuses.filter((excuse: string) => !recentExcuses.includes(excuse));
+      console.log('availableExcuses after filter:', availableExcuses.length);
       
       // If all excuses were recently used, use all excuses (reset the pool)
       if (availableExcuses.length === 0) {
         availableExcuses = [...allExcuses];
+        console.log('All excuses were recent, resetting pool');
       }
+      
+      // For debugging - always ensure we have variety by shuffling the array
+      const shuffled = [...availableExcuses].sort(() => Math.random() - 0.5);
       
       // Weight excuses based on ratings (highly rated excuses are more likely to be chosen)
       const weightedExcuses: string[] = [];
-      for (const excuse of availableExcuses) {
+      for (const excuse of shuffled) {
         const rating = getExcuseRating(excuse);
         if (rating === 'up') {
           // Add highly-rated excuses 3 times to increase their chances
@@ -1442,8 +1450,12 @@ export default function ExcuseGeneratorApp() {
         }
       }
       
+      // Add extra randomization - shuffle the weighted array
+      const shuffledWeighted = [...weightedExcuses].sort(() => Math.random() - 0.5);
+      
       // Select random excuse from weighted pool
-      const randomExcuse = weightedExcuses[Math.floor(Math.random() * weightedExcuses.length)];
+      const randomExcuse = shuffledWeighted[Math.floor(Math.random() * shuffledWeighted.length)];
+      console.log('Selected from', shuffledWeighted.length, 'weighted options');
       console.log('Generated excuse:', randomExcuse);
       
       // Add to history
