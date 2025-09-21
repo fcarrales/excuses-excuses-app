@@ -3083,45 +3083,93 @@ Reply STOP to opt out.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
           };
         } else {
+          // Professional email format for medical excuse
+          const emailSubject = {
+            en: 'Medical Excuse Documentation - Patient Restriction Notice',
+            es: 'Documentación de Excusa Médica - Aviso de Restricción del Paciente',
+            fr: 'Documentation d\'Excuse Médicale - Avis de Restriction Patient',
+            de: 'Medizinische Entschuldigung - Patientenbeschränkungshinweis',
+            it: 'Documentazione Scusa Medica - Avviso Restrizione Paziente',
+            pt: 'Documentação de Escusa Médica - Aviso de Restrição do Paciente',
+            ru: 'Медицинская Справка - Уведомление об Ограничении Пациента',
+            ja: '医療証明書 - 患者制限通知'
+          };
+
+          const fromEmail = {
+            en: 'medical.records@',
+            es: 'registros.medicos@',
+            fr: 'dossiers.medicaux@',
+            de: 'medizinische.aufzeichnungen@',
+            it: 'cartelle.cliniche@',
+            pt: 'registros.medicos@',
+            ru: 'medkarty@',
+            ja: 'medical.records@'
+          };
+
+          const clinicDomain = clinic.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '') + '.com';
+          const fromEmailAddress = (fromEmail[selectedLanguage] || fromEmail['en']) + clinicDomain;
+          
           return {
-            type: (t.medical || 'Medical') + ' Certificate',
-            content: `🏥 ${currentLangTexts.certificate}
+            type: (t.medical || 'Medical') + ' Email Documentation',
+            content: `📧 Email Message
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+From: ${fromEmailAddress}
+To: [RECIPIENT EMAIL]
+Subject: ${emailSubject[selectedLanguage] || emailSubject['en']}
+Date: ${currentDate} ${currentTime}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Dear Employer/Administrator,
+
+This email serves as official medical documentation regarding one of your employees/students.
+
+🏥 MEDICAL FACILITY INFORMATION:
 ${clinic.toUpperCase()}
 ${t.medicalServices || 'COMPREHENSIVE MEDICAL SERVICES'}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-${t.documentId || 'Document #'}: MC${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${alertId}
-
-${t.patientInfo || 'PATIENT INFORMATION'}:
-${t.patient || 'Patient'}: [PATIENT NAME]
-${t.serviceDate || 'Date of Service'}: ${currentDate}
-${t.time || 'Time'}: ${currentTime}
-
-${t.physician || 'ATTENDING PHYSICIAN'}:
+👨‍⚕️ ATTENDING PHYSICIAN:
 ${doctor}
 ${t.license || 'Medical License'}: MD${Math.floor(Math.random() * 90000) + 10000}
 
-CLINICAL ASSESSMENT:
+📋 PATIENT DETAILS:
+${t.patient || 'Patient'}: [PATIENT NAME]
+${t.serviceDate || 'Date of Service'}: ${currentDate}
+${t.time || 'Examination Time'}: ${currentTime}
+${t.documentId || 'Reference #'}: MC${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${alertId}
+
+🩺 CLINICAL ASSESSMENT:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Primary Diagnosis: ${selectedSymptom.condition}
 Chief Complaint: ${selectedSymptom.symptoms}
-Treatment Duration: ${selectedSymptom.duration}
+Recommended Treatment Duration: ${selectedSymptom.duration}
 
-WORK/SCHOOL RESTRICTION:
+⚕️ MEDICAL RECOMMENDATION:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Due to ${selectedSymptom.condition} presenting with ${selectedSymptom.symptoms}, 
-patient is medically restricted from work/school activities for ${durationDays} ${durationDays === 1 ? (t.day || 'day') : (t.days || 'days')}.
+Based on our clinical evaluation, the patient has been diagnosed with ${selectedSymptom.condition} presenting with ${selectedSymptom.symptoms}. 
 
-${t.returnDate || 'Patient may return to normal activities on'}:
+For optimal recovery and to prevent complications, I am recommending that the patient be excused from work/school activities for ${durationDays} ${durationDays === 1 ? (t.day || 'day') : (t.days || 'days')}.
+
+📅 ${t.returnDate || 'Patient may return to normal activities on'}:
 ${new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
 
-${currentLangTexts.verification}
+This medical recommendation is made in accordance with standard medical practices and in the best interest of the patient's health and recovery.
+
+If you require any additional documentation or have questions regarding this medical excuse, please do not hesitate to contact our office.
+
+Sincerely,
 
 ${doctor}
 ${clinic}
-${t.date || 'Date'}: ${currentDate}`
+
+📞 Office: (555) ${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}
+📧 Email: ${fromEmailAddress}
+
+CONFIDENTIALITY NOTICE: This email contains privileged and confidential information intended solely for the use of the addressee. If you are not the intended recipient, please notify the sender and delete this message.
+
+${currentLangTexts.verification}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
           };
         }
       }
