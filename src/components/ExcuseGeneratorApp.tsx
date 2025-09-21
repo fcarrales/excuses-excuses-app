@@ -1462,10 +1462,21 @@ export default function ExcuseGeneratorApp() {
       // Combine sample excuses with custom excuses
       let situationExcuses = sampleExcuses[situation as keyof typeof sampleExcuses];
       
-      // Fallback mechanism for missing situations
-      if (!situationExcuses && situation === 'social') {
-        console.log('Social situation not found, falling back to work');
+      // Fallback mechanism for missing situations - use work excuses as default
+      if (!situationExcuses) {
+        console.log(`Situation '${situation}' not found, falling back to work`);
         situationExcuses = sampleExcuses['work'];
+        
+        // If work doesn't exist either, create basic fallback excuses
+        if (!situationExcuses) {
+          console.log('Work situation also missing, using emergency fallback');
+          situationExcuses = {
+            funny: ["Something unexpected came up!", "I'm dealing with a situation.", "Life happened!", "The universe has other plans for me."],
+            professional: ["I have an urgent matter to attend to.", "Due to unforeseen circumstances, I cannot make it.", "I need to handle a priority issue.", "I have a conflict that requires my attention."],
+            believable: ["I'm not feeling well.", "I have a family emergency.", "My transportation fell through.", "I have a prior commitment."],
+            dramatic: ["The forces of chaos have conspired against me!", "I am battling unforeseen circumstances!", "Destiny has other plans!", "I am trapped in a whirlwind of obligations!"]
+          };
+        }
       }
       
       const customSituationExcuses = customExcuses[situation] || {};
@@ -1479,8 +1490,43 @@ export default function ExcuseGeneratorApp() {
         return; // Handle case where situation doesn't exist
       }
       
-      const toneExcuses = situationExcuses[tone as keyof typeof situationExcuses] as string[];
+      let toneExcuses = situationExcuses[tone as keyof typeof situationExcuses] as string[];
       const customToneExcuses = customSituationExcuses[tone] || [];
+      
+      // Fallback mechanism for missing tones
+      if (!toneExcuses || toneExcuses.length === 0) {
+        console.log(`Tone '${tone}' not found for situation '${situation}', trying fallback tones`);
+        // Try other tones in order of preference
+        const fallbackTones: (keyof typeof situationExcuses)[] = ['professional', 'believable', 'funny', 'dramatic'];
+        for (const fallbackTone of fallbackTones) {
+          if (fallbackTone !== tone && situationExcuses[fallbackTone] && situationExcuses[fallbackTone].length > 0) {
+            toneExcuses = situationExcuses[fallbackTone] as string[];
+            console.log(`Using fallback tone '${fallbackTone}' for tone '${tone}'`);
+            break;
+          }
+        }
+        
+        // If still no excuses, create generic ones based on tone
+        if (!toneExcuses || toneExcuses.length === 0) {
+          console.log(`Creating emergency excuses for tone '${tone}'`);
+          switch (tone) {
+            case 'funny':
+              toneExcuses = ["Something hilariously unexpected happened!", "Life decided to be comedic today!", "I'm having a sitcom moment!"];
+              break;
+            case 'professional':
+              toneExcuses = ["I have an urgent commitment.", "Due to circumstances beyond my control, I cannot attend.", "I need to address a priority matter."];
+              break;
+            case 'believable':
+              toneExcuses = ["I'm not feeling well.", "I have a family situation.", "My transportation plans fell through."];
+              break;
+            case 'dramatic':
+              toneExcuses = ["Fate has conspired against me!", "I am trapped in a whirlwind of chaos!", "The universe demands my attention elsewhere!"];
+              break;
+            default:
+              toneExcuses = ["I cannot make it.", "Something came up.", "I have a conflict."];
+          }
+        }
+      }
       
       console.log('toneExcuses:', toneExcuses);
       console.log('customToneExcuses:', customToneExcuses);
