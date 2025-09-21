@@ -3769,6 +3769,62 @@ ${t.date || 'Date'}: ${currentDate}`
               </Select>
             </div>
 
+            {/* Format Selection - Available to All Users */}
+            <div className="mt-3 p-2 bg-gray-50 rounded-lg border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700">Proof Format:</span>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setProofFormat('document')}
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      proofFormat === 'document' 
+                        ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                        : 'bg-white text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    📄 Document
+                  </button>
+                  <button
+                    onClick={() => setProofFormat('email')}
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      proofFormat === 'email' 
+                        ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                        : 'bg-white text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    📧 Email
+                  </button>
+                  <button
+                    onClick={() => setProofFormat('sms')}
+                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                      proofFormat === 'sms' 
+                        ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                        : 'bg-white text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    📱 SMS
+                  </button>
+                </div>
+              </div>
+              
+              {/* Phone Number Input - Only show for SMS format */}
+              {proofFormat === 'sms' && (
+                <div className="mt-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Your Phone Number (for SMS recipient):
+                  </label>
+                  <input
+                    type="tel"
+                    value={userPhoneNumber}
+                    onChange={(e) => setUserPhoneNumber(e.target.value)}
+                    placeholder="(555) 123-4567"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                    maxLength={20}
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center space-x-2">
               <Switch 
                 checked={isPremium} 
