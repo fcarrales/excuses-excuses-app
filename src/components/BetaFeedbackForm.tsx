@@ -7,6 +7,202 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { MessageCircle, Star, Bug, Lightbulb, X } from 'lucide-react';
 
+// Translations for the beta feedback form
+const feedbackTranslations = {
+  en: {
+    title: "🧪 Beta Feedback",
+    subtitle: "Help us improve Excuses, Excuses!",
+    feedbackType: "Feedback Type",
+    general: "General Feedback",
+    bug: "Bug Report", 
+    feature: "Feature Request",
+    usability: "Usability Issue",
+    rating: "Overall Rating",
+    ratingLabel: "How would you rate your experience?",
+    email: "Email (Optional)",
+    emailPlaceholder: "your@email.com",
+    subject: "Subject",
+    subjectPlaceholder: "Brief summary of your feedback",
+    message: "Message",
+    messagePlaceholder: "Please share your thoughts, suggestions, or describe any issues you've encountered...",
+    reproductionSteps: "Steps to Reproduce (For Bugs)",
+    reproductionPlaceholder: "1. First I did...\n2. Then I clicked...\n3. Finally I saw...",
+    submitButton: "Submit Feedback",
+    cancelButton: "Cancel",
+    submitting: "Submitting...",
+    thankYou: "Thank you for your feedback!",
+    error: "Error submitting feedback. Please try again."
+  },
+  es: {
+    title: "🧪 Comentarios Beta",
+    subtitle: "¡Ayúdanos a mejorar Excusas, Excusas!",
+    feedbackType: "Tipo de Comentario",
+    general: "Comentario General",
+    bug: "Reporte de Error",
+    feature: "Solicitud de Función",
+    usability: "Problema de Usabilidad",
+    rating: "Calificación General",
+    ratingLabel: "¿Cómo calificarías tu experiencia?",
+    email: "Correo (Opcional)",
+    emailPlaceholder: "tu@correo.com",
+    subject: "Asunto",
+    subjectPlaceholder: "Resumen breve de tu comentario",
+    message: "Mensaje",
+    messagePlaceholder: "Por favor comparte tus pensamientos, sugerencias o describe cualquier problema que hayas encontrado...",
+    reproductionSteps: "Pasos para Reproducir (Para Errores)",
+    reproductionPlaceholder: "1. Primero hice...\n2. Luego hice clic en...\n3. Finalmente vi...",
+    submitButton: "Enviar Comentarios",
+    cancelButton: "Cancelar",
+    submitting: "Enviando...",
+    thankYou: "¡Gracias por tus comentarios!",
+    error: "Error al enviar comentarios. Inténtalo de nuevo."
+  },
+  fr: {
+    title: "🧪 Commentaires Bêta",
+    subtitle: "Aidez-nous à améliorer Excuses, Excuses!",
+    feedbackType: "Type de Commentaire",
+    general: "Commentaire Général",
+    bug: "Rapport de Bug",
+    feature: "Demande de Fonctionnalité",
+    usability: "Problème d'Utilisabilité",
+    rating: "Note Globale",
+    ratingLabel: "Comment évalueriez-vous votre expérience?",
+    email: "Email (Optionnel)",
+    emailPlaceholder: "votre@email.com",
+    subject: "Sujet",
+    subjectPlaceholder: "Résumé de votre commentaire",
+    message: "Message",
+    messagePlaceholder: "Partagez vos pensées, suggestions ou décrivez les problèmes rencontrés...",
+    reproductionSteps: "Étapes de Reproduction (Pour les Bugs)",
+    reproductionPlaceholder: "1. D'abord j'ai...\n2. Puis j'ai cliqué...\n3. Finalement j'ai vu...",
+    submitButton: "Envoyer Commentaires",
+    cancelButton: "Annuler",
+    submitting: "Envoi en cours...",
+    thankYou: "Merci pour vos commentaires!",
+    error: "Erreur lors de l'envoi. Veuillez réessayer."
+  },
+  de: {
+    title: "🧪 Beta-Feedback",
+    subtitle: "Helfen Sie uns, Excuses, Excuses zu verbessern!",
+    feedbackType: "Feedback-Typ",
+    general: "Allgemeines Feedback",
+    bug: "Fehlerbericht",
+    feature: "Funktionsanfrage",
+    usability: "Benutzerfreundlichkeitsproblem",
+    rating: "Gesamtbewertung",
+    ratingLabel: "Wie würden Sie Ihre Erfahrung bewerten?",
+    email: "E-Mail (Optional)",
+    emailPlaceholder: "ihre@email.com",
+    subject: "Betreff",
+    subjectPlaceholder: "Kurze Zusammenfassung Ihres Feedbacks",
+    message: "Nachricht",
+    messagePlaceholder: "Teilen Sie Ihre Gedanken, Vorschläge mit oder beschreiben Sie Probleme...",
+    reproductionSteps: "Reproduktionsschritte (Für Fehler)",
+    reproductionPlaceholder: "1. Zuerst habe ich...\n2. Dann habe ich geklickt...\n3. Schließlich sah ich...",
+    submitButton: "Feedback Senden",
+    cancelButton: "Abbrechen",
+    submitting: "Wird gesendet...",
+    thankYou: "Vielen Dank für Ihr Feedback!",
+    error: "Fehler beim Senden. Bitte versuchen Sie es erneut."
+  },
+  it: {
+    title: "🧪 Feedback Beta",
+    subtitle: "Aiutaci a migliorare Excuses, Excuses!",
+    feedbackType: "Tipo di Feedback",
+    general: "Feedback Generale",
+    bug: "Segnalazione Bug",
+    feature: "Richiesta Funzionalità",
+    usability: "Problema di Usabilità",
+    rating: "Valutazione Complessiva",
+    ratingLabel: "Come valuteresti la tua esperienza?",
+    email: "Email (Opzionale)",
+    emailPlaceholder: "tua@email.com",
+    subject: "Oggetto",
+    subjectPlaceholder: "Riassunto del tuo feedback",
+    message: "Messaggio",
+    messagePlaceholder: "Condividi i tuoi pensieri, suggerimenti o descrivi problemi riscontrati...",
+    reproductionSteps: "Passaggi per Riprodurre (Per Bug)",
+    reproductionPlaceholder: "1. Prima ho...\n2. Poi ho cliccato...\n3. Infine ho visto...",
+    submitButton: "Invia Feedback",
+    cancelButton: "Annulla",
+    submitting: "Invio in corso...",
+    thankYou: "Grazie per il tuo feedback!",
+    error: "Errore nell'invio. Riprova."
+  },
+  pt: {
+    title: "🧪 Feedback Beta",
+    subtitle: "Ajude-nos a melhorar Excuses, Excuses!",
+    feedbackType: "Tipo de Feedback",
+    general: "Feedback Geral",
+    bug: "Relatório de Bug",
+    feature: "Solicitação de Recurso",
+    usability: "Problema de Usabilidade",
+    rating: "Avaliação Geral",
+    ratingLabel: "Como você avaliaria sua experiência?",
+    email: "Email (Opcional)",
+    emailPlaceholder: "seu@email.com",
+    subject: "Assunto",
+    subjectPlaceholder: "Resumo do seu feedback",
+    message: "Mensagem",
+    messagePlaceholder: "Compartilhe seus pensamentos, sugestões ou descreva problemas encontrados...",
+    reproductionSteps: "Passos para Reproduzir (Para Bugs)",
+    reproductionPlaceholder: "1. Primeiro eu...\n2. Depois cliquei em...\n3. Finalmente vi...",
+    submitButton: "Enviar Feedback",
+    cancelButton: "Cancelar",
+    submitting: "Enviando...",
+    thankYou: "Obrigado pelo seu feedback!",
+    error: "Erro ao enviar. Tente novamente."
+  },
+  ru: {
+    title: "🧪 Бета Отзыв",
+    subtitle: "Помогите нам улучшить Excuses, Excuses!",
+    feedbackType: "Тип Отзыва",
+    general: "Общий Отзыв",
+    bug: "Отчет об Ошибке",
+    feature: "Запрос Функции",
+    usability: "Проблема Юзабилити",
+    rating: "Общая Оценка",
+    ratingLabel: "Как бы вы оценили свой опыт?",
+    email: "Email (Необязательно)",
+    emailPlaceholder: "ваш@email.com",
+    subject: "Тема",
+    subjectPlaceholder: "Краткое описание вашего отзыва",
+    message: "Сообщение",
+    messagePlaceholder: "Поделитесь мыслями, предложениями или опишите проблемы...",
+    reproductionSteps: "Шаги Воспроизведения (Для Ошибок)",
+    reproductionPlaceholder: "1. Сначала я...\n2. Затем нажал...\n3. В итоге увидел...",
+    submitButton: "Отправить Отзыв",
+    cancelButton: "Отмена",
+    submitting: "Отправка...",
+    thankYou: "Спасибо за ваш отзыв!",
+    error: "Ошибка при отправке. Попробуйте снова."
+  },
+  ja: {
+    title: "🧪 ベータフィードバック",
+    subtitle: "Excuses, Excuses!の改善にご協力ください！",
+    feedbackType: "フィードバックの種類",
+    general: "一般的なフィードバック",
+    bug: "バグ報告",
+    feature: "機能リクエスト",
+    usability: "ユーザビリティの問題",
+    rating: "総合評価",
+    ratingLabel: "あなたの体験をどのように評価しますか？",
+    email: "メール（任意）",
+    emailPlaceholder: "your@email.com",
+    subject: "件名",
+    subjectPlaceholder: "フィードバックの要約",
+    message: "メッセージ",
+    messagePlaceholder: "ご意見、提案、または遭遇した問題について教えてください...",
+    reproductionSteps: "再現手順（バグの場合）",
+    reproductionPlaceholder: "1. 最初に...\n2. 次にクリックして...\n3. 最終的に見た...",
+    submitButton: "フィードバックを送信",
+    cancelButton: "キャンセル",
+    submitting: "送信中...",
+    thankYou: "フィードバックありがとうございます！",
+    error: "送信エラー。もう一度お試しください。"
+  }
+};
+
 export interface FeedbackData {
   id: string;
   timestamp: string;
@@ -35,6 +231,36 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
   currentLanguage, 
   currentStyle 
 }) => {
+  // Convert language name to language code
+  const getLanguageCode = (langName: string): keyof typeof feedbackTranslations => {
+    // If it's already a language code, return it directly
+    if (langName.length === 2 && feedbackTranslations[langName as keyof typeof feedbackTranslations]) {
+      return langName as keyof typeof feedbackTranslations;
+    }
+    
+    // Otherwise map full language names to codes
+    const langMap: { [key: string]: keyof typeof feedbackTranslations } = {
+      'English': 'en',
+      'Spanish': 'es', 
+      'Español': 'es',
+      'French': 'fr',
+      'Français': 'fr',
+      'German': 'de',
+      'Deutsch': 'de',
+      'Italian': 'it',
+      'Italiano': 'it',
+      'Portuguese': 'pt',
+      'Português': 'pt',
+      'Russian': 'ru',
+      'Русский': 'ru',
+      'Japanese': 'ja',
+      '日本語': 'ja'
+    };
+    return langMap[langName] || 'en';
+  };
+
+  const langCode = getLanguageCode(currentLanguage);
+  const t = feedbackTranslations[langCode] || feedbackTranslations.en;
   const [formData, setFormData] = useState<{
     type: 'general' | 'bug' | 'feature' | 'usability';
     rating: number;
@@ -122,10 +348,10 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
   };
 
   const feedbackTypes = [
-    { value: 'general', label: 'General Feedback', icon: MessageCircle },
-    { value: 'bug', label: 'Bug Report', icon: Bug },
-    { value: 'feature', label: 'Feature Request', icon: Lightbulb },
-    { value: 'usability', label: 'Usability Issue', icon: Star }
+    { value: 'general', label: t.general, icon: MessageCircle },
+    { value: 'bug', label: t.bug, icon: Bug },
+    { value: 'feature', label: t.feature, icon: Lightbulb },
+    { value: 'usability', label: t.usability, icon: Star }
   ];
 
   if (isSubmitted) {
@@ -134,9 +360,9 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
             <div className="text-green-500 text-6xl mb-4">✅</div>
-            <h3 className="text-xl font-semibold mb-2">Thank You!</h3>
+            <h3 className="text-xl font-semibold mb-2">{t.thankYou}</h3>
             <p className="text-gray-600">
-              Your feedback has been submitted successfully. We appreciate your help in making Excuses, Excuses! better!
+              {t.thankYou}
             </p>
           </CardContent>
         </Card>
@@ -149,8 +375,8 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">🧪 Beta Feedback</h2>
-            <p className="text-gray-600 mt-1">Help us improve Excuses, Excuses!</p>
+            <h2 className="text-2xl font-bold">{t.title}</h2>
+            <p className="text-gray-600 mt-1">{t.subtitle}</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -160,7 +386,7 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Feedback Type */}
             <div className="space-y-2">
-              <Label>Feedback Type</Label>
+              <Label>{t.feedbackType}</Label>
               <Select value={formData.type} onValueChange={(value: any) => setFormData({...formData, type: value})}>
                 <SelectTrigger>
                   <SelectValue />
@@ -180,7 +406,7 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
 
             {/* Overall Rating */}
             <div className="space-y-2">
-              <Label>Overall Rating</Label>
+              <Label>{t.rating}</Label>
               <div className="flex items-center gap-3">
                 <StarRating 
                   rating={formData.rating} 
@@ -197,10 +423,10 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
 
             {/* Email (Optional) */}
             <div className="space-y-2">
-              <Label>Email (Optional - for follow-up)</Label>
+              <Label>{t.email}</Label>
               <Input
                 type="email"
-                placeholder="your.email@example.com"
+                placeholder={t.emailPlaceholder}
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
               />
@@ -208,9 +434,9 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
 
             {/* Subject */}
             <div className="space-y-2">
-              <Label>Subject *</Label>
+              <Label>{t.subject} *</Label>
               <Input
-                placeholder="Brief summary of your feedback"
+                placeholder={t.subjectPlaceholder}
                 value={formData.subject}
                 onChange={(e) => setFormData({...formData, subject: e.target.value})}
                 required
@@ -219,17 +445,9 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
 
             {/* Detailed Message */}
             <div className="space-y-2">
-              <Label>Detailed Feedback *</Label>
+              <Label>{t.message} *</Label>
               <Textarea
-                placeholder={
-                  formData.type === 'bug' ? 
-                    "Please describe the bug you encountered. What happened? What did you expect to happen?" :
-                  formData.type === 'feature' ?
-                    "What feature would you like to see added? How would it improve your experience?" :
-                  formData.type === 'usability' ?
-                    "What part of the app was confusing or difficult to use? How could it be improved?" :
-                    "Share your thoughts, suggestions, or general feedback about the app..."
-                }
+                placeholder={t.messagePlaceholder}
                 value={formData.message}
                 onChange={(e) => setFormData({...formData, message: e.target.value})}
                 rows={4}
@@ -240,9 +458,9 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
             {/* Bug Reproduction Steps */}
             {formData.type === 'bug' && (
               <div className="space-y-2">
-                <Label>Steps to Reproduce</Label>
+                <Label>{t.reproductionSteps}</Label>
                 <Textarea
-                  placeholder="1. Click on...&#10;2. Select...&#10;3. Notice that..."
+                  placeholder={t.reproductionPlaceholder}
                   value={formData.reproductionSteps}
                   onChange={(e) => setFormData({...formData, reproductionSteps: e.target.value})}
                   rows={3}
@@ -259,10 +477,10 @@ export const BetaFeedbackForm: React.FC<BetaFeedbackFormProps> = ({
             {/* Submit Button */}
             <div className="flex gap-3">
               <Button type="submit" disabled={isSubmitting || !formData.subject || !formData.message}>
-                {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                {isSubmitting ? t.submitting : t.submitButton}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
+                {t.cancelButton}
               </Button>
             </div>
           </form>

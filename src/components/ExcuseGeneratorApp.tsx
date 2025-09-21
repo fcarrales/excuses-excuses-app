@@ -9,12 +9,56 @@ import { Sparkles, Crown, Share2, Zap, Settings, Star, Calendar, Copy, Check, Hi
 import { BetaFeedbackForm } from "./BetaFeedbackForm";
 
 export default function ExcuseGeneratorApp() {
+  // Safe localStorage wrapper to handle security restrictions
+  const safeLocalStorage = {
+    isAvailable: () => {
+      try {
+        const test = '__localStorage_test__';
+        window.localStorage.setItem(test, test);
+        window.localStorage.removeItem(test);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    getItem: (key: string) => {
+      if (!safeLocalStorage.isAvailable()) {
+        return null;
+      }
+      try {
+        return window.localStorage.getItem(key);
+      } catch (error) {
+        console.warn(`localStorage.getItem failed for key "${key}":`, error);
+        return null;
+      }
+    },
+    setItem: (key: string, value: string) => {
+      if (!safeLocalStorage.isAvailable()) {
+        return;
+      }
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (error) {
+        console.warn(`localStorage.setItem failed for key "${key}":`, error);
+      }
+    }
+  };
+
   const [situation, setSituation] = useState("work");
   const [tone, setTone] = useState("funny");
   const [excuse, setExcuse] = useState("");
   const [showPremium, setShowPremium] = useState(false);
   const [showShare, setShowShare] = useState(false);
-  const [onboarding, setOnboarding] = useState(true);
+  const [onboarding, setOnboarding] = useState(() => {
+    // Check URL parameter for forcing onboarding
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('onboard') === 'true') {
+        return true;
+      }
+    }
+    return true; // Default to true for first-time users
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [dailyExcuse, setDailyExcuse] = useState("");
@@ -254,6 +298,9 @@ export default function ExcuseGeneratorApp() {
         family: "👨‍👩‍👧‍👦 Family",
         social: "🎉 Social",
         exercise: "💪 Exercise",
+        weather: "🌦️ Weather",
+        traffic: "🚗 Traffic", 
+        medical: "🏥 Medical",
         emergency: "🚨 Emergency (Premium)",
         travel: "✈️ Travel (Premium)"
       },
@@ -349,7 +396,17 @@ export default function ExcuseGeneratorApp() {
       north: "North",
       south: "South",
       exit: "Exit",
-      affectedArea: "AFFECTED AREA"
+      affectedArea: "AFFECTED AREA",
+      
+      // Onboarding
+      welcomeTitle: "🎉 Welcome to Excuses, Excuses!",
+      welcomeDescription: "The ultimate excuse generator for any situation! Choose your language above, then pick your preferred excuse style to get started.",
+      chooseLanguageLabel: "🌍 Choose Your Language",
+      chooseStyleTitle: "Choose Your Style",
+      funnyStyle: "😂 Funny & Hilarious",
+      professionalStyle: "💼 Professional & Polished",
+      believableStyle: "✅ Believable & Realistic", 
+      dramaticStyle: "🎭 Dramatic & Over-the-Top"
     },
     es: {
       // App title
@@ -372,6 +429,9 @@ export default function ExcuseGeneratorApp() {
         family: "👨‍👩‍👧‍👦 Familia", 
         social: "🎉 Social",
         exercise: "💪 Ejercicio",
+        weather: "🌦️ Clima",
+        traffic: "🚗 Tráfico", 
+        medical: "🏥 Médico",
         emergency: "🚨 Emergencia (Premium)",
         travel: "✈️ Viaje (Premium)"
       },
@@ -447,7 +507,17 @@ export default function ExcuseGeneratorApp() {
       north: "Norte", 
       south: "Sur",
       exit: "Salida",
-      affectedArea: "ÁREA AFECTADA"
+      affectedArea: "ÁREA AFECTADA",
+      
+      // Onboarding
+      welcomeTitle: "🎉 ¡Bienvenido a Excusas, Excusas!",
+      welcomeDescription: "¡El mejor generador de excusas para cualquier situación! Elige tu idioma arriba, luego selecciona tu estilo de excusa preferido para comenzar.",
+      chooseLanguageLabel: "🌍 Elige Tu Idioma",
+      chooseStyleTitle: "Elige Tu Estilo",
+      funnyStyle: "😂 Divertido e Hilarante",
+      professionalStyle: "💼 Profesional y Pulido",
+      believableStyle: "✅ Creíble y Realista", 
+      dramaticStyle: "🎭 Dramático y Exagerado"
     },
     fr: {
       // App title
@@ -470,6 +540,9 @@ export default function ExcuseGeneratorApp() {
         family: "👨‍👩‍👧‍👦 Famille",
         social: "🎉 Social", 
         exercise: "💪 Exercice",
+        weather: "🌦️ Météo",
+        traffic: "🚗 Trafic", 
+        medical: "🏥 Médical",
         emergency: "🚨 Urgence (Premium)",
         travel: "✈️ Voyage (Premium)"
       },
@@ -545,7 +618,17 @@ export default function ExcuseGeneratorApp() {
       north: "Nord",
       south: "Sud", 
       exit: "Sortie",
-      affectedArea: "ZONE AFFECTÉE"
+      affectedArea: "ZONE AFFECTÉE",
+      
+      // Onboarding
+      welcomeTitle: "🎉 Bienvenue dans Excuses, Excuses!",
+      welcomeDescription: "Le générateur d'excuses ultime pour toute situation! Choisissez votre langue ci-dessus, puis sélectionnez votre style d'excuse préféré pour commencer.",
+      chooseLanguageLabel: "🌍 Choisissez Votre Langue",
+      chooseStyleTitle: "Choisissez Votre Style",
+      funnyStyle: "😂 Amusant et Hilarant",
+      professionalStyle: "💼 Professionnel et Poli",
+      believableStyle: "✅ Crédible et Réaliste", 
+      dramaticStyle: "🎭 Dramatique et Exagéré"
     },
     de: {
       // App title
@@ -568,6 +651,9 @@ export default function ExcuseGeneratorApp() {
         family: "👨‍👩‍👧‍👦 Familie",
         social: "🎉 Sozial",
         exercise: "💪 Sport",
+        weather: "🌦️ Wetter",
+        traffic: "🚗 Verkehr",
+        medical: "🏥 Medizinisch",
         emergency: "🚨 Notfall (Premium)",
         travel: "✈️ Reise (Premium)"
       },
@@ -643,7 +729,17 @@ export default function ExcuseGeneratorApp() {
       north: "Nord",
       south: "Süd",
       exit: "Ausfahrt", 
-      affectedArea: "BETROFFENES GEBIET"
+      affectedArea: "BETROFFENES GEBIET",
+      
+      // Onboarding
+      welcomeTitle: "🎉 Willkommen bei Excuses, Excuses!",
+      welcomeDescription: "Der ultimative Ausredengenerator für jede Situation! Wählen Sie oben Ihre Sprache und dann Ihren bevorzugten Ausredenstil, um zu beginnen.",
+      chooseLanguageLabel: "🌍 Wählen Sie Ihre Sprache",
+      chooseStyleTitle: "Wählen Sie Ihren Stil",
+      funnyStyle: "😂 Lustig und Urkomisch",
+      professionalStyle: "💼 Professionell und Gepflegt",
+      believableStyle: "✅ Glaubwürdig und Realistisch", 
+      dramaticStyle: "🎭 Dramatisch und Übertrieben"
     },
     it: {
       // App title
@@ -665,7 +761,10 @@ export default function ExcuseGeneratorApp() {
         date: "💕 Appuntamento",
         family: "👨‍👩‍👧‍👦 Famiglia",
         social: "🎉 Sociale",
-        exercise: "💪 Esercizio", 
+        exercise: "💪 Esercizio",
+        weather: "🌦️ Meteo",
+        traffic: "🚗 Traffico",
+        medical: "🏥 Medico",
         emergency: "🚨 Emergenza (Premium)",
         travel: "✈️ Viaggio (Premium)"
       },
@@ -741,7 +840,17 @@ export default function ExcuseGeneratorApp() {
       north: "Nord",
       south: "Sud",
       exit: "Uscita",
-      affectedArea: "AREA INTERESSATA"
+      affectedArea: "AREA INTERESSATA",
+      
+      // Onboarding
+      welcomeTitle: "🎉 Benvenuto in Excuses, Excuses!",
+      welcomeDescription: "Il generatore di scuse definitivo per ogni situazione! Scegli la tua lingua sopra, poi seleziona il tuo stile di scusa preferito per iniziare.",
+      chooseLanguageLabel: "🌍 Scegli La Tua Lingua",
+      chooseStyleTitle: "Scegli Il Tuo Stile",
+      funnyStyle: "😂 Divertente e Esilarante",
+      professionalStyle: "💼 Professionale e Raffinato",
+      believableStyle: "✅ Credibile e Realistico", 
+      dramaticStyle: "🎭 Drammatico e Esagerato"
     },
     pt: {
       // App title
@@ -764,6 +873,9 @@ export default function ExcuseGeneratorApp() {
         family: "👨‍👩‍👧‍👦 Família",
         social: "🎉 Social",
         exercise: "💪 Exercício",
+        weather: "🌦️ Clima",
+        traffic: "🚗 Trânsito",
+        medical: "🏥 Médico",
         emergency: "🚨 Emergência (Premium)",
         travel: "✈️ Viagem (Premium)"
       },
@@ -839,7 +951,17 @@ export default function ExcuseGeneratorApp() {
       north: "Norte",
       south: "Sul",
       exit: "Saída", 
-      affectedArea: "ÁREA AFETADA"
+      affectedArea: "ÁREA AFETADA",
+      
+      // Onboarding
+      welcomeTitle: "🎉 Bem-vindo ao Excuses, Excuses!",
+      welcomeDescription: "O melhor gerador de desculpas para qualquer situação! Escolha seu idioma acima, depois selecione seu estilo de desculpa preferido para começar.",
+      chooseLanguageLabel: "🌍 Escolha Seu Idioma",
+      chooseStyleTitle: "Escolha Seu Estilo",
+      funnyStyle: "😂 Engraçado e Hilário",
+      professionalStyle: "💼 Profissional e Polido",
+      believableStyle: "✅ Acreditável e Realista", 
+      dramaticStyle: "🎭 Dramático e Exagerado"
     },
     ru: {
       // App title
@@ -862,6 +984,9 @@ export default function ExcuseGeneratorApp() {
         family: "👨‍👩‍👧‍👦 Семья",
         social: "🎉 Общественное",
         exercise: "💪 Спорт",
+        weather: "🌦️ Погода",
+        traffic: "🚗 Трафик",
+        medical: "🏥 Медицинский",
         emergency: "🚨 Экстренная (Premium)",
         travel: "✈️ Путешествие (Premium)"
       },
@@ -937,7 +1062,17 @@ export default function ExcuseGeneratorApp() {
       north: "Север",
       south: "Юг",
       exit: "Выезд",
-      affectedArea: "ПОСТРАДАВШАЯ ОБЛАСТЬ"
+      affectedArea: "ПОСТРАДАВШАЯ ОБЛАСТЬ",
+      
+      // Onboarding
+      welcomeTitle: "🎉 Добро пожаловать в Excuses, Excuses!",
+      welcomeDescription: "Идеальный генератор оправданий для любой ситуации! Выберите свой язык выше, затем выберите предпочтительный стиль оправданий, чтобы начать.",
+      chooseLanguageLabel: "🌍 Выберите Ваш Язык",
+      chooseStyleTitle: "Выберите Ваш Стиль",
+      funnyStyle: "😂 Смешно и Весело",
+      professionalStyle: "💼 Профессионально и Изящно",
+      believableStyle: "✅ Правдоподобно и Реалистично", 
+      dramaticStyle: "🎭 Драматично и Преувеличенно"
     },
     ja: {
       // App title
@@ -960,6 +1095,9 @@ export default function ExcuseGeneratorApp() {
         family: "👨‍👩‍👧‍👦 家族",
         social: "🎉 社交",
         exercise: "💪 運動",
+        weather: "🌦️ 天気",
+        traffic: "🚗 交通",
+        medical: "🏥 医療",
         emergency: "🚨 緊急 (プレミアム)",
         travel: "✈️ 旅行 (プレミアム)"
       },
@@ -1035,7 +1173,17 @@ export default function ExcuseGeneratorApp() {
       north: "北",
       south: "南", 
       exit: "出口",
-      affectedArea: "影響を受ける地域"
+      affectedArea: "影響を受ける地域",
+      
+      // Onboarding
+      welcomeTitle: "🎉 Excuses, Excuses!へようこそ！",
+      welcomeDescription: "あらゆる状況に対応する究極の言い訳ジェネレーター！上記で言語を選択し、お好みの言い訳スタイルを選んで始めましょう。",
+      chooseLanguageLabel: "🌍 言語を選択",
+      chooseStyleTitle: "スタイルを選択",
+      funnyStyle: "😂 面白くてユーモラス",
+      professionalStyle: "💼 プロフェッショナルで洗練",
+      believableStyle: "✅ 信憑性があり現実的", 
+      dramaticStyle: "🎭 ドラマチックで大袈裟"
     }
   };
 
@@ -1092,6 +1240,108 @@ export default function ExcuseGeneratorApp() {
           "I'm battling forces that seek to prevent my social participation!",
           "My presence would only bring darkness to this joyous occasion!"
         ]
+      },
+      weather: {
+        funny: [
+          "Mother Nature decided to throw a tantrum and I'm caught in the crossfire.",
+          "The weather app lied to me worse than my ex did.",
+          "I'm currently being held hostage by a rogue rainstorm.",
+          "The sun called in sick and took all my motivation with it.",
+          "I'm having an intense staring contest with a lightning bolt.",
+          "The weather is more unpredictable than my WiFi connection."
+        ],
+        professional: [
+          "Severe weather conditions have made travel unsafe in my area.",
+          "I'm experiencing weather-related transportation delays that will impact my arrival time.",
+          "Due to hazardous weather conditions, I need to prioritize safety and delay my departure.",
+          "Local weather advisories are recommending against non-essential travel at this time.",
+          "Weather-related power outages in my area are affecting my ability to participate remotely.",
+          "I'm monitoring weather conditions and will update you on my availability shortly."
+        ],
+        believable: [
+          "There's a severe storm warning in my area and roads are flooded.",
+          "Heavy snow has made driving conditions extremely dangerous.",
+          "My power went out due to the storm and my phone is nearly dead.",
+          "The weather is so bad that public transportation has been suspended.",
+          "Ice storm has made it impossible to safely leave my driveway.",
+          "Flash flood warnings mean I need to stay put until conditions improve."
+        ],
+        dramatic: [
+          "The heavens have opened and are unleashing their fury upon me!",
+          "I'm trapped in nature's violent ballet of wind and rain!",
+          "The storm gods have chosen me as their personal target today!",
+          "I'm caught in an epic battle between the elements themselves!",
+          "Mother Nature is having a full-scale meltdown and I'm in the blast zone!",
+          "The weather has conspired to create a perfect storm of inconvenience!"
+        ]
+      },
+      traffic: {
+        funny: [
+          "I'm stuck in traffic so bad, I've started a small civilization in my car.",
+          "The highway has become a very expensive parking lot.",
+          "I'm moving slower than a Windows 95 computer loading the internet.",
+          "Traffic is so backed up, I've aged three years in the last hour.",
+          "I'm trapped in what appears to be the world's slowest parade.",
+          "The GPS is laughing at me - actual arrival time: sometime next week."
+        ],
+        professional: [
+          "I'm experiencing significant traffic delays due to an accident on my route.",
+          "Unexpected road construction has created substantial delays in my commute.",
+          "I'm currently navigating through heavy traffic congestion and will be delayed.",
+          "A major traffic incident has blocked my usual route, causing significant delays.",
+          "Peak traffic conditions are heavier than anticipated, impacting my arrival time.",
+          "I'm working through alternative routes due to current traffic conditions."
+        ],
+        believable: [
+          "Major accident on the freeway has traffic at a complete standstill.",
+          "There's construction I wasn't aware of that's caused a huge backup.",
+          "My usual route is blocked due to emergency road repairs.",
+          "Traffic is backed up for miles due to a multi-car accident ahead.",
+          "Road closure due to utility work has diverted all traffic to side streets.",
+          "Rush hour traffic is particularly heavy today due to a special event."
+        ],
+        dramatic: [
+          "I'm trapped in an endless river of metal and fury!",
+          "The great migration of vehicles has claimed me as its prisoner!",
+          "I've become one with the eternal traffic jam of souls!",
+          "The highway gods are testing my patience with this automotive purgatory!",
+          "I'm caught in the epic saga of ten thousand commuters versus one small road!",
+          "The traffic has achieved sentience and chosen me as its unwilling victim!"
+        ]
+      },
+      medical: {
+        funny: [
+          "My body decided to stage a rebellion and I'm the unwilling dictator.",
+          "I'm having technical difficulties with my human operating system.",
+          "My immune system is throwing a tantrum like a toddler in a grocery store.",
+          "I woke up feeling like I was hit by the struggle bus... twice.",
+          "My body's warranty expired and everything is malfunctioning at once.",
+          "I'm experiencing a temporary glitch in my human software."
+        ],
+        professional: [
+          "I'm experiencing health-related symptoms that require medical attention.",
+          "I need to address a medical situation that has developed suddenly.",
+          "I'm following medical advice to rest and avoid potential exposure to others.",
+          "I have a medical appointment that cannot be rescheduled due to scheduling constraints.",
+          "I'm managing a health condition that requires immediate attention today.",
+          "Medical circumstances require me to prioritize my health and recovery."
+        ],
+        believable: [
+          "I woke up with severe flu symptoms and don't want to risk spreading it.",
+          "I'm experiencing food poisoning symptoms from something I ate last night.",
+          "I have a migraine so severe that I can't focus or function properly.",
+          "I'm dealing with a stomach virus and need to stay close to home.",
+          "I have a severe allergic reaction and need to see a doctor immediately.",
+          "I threw out my back and can barely move without significant pain."
+        ],
+        dramatic: [
+          "My mortal vessel has betrayed me in the most spectacular fashion!",
+          "I'm locked in an epic battle with microscopic invaders!",
+          "My body has declared war on itself and I'm caught in the crossfire!",
+          "The plague of inconvenience has chosen me as its latest victim!",
+          "I'm experiencing a full-scale revolt of my biological systems!",
+          "My health has abandoned me like a fair-weather friend!"
+        ]
       }
     },
     es: {
@@ -1145,6 +1395,108 @@ export default function ExcuseGeneratorApp() {
           "¡La misma tela de mi noche ha sido desgarrada por el caos!",
           "¡Estoy luchando contra fuerzas que buscan impedir mi participación social!",
           "¡Mi presencia solo traería oscuridad a esta ocasión alegre!"
+        ]
+      },
+      weather: {
+        funny: [
+          "La Madre Naturaleza decidió hacer berrinche y estoy atrapado en el fuego cruzado.",
+          "La app del clima me mintió peor que mi ex.",
+          "Actualmente estoy siendo rehén de una tormenta rebelde.",
+          "El sol pidió día libre y se llevó toda mi motivación con él.",
+          "Estoy teniendo un concurso intenso de miradas con un rayo.",
+          "El clima es más impredecible que mi conexión WiFi."
+        ],
+        professional: [
+          "Las condiciones climáticas severas han hecho que viajar sea inseguro en mi área.",
+          "Estoy experimentando retrasos de transporte relacionados con el clima.",
+          "Debido a las condiciones climáticas peligrosas, debo priorizar la seguridad.",
+          "Los avisos meteorológicos locales recomiendan evitar viajes no esenciales.",
+          "Cortes de energía relacionados con el clima están afectando mi participación remota.",
+          "Estoy monitoreando las condiciones climáticas y actualizaré mi disponibilidad pronto."
+        ],
+        believable: [
+          "Hay una advertencia de tormenta severa en mi área y las carreteras están inundadas.",
+          "La nieve pesada ha hecho que las condiciones de manejo sean extremadamente peligrosas.",
+          "Se fue la luz por la tormenta y mi teléfono está casi sin batería.",
+          "El clima está tan malo que el transporte público ha sido suspendido.",
+          "La tormenta de hielo ha hecho imposible salir de mi entrada de forma segura.",
+          "Las advertencias de inundación repentina significan que debo quedarme hasta que mejore."
+        ],
+        dramatic: [
+          "¡Los cielos se han abierto y están desatando su furia sobre mí!",
+          "¡Estoy atrapado en el ballet violento de viento y lluvia de la naturaleza!",
+          "¡Los dioses de la tormenta me han elegido como su objetivo personal hoy!",
+          "¡Estoy atrapado en una batalla épica entre los elementos mismos!",
+          "¡La Madre Naturaleza está teniendo un colapso total y estoy en la zona de impacto!",
+          "¡El clima ha conspirado para crear una tormenta perfecta de inconvenientes!"
+        ]
+      },
+      traffic: {
+        funny: [
+          "Estoy atrapado en tráfico tan malo que he comenzado una pequeña civilización en mi carro.",
+          "La autopista se ha convertido en un estacionamiento muy caro.",
+          "Me muevo más lento que una computadora Windows 95 cargando internet.",
+          "El tráfico está tan atascado que he envejecido tres años en la última hora.",
+          "Estoy atrapado en lo que parece ser el desfile más lento del mundo.",
+          "El GPS se está riendo de mí - tiempo real de llegada: algún momento la próxima semana."
+        ],
+        professional: [
+          "Estoy experimentando retrasos significativos de tráfico debido a un accidente en mi ruta.",
+          "La construcción inesperada de carreteras ha creado retrasos sustanciales en mi viaje.",
+          "Actualmente estoy navegando a través de congestión de tráfico pesada.",
+          "Un incidente de tráfico mayor ha bloqueado mi ruta usual, causando retrasos significativos.",
+          "Las condiciones de tráfico pico son más pesadas de lo anticipado.",
+          "Estoy trabajando en rutas alternativas debido a las condiciones actuales de tráfico."
+        ],
+        believable: [
+          "Accidente mayor en la autopista tiene el tráfico completamente parado.",
+          "Hay construcción de la que no estaba consciente que ha causado un gran atasco.",
+          "Mi ruta usual está bloqueada debido a reparaciones de emergencia del camino.",
+          "El tráfico está atascado por millas debido a un accidente de múltiples carros adelante.",
+          "Cierre de carretera debido a trabajo de servicios ha desviado todo el tráfico.",
+          "El tráfico de hora pico está particularmente pesado hoy debido a un evento especial."
+        ],
+        dramatic: [
+          "¡Estoy atrapado en un río sin fin de metal y furia!",
+          "¡La gran migración de vehículos me ha reclamado como su prisionero!",
+          "¡Me he vuelto uno con el atasco de tráfico eterno de almas!",
+          "¡Los dioses de la autopista están probando mi paciencia con este purgatorio automotriz!",
+          "¡Estoy atrapado en la saga épica de diez mil viajeros versus un camino pequeño!",
+          "¡El tráfico ha alcanzado conciencia y me ha elegido como su víctima involuntaria!"
+        ]
+      },
+      medical: {
+        funny: [
+          "Mi cuerpo decidió organizar una rebelión y soy el dictador involuntario.",
+          "Estoy teniendo dificultades técnicas con mi sistema operativo humano.",
+          "Mi sistema inmunológico está haciendo berrinche como un niño en el supermercado.",
+          "Desperté sintiéndome como si me hubiera golpeado el autobús de la lucha... dos veces.",
+          "La garantía de mi cuerpo expiró y todo está funcionando mal a la vez.",
+          "Estoy experimentando un error temporal en mi software humano."
+        ],
+        professional: [
+          "Estoy experimentando síntomas relacionados con la salud que requieren atención médica.",
+          "Necesito atender una situación médica que se ha desarrollado repentinamente.",
+          "Estoy siguiendo consejos médicos para descansar y evitar exposición potencial a otros.",
+          "Tengo una cita médica que no puede ser reprogramada debido a restricciones de horario.",
+          "Estoy manejando una condición de salud que requiere atención inmediata hoy.",
+          "Las circunstancias médicas requieren que priorice mi salud y recuperación."
+        ],
+        believable: [
+          "Desperté con síntomas severos de gripe y no quiero arriesgar propagarlo.",
+          "Estoy experimentando síntomas de intoxicación alimentaria por algo que comí anoche.",
+          "Tengo una migraña tan severa que no puedo enfocarme o funcionar adecuadamente.",
+          "Estoy lidiando con un virus estomacal y necesito quedarme cerca de casa.",
+          "Tengo una reacción alérgica severa y necesito ver a un doctor inmediatamente.",
+          "Me lastimé la espalda y apenas puedo moverme sin dolor significativo."
+        ],
+        dramatic: [
+          "¡Mi vasija mortal me ha traicionado de la manera más espectacular!",
+          "¡Estoy encerrado en una batalla épica con invasores microscópicos!",
+          "¡Mi cuerpo ha declarado guerra contra sí mismo y estoy atrapado en el fuego cruzado!",
+          "¡La plaga de la inconveniencia me ha elegido como su última víctima!",
+          "¡Estoy experimentando una revuelta total de mis sistemas biológicos!",
+          "¡Mi salud me ha abandonado como un amigo de buen tiempo!"
         ]
       }
     },
@@ -1452,7 +1804,6 @@ export default function ExcuseGeneratorApp() {
       
       console.log('Starting excuse generation...');
       setIsGenerating(true);
-      setAnimateExcuse(false);
       
       // Small delay for better UX
       await new Promise(resolve => setTimeout(resolve, 800));
@@ -1615,7 +1966,6 @@ export default function ExcuseGeneratorApp() {
       
       console.log('Excuse generation completed successfully');
       setIsGenerating(false);
-      setAnimateExcuse(true);
     } catch (error) {
       console.error('Error in generateExcuse:', error);
       setIsGenerating(false);
@@ -2363,20 +2713,49 @@ Next Update: ${new Date(now.getTime() + 15 * 60000).toLocaleTimeString()}`
           { condition: 'severe migraine with aura', symptoms: 'intense headache, visual disturbances, and photophobia', duration: '12-24 hours' },
           { condition: 'acute lower back strain', symptoms: 'severe lumbar pain and muscle spasms', duration: '2-3 days' },
           { condition: 'viral upper respiratory infection', symptoms: 'fever, congestion, and productive cough', duration: '3-5 days' },
-          { condition: 'acute allergic reaction', symptoms: 'widespread urticaria and respiratory irritation', duration: '24-48 hours' }
+          { condition: 'acute allergic reaction', symptoms: 'widespread urticaria and respiratory irritation', duration: '24-48 hours' },
+          { condition: 'acute sinusitis', symptoms: 'severe facial pain, nasal congestion, and headache', duration: '3-5 days' },
+          { condition: 'food poisoning', symptoms: 'severe nausea, diarrhea, and dehydration', duration: '24-72 hours' },
+          { condition: 'acute bronchitis', symptoms: 'persistent cough, chest tightness, and fatigue', duration: '3-7 days' },
+          { condition: 'vertigo and balance disorder', symptoms: 'severe dizziness, nausea, and spatial disorientation', duration: '1-2 days' },
+          { condition: 'acute stress reaction', symptoms: 'anxiety, insomnia, and physical exhaustion', duration: '2-4 days' }
         ];
-        const symptom = symptoms[Math.floor(Math.random() * symptoms.length)];
-        const doctorNames = ['Dr. Sarah Johnson, MD', 'Dr. Michael Chen, MD', 'Dr. Lisa Rodriguez, MD', 'Dr. James Wilson, MD'];
+        
+        // Sometimes generate multiple related conditions (premium feature)
+        const shouldGenerateMultiple = Math.random() < 0.3; // 30% chance for multiple conditions
+        const selectedSymptoms = shouldGenerateMultiple 
+          ? [symptoms[Math.floor(Math.random() * symptoms.length)], symptoms[Math.floor(Math.random() * symptoms.length)]]
+          : [symptoms[Math.floor(Math.random() * symptoms.length)]];
+        
+        const primarySymptom = selectedSymptoms[0];
+        const doctorNames = ['Dr. Sarah Johnson, MD', 'Dr. Michael Chen, MD', 'Dr. Lisa Rodriguez, MD', 'Dr. James Wilson, MD', 'Dr. Amanda Foster, MD', 'Dr. Robert Kim, MD'];
         const doctor = doctorNames[Math.floor(Math.random() * doctorNames.length)];
-        const clinics = ['Family Health Center', 'Urgent Care Plus', 'Premier Medical Group', 'Community Health Clinic'];
+        const clinics = ['Family Health Center', 'Urgent Care Plus', 'Premier Medical Group', 'Community Health Clinic', 'Advanced Care Medical Center', 'Regional Health Associates'];
         const clinic = clinics[Math.floor(Math.random() * clinics.length)];
         const licenseNum = `MD${Math.floor(Math.random() * 90000) + 10000}`;
+        
+        // Create comprehensive symptoms list
+        const allSymptoms = selectedSymptoms.map(s => s.symptoms).join(', with secondary ');
+        const allConditions = selectedSymptoms.map(s => s.condition).join(' complicated by ');
+        const maxDuration = Math.max(...selectedSymptoms.map(s => {
+          const days = s.duration.includes('24') ? 1 : 
+                      s.duration.includes('2-3') ? 2.5 : 
+                      s.duration.includes('3-5') ? 4 : 
+                      s.duration.includes('3-7') ? 5 : 
+                      s.duration.includes('2-4') ? 3 : 2;
+          return days;
+        }));
+        
+        const durationText = maxDuration <= 1 ? '24-48 hours' : 
+                           maxDuration <= 2.5 ? '2-3 days' : 
+                           maxDuration <= 4 ? '3-5 days' : 
+                           maxDuration <= 5 ? '5-7 days' : '3-5 days';
         
         return {
           type: 'Official Medical Certificate',
           content: `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃                 ${clinic.toUpperCase()}                 ┃
-┃              COMPREHENSIVE MEDICAL SERVICES              ┃
+┃              COMPREHENSIVE MEDICAL services              ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 ${Math.floor(Math.random() * 9000) + 1000} Medical Center Drive, Suite ${Math.floor(Math.random() * 500) + 100}
@@ -2406,23 +2785,25 @@ DEA Registration: B${doctor.split(' ')[1].substring(0,1)}${Math.floor(Math.rando
 
 CLINICAL DOCUMENTATION:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Chief Complaint: ${symptom.symptoms}
+Chief Complaint: ${allSymptoms}
 
 History of Present Illness:
-Patient presents with acute onset of ${symptom.symptoms} beginning 
+Patient presents with acute onset of ${allSymptoms} beginning 
 approximately ${Math.floor(Math.random() * 12) + 6} hours prior to evaluation.
 Symptoms have been progressively worsening and interfering with 
 normal daily activities and work performance.
+${selectedSymptoms.length > 1 ? '\nComplications noted due to multiple concurrent conditions requiring\nextended observation and comprehensive treatment approach.' : ''}
 
 Physical Examination:
 - Vital Signs: Stable, slight elevation in temperature
 - General: Patient appears uncomfortable but alert and oriented
-- Findings consistent with ${symptom.condition}
+- Findings consistent with ${allConditions}
+${selectedSymptoms.length > 1 ? '- Multiple systems involved requiring careful monitoring' : ''}
 
 ASSESSMENT & DIAGNOSIS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Primary Diagnosis: ${symptom.condition}
-ICD-10-CM Code: ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 90) + 10}.${Math.floor(Math.random() * 9)}${Math.floor(Math.random() * 10)}
+Primary Diagnosis: ${allConditions}
+ICD-10-CM Code: ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 90) + 10}.${Math.floor(Math.random() * 9)}${Math.floor(Math.random() * 10)}${selectedSymptoms.length > 1 ? `, ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 90) + 10}.${Math.floor(Math.random() * 9)}${Math.floor(Math.random() * 10)}` : ''}
 
 TREATMENT PLAN:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2431,25 +2812,27 @@ TREATMENT PLAN:
 • Restriction from work-related activities
 • Follow-up appointment scheduled if symptoms persist
 • Return if condition deteriorates or new symptoms develop
+${selectedSymptoms.length > 1 ? '• Multidisciplinary approach for complex presentation\n• Extended monitoring period recommended' : ''}
 
 WORK/ACTIVITY RESTRICTIONS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Due to the contagious nature and severity of symptoms, patient is 
-medically restricted from work/school activities for ${symptom.duration}.
+Due to the ${selectedSymptoms.length > 1 ? 'complex nature of multiple conditions' : 'contagious nature'} and severity of symptoms, patient is 
+medically restricted from work/school activities for ${durationText}.
 
 This medical restriction is necessary to:
 ☐ Prevent transmission to coworkers/students
 ☐ Allow adequate recovery time
 ☐ Prevent worsening of current condition
 ☐ Maintain public health standards
+${selectedSymptoms.length > 1 ? '☐ Manage complex multi-system involvement' : ''}
 
 RETURN TO WORK AUTHORIZATION:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Patient may return to normal activities on: 
-${new Date(now.getTime() + (symptom.duration.includes('24') ? 1 : symptom.duration.includes('2-3') ? 2 : 3) * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+${new Date(now.getTime() + maxDuration * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
 
 This document serves as official medical verification for the 
-period of ${symptom.duration} from date of service.
+period of ${durationText} from date of service.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PHYSICIAN SIGNATURE & VALIDATION
@@ -2642,7 +3025,27 @@ ${currentLangTexts.avoid}`
         const clinics = localizedClinics[selectedLanguage] || localizedClinics['en'];
         const doctor = doctorNames[Math.floor(Math.random() * doctorNames.length)];
         const clinic = clinics[Math.floor(Math.random() * clinics.length)];
-        const durationDays = Math.ceil(duration / 30); // Convert to days
+        
+        // Use the same detailed symptoms as the comprehensive medical certificate
+        const symptoms = [
+          { condition: 'acute gastroenteritis', symptoms: 'nausea, vomiting, and abdominal cramping', duration: '24-48 hours' },
+          { condition: 'severe migraine with aura', symptoms: 'intense headache, visual disturbances, and photophobia', duration: '12-24 hours' },
+          { condition: 'acute lower back strain', symptoms: 'severe lumbar pain and muscle spasms', duration: '2-3 days' },
+          { condition: 'viral upper respiratory infection', symptoms: 'fever, congestion, and productive cough', duration: '3-5 days' },
+          { condition: 'acute allergic reaction', symptoms: 'widespread urticaria and respiratory irritation', duration: '24-48 hours' },
+          { condition: 'acute sinusitis', symptoms: 'severe facial pain, nasal congestion, and headache', duration: '3-5 days' },
+          { condition: 'food poisoning', symptoms: 'severe nausea, diarrhea, and dehydration', duration: '24-72 hours' },
+          { condition: 'acute bronchitis', symptoms: 'persistent cough, chest tightness, and fatigue', duration: '3-7 days' },
+          { condition: 'vertigo and balance disorder', symptoms: 'severe dizziness, nausea, and spatial disorientation', duration: '1-2 days' },
+          { condition: 'acute stress reaction', symptoms: 'anxiety, insomnia, and physical exhaustion', duration: '2-4 days' }
+        ];
+        
+        const selectedSymptom = symptoms[Math.floor(Math.random() * symptoms.length)];
+        const durationDays = selectedSymptom.duration.includes('24') ? 1 : 
+                           selectedSymptom.duration.includes('2-3') ? 2 : 
+                           selectedSymptom.duration.includes('3-5') ? 4 : 
+                           selectedSymptom.duration.includes('3-7') ? 5 : 
+                           selectedSymptom.duration.includes('2-4') ? 3 : 2;
         
         if (proofFormat === 'sms') {
           const phoneNumbers = officialNumbers.medical[selectedLanguage] || officialNumbers.medical['en'];
@@ -2663,6 +3066,9 @@ ${phoneNumber}                   ${timestamp}
 ${t.patientInfo || 'Patient'}: [PATIENT NAME]
 ${t.physician || 'Doctor'}: ${doctor}
 ${t.serviceDate || 'Visit'}: ${currentDate}
+
+Diagnosis: ${selectedSymptom.condition}
+Symptoms: ${selectedSymptom.symptoms}
 
 ${currentLangTexts.due} ${durationDays} ${durationDays === 1 ? (t.day || 'day') : (t.days || 'days')}.
 
@@ -2697,7 +3103,16 @@ ${t.physician || 'ATTENDING PHYSICIAN'}:
 ${doctor}
 ${t.license || 'Medical License'}: MD${Math.floor(Math.random() * 90000) + 10000}
 
-${currentLangTexts.due} ${durationDays} ${durationDays === 1 ? (t.day || 'day') : (t.days || 'days')}.
+CLINICAL ASSESSMENT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Primary Diagnosis: ${selectedSymptom.condition}
+Chief Complaint: ${selectedSymptom.symptoms}
+Treatment Duration: ${selectedSymptom.duration}
+
+WORK/SCHOOL RESTRICTION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Due to ${selectedSymptom.condition} presenting with ${selectedSymptom.symptoms}, 
+patient is medically restricted from work/school activities for ${durationDays} ${durationDays === 1 ? (t.day || 'day') : (t.days || 'days')}.
 
 ${t.returnDate || 'Patient may return to normal activities on'}:
 ${new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
@@ -2723,18 +3138,18 @@ ${t.date || 'Date'}: ${currentDate}`
     setIsPremium(true);
     setShowPremium(false);
     // Save premium status
-    localStorage.setItem('isPremium', 'true');
+    safeLocalStorage.setItem('isPremium', 'true');
   };
 
   const togglePremium = (checked: boolean) => {
     setIsPremium(checked);
-    localStorage.setItem('isPremium', checked.toString());
+    safeLocalStorage.setItem('isPremium', checked.toString());
   };
 
   // Load history and favorites from localStorage on mount
   useEffect(() => {
     try {
-      const savedHistory = localStorage.getItem('excuseHistory');
+      const savedHistory = safeLocalStorage.getItem('excuseHistory');
       if (savedHistory) {
         const parsedHistory = JSON.parse(savedHistory).map((entry: any) => ({
           ...entry,
@@ -2743,12 +3158,12 @@ ${t.date || 'Date'}: ${currentDate}`
         setExcuseHistory(parsedHistory);
       }
 
-      const savedFavorites = localStorage.getItem('favorites');
+      const savedFavorites = safeLocalStorage.getItem('favorites');
       if (savedFavorites) {
         setFavorites(JSON.parse(savedFavorites));
       }
 
-      const savedRatings = localStorage.getItem('excuseRatings');
+      const savedRatings = safeLocalStorage.getItem('excuseRatings');
       if (savedRatings) {
         const parsedRatings = JSON.parse(savedRatings);
         // Convert timestamp strings back to Date objects
@@ -2761,23 +3176,23 @@ ${t.date || 'Date'}: ${currentDate}`
         setExcuseRatings(ratingsWithDates);
       }
 
-      const savedPremiumStatus = localStorage.getItem('isPremium');
+      const savedPremiumStatus = safeLocalStorage.getItem('isPremium');
       if (savedPremiumStatus === 'true') {
         setIsPremium(true);
       }
 
-      const savedCustomExcuses = localStorage.getItem('customExcuses');
+      const savedCustomExcuses = safeLocalStorage.getItem('customExcuses');
       if (savedCustomExcuses) {
         setCustomExcuses(JSON.parse(savedCustomExcuses));
       }
 
       // Load analytics data
-      const savedUsageStats = localStorage.getItem('usageStats');
+      const savedUsageStats = safeLocalStorage.getItem('usageStats');
       if (savedUsageStats) {
         setUsageStats(JSON.parse(savedUsageStats));
       }
 
-      const savedExcuseAnalytics = localStorage.getItem('excuseAnalytics');
+      const savedExcuseAnalytics = safeLocalStorage.getItem('excuseAnalytics');
       if (savedExcuseAnalytics) {
         const parsedAnalytics = JSON.parse(savedExcuseAnalytics);
         // Convert date strings back to Date objects
@@ -2790,7 +3205,7 @@ ${t.date || 'Date'}: ${currentDate}`
         setExcuseAnalytics(analyticsWithDates);
       }
 
-      const savedAbTestGroups = localStorage.getItem('abTestGroups');
+      const savedAbTestGroups = safeLocalStorage.getItem('abTestGroups');
       if (savedAbTestGroups) {
         setAbTestGroups(JSON.parse(savedAbTestGroups));
       } else {
@@ -2799,7 +3214,7 @@ ${t.date || 'Date'}: ${currentDate}`
       }
       
       // Load subscription data
-      const savedSubscriptionData = localStorage.getItem('subscriptionData');
+      const savedSubscriptionData = safeLocalStorage.getItem('subscriptionData');
       if (savedSubscriptionData) {
         const parsedSubData = JSON.parse(savedSubscriptionData);
         // Convert date strings back to Date objects
@@ -2814,19 +3229,19 @@ ${t.date || 'Date'}: ${currentDate}`
         });
       }
       
-      const savedSubscriptionTier = localStorage.getItem('subscriptionTier');
+      const savedSubscriptionTier = safeLocalStorage.getItem('subscriptionTier');
       if (savedSubscriptionTier && ['free', 'pro', 'premium'].includes(savedSubscriptionTier)) {
         setSubscriptionTier(savedSubscriptionTier as 'free' | 'pro' | 'premium');
       }
       
       // Load language preference
-      const savedLanguage = localStorage.getItem('selectedLanguage');
+      const savedLanguage = safeLocalStorage.getItem('selectedLanguage');
       if (savedLanguage && ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja'].includes(savedLanguage)) {
         setSelectedLanguage(savedLanguage as 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'ja');
       }
       
       // Load phone number preference
-      const savedPhoneNumber = localStorage.getItem('userPhoneNumber');
+      const savedPhoneNumber = safeLocalStorage.getItem('userPhoneNumber');
       if (savedPhoneNumber) {
         setUserPhoneNumber(savedPhoneNumber);
       }
@@ -2838,7 +3253,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save history to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('excuseHistory', JSON.stringify(excuseHistory));
+      safeLocalStorage.setItem('excuseHistory', JSON.stringify(excuseHistory));
     } catch (error) {
       console.error('Error saving history to localStorage:', error);
     }
@@ -2847,7 +3262,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save favorites to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('favorites', JSON.stringify(favorites));
+      safeLocalStorage.setItem('favorites', JSON.stringify(favorites));
     } catch (error) {
       console.error('Error saving favorites to localStorage:', error);
     }
@@ -2856,7 +3271,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save ratings to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('excuseRatings', JSON.stringify(excuseRatings));
+      safeLocalStorage.setItem('excuseRatings', JSON.stringify(excuseRatings));
     } catch (error) {
       console.error('Error saving ratings to localStorage:', error);
     }
@@ -2865,7 +3280,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save custom excuses to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('customExcuses', JSON.stringify(customExcuses));
+      safeLocalStorage.setItem('customExcuses', JSON.stringify(customExcuses));
     } catch (error) {
       console.error('Error saving custom excuses to localStorage:', error);
     }
@@ -2874,7 +3289,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save usage statistics to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('usageStats', JSON.stringify(usageStats));
+      safeLocalStorage.setItem('usageStats', JSON.stringify(usageStats));
     } catch (error) {
       console.error('Error saving usage stats to localStorage:', error);
     }
@@ -2883,7 +3298,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save excuse analytics to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('excuseAnalytics', JSON.stringify(excuseAnalytics));
+      safeLocalStorage.setItem('excuseAnalytics', JSON.stringify(excuseAnalytics));
     } catch (error) {
       console.error('Error saving excuse analytics to localStorage:', error);
     }
@@ -2892,7 +3307,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save A/B test groups to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('abTestGroups', JSON.stringify(abTestGroups));
+      safeLocalStorage.setItem('abTestGroups', JSON.stringify(abTestGroups));
     } catch (error) {
       console.error('Error saving A/B test groups to localStorage:', error);
     }
@@ -2901,8 +3316,8 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save subscription data to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem('subscriptionData', JSON.stringify(subscriptionData));
-      localStorage.setItem('subscriptionTier', subscriptionTier);
+      safeLocalStorage.setItem('subscriptionData', JSON.stringify(subscriptionData));
+      safeLocalStorage.setItem('subscriptionTier', subscriptionTier);
     } catch (error) {
       console.error('Error saving subscription data to localStorage:', error);
     }
@@ -2911,7 +3326,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save language selection to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('selectedLanguage', selectedLanguage);
+      safeLocalStorage.setItem('selectedLanguage', selectedLanguage);
     } catch (error) {
       console.error('Error saving language to localStorage:', error);
     }
@@ -2920,7 +3335,7 @@ ${t.date || 'Date'}: ${currentDate}`
   // Save phone number to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('userPhoneNumber', userPhoneNumber);
+      safeLocalStorage.setItem('userPhoneNumber', userPhoneNumber);
     } catch (error) {
       console.error('Error saving phone number to localStorage:', error);
     }
@@ -2941,12 +3356,12 @@ ${t.date || 'Date'}: ${currentDate}`
       <div className="min-h-screen bg-gradient-to-br from-yellow-100 to-orange-100 flex flex-col items-center justify-center p-6">
         <Card className="w-full max-w-md shadow-xl rounded-2xl">
           <CardContent className="p-6 space-y-6 text-center">
-            <h1 className="text-3xl font-bold mb-2">🎉 Welcome to Excuses, Excuses!</h1>
-            <p className="text-gray-600">Pick your style and let's craft your perfect excuse persona!</p>
+            <h1 className="text-3xl font-bold mb-2">{t.welcomeTitle}</h1>
+            <p className="text-gray-600">{t.welcomeDescription}</p>
 
             {/* Language Selector */}
             <div className="mb-4">
-              <label htmlFor="onboarding-language-select" className="block mb-2 text-sm font-medium text-gray-700">🌍 Choose Your Language</label>
+              <label htmlFor="onboarding-language-select" className="block mb-2 text-sm font-medium text-gray-700">{t.chooseLanguageLabel}</label>
               <Select onValueChange={(val: 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ru' | 'ja') => setSelectedLanguage(val)} value={selectedLanguage}>
                 <SelectTrigger id="onboarding-language-select" aria-label="Choose language for excuses" className="w-full">
                   <SelectValue placeholder="Select language" />
@@ -2961,18 +3376,19 @@ ${t.date || 'Date'}: ${currentDate}`
               </Select>
             </div>
 
+            <h2 className="text-lg font-semibold mb-4">{t.chooseStyleTitle}</h2>
             <div className="grid grid-cols-1 gap-3 mt-6">
               <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white" onClick={() => { setTone("funny"); setOnboarding(false); }}>
-                😂 Sneaky & Funny
+                {t.funnyStyle}
               </Button>
               <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white" onClick={() => { setTone("professional"); setOnboarding(false); }}>
-                💼 Smooth & Professional
+                {t.professionalStyle}
               </Button>
               <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={() => { setTone("believable"); setOnboarding(false); }}>
-                ✅ Realistic & Believable
+                {t.believableStyle}
               </Button>
               <Button className="w-full bg-red-500 hover:bg-red-600 text-white" onClick={() => { setTone("dramatic"); setOnboarding(false); }}>
-                🎭 Dramatic & Theatrical
+                {t.dramaticStyle}
               </Button>
             </div>
 
@@ -3235,6 +3651,9 @@ ${t.date || 'Date'}: ${currentDate}`
                   <SelectItem value="family" role="option">{t.situations.family}</SelectItem>
                   <SelectItem value="social" role="option">{t.situations.social}</SelectItem>
                   <SelectItem value="exercise">{t.situations.exercise}</SelectItem>
+                  <SelectItem value="weather">{t.situations.weather}</SelectItem>
+                  <SelectItem value="traffic">{t.situations.traffic}</SelectItem>
+                  <SelectItem value="medical">{t.situations.medical}</SelectItem>
                   {isPremium && (
                     <>
                       <SelectItem value="emergency">{t.situations.emergency}</SelectItem>
@@ -3527,7 +3946,7 @@ ${t.date || 'Date'}: ${currentDate}`
 
             {excuse && !isGenerating && (
               <div 
-                className={`mt-4 p-4 bg-gray-100 rounded-xl border text-center text-gray-800 transition-all duration-500 ${animateExcuse ? 'animate-pulse opacity-100 scale-100' : 'opacity-90 scale-95'}`}
+                className="mt-4 p-4 bg-gray-100 rounded-xl border text-center text-gray-800 opacity-100 scale-100 animate-in fade-in-50 duration-500"
                 role="region"
                 aria-label="Generated excuse"
                 aria-live="polite"
@@ -4360,7 +4779,7 @@ ${t.date || 'Date'}: ${currentDate}`
       <BetaFeedbackForm 
         isOpen={showBetaFeedback}
         onClose={() => setShowBetaFeedback(false)}
-        currentLanguage={getLanguageName(selectedLanguage)}
+        currentLanguage={selectedLanguage}
         currentStyle={getCurrentStyleName()}
       />
     </div>
