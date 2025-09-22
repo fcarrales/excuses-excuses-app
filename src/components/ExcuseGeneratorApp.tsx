@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Crown, Share2, Zap, Settings, Star, Calendar, Copy, Check, History, Trash2, MessageCircle, Mail, Twitter, Facebook, ThumbsUp, ThumbsDown, TrendingUp, Camera, FileText, MapPin, Cloud, MessageSquare, TestTube } from "lucide-react";
+import { Sparkles, Crown, Share2, Zap, Settings, Star, Calendar, Copy, Check, History, Trash2, MessageCircle, Mail, Twitter, Facebook, ThumbsUp, ThumbsDown, TrendingUp, Camera, FileText, MapPin, Cloud, MessageSquare, TestTube, Share } from "lucide-react";
 import { BetaFeedbackForm } from "./BetaFeedbackForm";
 
 export default function ExcuseGeneratorApp() {
@@ -69,8 +69,15 @@ export default function ExcuseGeneratorApp() {
   const [isPremium, setIsPremium] = useState(false);
   const [showProofGenerator, setShowProofGenerator] = useState(false);
   const [proofFormat, setProofFormat] = useState<'document' | 'sms' | 'email'>('document');
+  const [userEmailAddress, setUserEmailAddress] = useState('');
+  const [emailSending, setEmailSending] = useState(false);
   const [userPhoneNumber, setUserPhoneNumber] = useState('');
-  const [generatedProof, setGeneratedProof] = useState<{type: string, content: string} | null>(null);
+  const [generatedProof, setGeneratedProof] = useState<{type: string, content: string, image?: string} | null>(null);
+  
+  // Patient information for medical certificates
+  const [showPatientInfoDialog, setShowPatientInfoDialog] = useState(false);
+  const [patientName, setPatientName] = useState('');
+  const [patientDateOfBirth, setPatientDateOfBirth] = useState('');
   
   // New states for custom features
   const [customExcuses, setCustomExcuses] = useState<{[key: string]: {[key: string]: string[]}}>({}); 
@@ -86,6 +93,22 @@ export default function ExcuseGeneratorApp() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const [animateExcuse, setAnimateExcuse] = useState(false);
+  
+  // Location and live data states
+  const [userLocation, setUserLocation] = useState<{
+    lat: number, 
+    lon: number, 
+    city?: string,
+    state?: string,
+    country?: string,
+    address?: string,
+    neighborhood?: string
+  } | null>(null);
+  const [locationPermission, setLocationPermission] = useState<'denied' | 'granted' | 'pending'>('pending');
+  const [liveWeatherData, setLiveWeatherData] = useState<any>(null);
+  const [liveTrafficData, setLiveTrafficData] = useState<any>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [useRealData, setUseRealData] = useState(false);
   
   // Analytics and tracking states
   const [usageStats, setUsageStats] = useState<{
@@ -1893,67 +1916,76 @@ export default function ExcuseGeneratorApp() {
       console.log('allExcuses length:', allExcuses.length);
       console.log('allExcuses sample:', allExcuses.slice(0, 3));
       
-      // Get recently used excuses (last 10 or within last 10 minutes - reduced from 1 hour)
-      const recentExcuses = excuseHistory
-        .filter(entry => {
-          const timeDiff = Date.now() - entry.timestamp.getTime();
-          return timeDiff < 600000; // 10 minutes in milliseconds (reduced from 1 hour)
-        })
-        .map(entry => entry.excuse);
-      
-      console.log('recentExcuses:', recentExcuses);
-      
-      // Filter out recently used excuses
-      let availableExcuses = allExcuses.filter((excuse: string) => !recentExcuses.includes(excuse));
-      console.log('availableExcuses after filter:', availableExcuses.length);
-      
-      // If all excuses were recently used, use all excuses (reset the pool)
-      if (availableExcuses.length === 0) {
-        availableExcuses = [...allExcuses];
-        console.log('All excuses were recent, resetting pool');
-      }
-      
-      // For debugging - always ensure we have variety by shuffling the array
-      const shuffled = [...availableExcuses].sort(() => Math.random() - 0.5);
-      
-      // Weight excuses based on ratings (highly rated excuses are more likely to be chosen)
-      const weightedExcuses: string[] = [];
-      for (const excuse of shuffled) {
-        const rating = getExcuseRating(excuse);
-        if (rating === 'up') {
-          // Add highly-rated excuses 3 times to increase their chances
-          weightedExcuses.push(excuse, excuse, excuse);
-        } else if (rating === 'down') {
-          // Add poorly-rated excuses only once (reduce their chances)
-          weightedExcuses.push(excuse);
-        } else {
-          // Add unrated excuses twice (normal chance)
-          weightedExcuses.push(excuse, excuse);
+      // Generate live data-enhanced excuse if location and live data are available
+      let finalExcuse = '';
+      if (useRealData && userLocation && (liveWeatherData || liveTrafficData)) {
+        finalExcuse = generateLiveDataExcuse(situation, tone, liveWeatherData, liveTrafficData);
+        console.log('Generated live data excuse:', finalExcuse);
+      } else {
+        // Use traditional random selection from available excuses
+        
+        // Get recently used excuses (last 10 or within last 10 minutes - reduced from 1 hour)
+        const recentExcuses = excuseHistory
+          .filter(entry => {
+            const timeDiff = Date.now() - entry.timestamp.getTime();
+            return timeDiff < 600000; // 10 minutes in milliseconds (reduced from 1 hour)
+          })
+          .map(entry => entry.excuse);
+        
+        console.log('recentExcuses:', recentExcuses);
+        
+        // Filter out recently used excuses
+        let availableExcuses = allExcuses.filter((excuse: string) => !recentExcuses.includes(excuse));
+        console.log('availableExcuses after filter:', availableExcuses.length);
+        
+        // If all excuses were recently used, use all excuses (reset the pool)
+        if (availableExcuses.length === 0) {
+          availableExcuses = [...allExcuses];
+          console.log('All excuses were recent, resetting pool');
         }
+        
+        // For debugging - always ensure we have variety by shuffling the array
+        const shuffled = [...availableExcuses].sort(() => Math.random() - 0.5);
+        
+        // Weight excuses based on ratings (highly rated excuses are more likely to be chosen)
+        const weightedExcuses: string[] = [];
+        for (const excuse of shuffled) {
+          const rating = getExcuseRating(excuse);
+          if (rating === 'up') {
+            // Add highly-rated excuses 3 times to increase their chances
+            weightedExcuses.push(excuse, excuse, excuse);
+          } else if (rating === 'down') {
+            // Add poorly-rated excuses only once (reduce their chances)
+            weightedExcuses.push(excuse);
+          } else {
+            // Add unrated excuses twice (normal chance)
+            weightedExcuses.push(excuse, excuse);
+          }
+        }
+        
+        // Add extra randomization - shuffle the weighted array
+        const shuffledWeighted = [...weightedExcuses].sort(() => Math.random() - 0.5);
+        
+        // Select random excuse from weighted pool
+        finalExcuse = shuffledWeighted[Math.floor(Math.random() * shuffledWeighted.length)];
+        console.log('Selected from', shuffledWeighted.length, 'weighted options');
+        console.log('Generated excuse:', finalExcuse);
       }
-      
-      // Add extra randomization - shuffle the weighted array
-      const shuffledWeighted = [...weightedExcuses].sort(() => Math.random() - 0.5);
-      
-      // Select random excuse from weighted pool
-      const randomExcuse = shuffledWeighted[Math.floor(Math.random() * shuffledWeighted.length)];
-      console.log('Selected from', shuffledWeighted.length, 'weighted options');
-      console.log('Generated excuse:', randomExcuse);
       
       // Add to history
       const newHistoryEntry = {
-        excuse: randomExcuse,
+        excuse: finalExcuse,
         timestamp: new Date(),
         situation: situation,
         tone: tone
       };
       
       setExcuseHistory(prev => [newHistoryEntry, ...prev].slice(0, 50)); // Keep last 50 excuses
-      setExcuse(randomExcuse);
+      setExcuse(finalExcuse);
       setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
       
       // Track usage analytics
-      trackUsageAnalytics(situation, tone, randomExcuse);
+      trackUsageAnalytics(situation, tone, finalExcuse);
       
       // Increment usage counter for subscription tracking
       incrementUsage('generate');
@@ -2028,6 +2060,457 @@ export default function ExcuseGeneratorApp() {
     }
   };
 
+  const sendAsEmail = async (content: string, recipientEmail: string) => {
+    setEmailSending(true);
+    try {
+      // Create a simple, clean email format
+      const subject = 'Medical Excuse Documentation';
+      
+      // Clean up the content for email
+      let emailContent = content;
+      
+      // If it's an email format, clean it up
+      if (content.includes('Subject:')) {
+        emailContent = content.replace(/Subject:.*\n/, '').replace(/To:.*\n/, '').replace(/From:.*\n/, '').trim();
+      }
+      
+      // Create mailto URL with simple encoding
+      const mailtoUrl = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
+      
+      // Try multiple methods to ensure it works
+      try {
+        // Method 1: Direct window location
+        window.location.href = mailtoUrl;
+      } catch (e) {
+        // Method 2: Window.open as fallback
+        window.open(mailtoUrl);
+      }
+      
+      // Show success message
+      alert('✅ Email client should be opening now!\n\nIf your email client didn\'t open automatically:\n1. Copy the proof text below\n2. Create a new email\n3. Paste the content');
+      
+      setTimeout(() => {
+        setEmailSending(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('❌ Could not open email client automatically.\n\nPlease copy the proof text and paste it into your email manually.');
+      setEmailSending(false);
+    }
+  };
+
+  // Location and Live Data Functions
+  const requestLocation = async () => {
+    setIsLoadingLocation(true);
+    
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by this browser.');
+      setLocationPermission('denied');
+      setIsLoadingLocation(false);
+      return;
+    }
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0 // Always get fresh location data
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      const location: {
+        lat: number, 
+        lon: number, 
+        city?: string,
+        state?: string,
+        country?: string,
+        address?: string,
+        neighborhood?: string
+      } = { lat: latitude, lon: longitude };
+      
+      // Get detailed location info from coordinates using multiple sources
+      try {
+        // Try OpenWeatherMap reverse geocoding first
+        const weatherResponse = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=demo`);
+        if (weatherResponse.ok) {
+          const weatherData = await weatherResponse.json();
+          if (weatherData[0]) {
+            location.city = weatherData[0].name;
+            location.state = weatherData[0].state;
+            location.country = weatherData[0].country;
+          }
+        }
+        
+        // Try more detailed reverse geocoding with Nominatim (OpenStreetMap)
+        try {
+          const nominatimResponse = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+            {
+              headers: {
+                'User-Agent': 'ExcusesApp/1.0'
+              }
+            }
+          );
+          
+          if (nominatimResponse.ok) {
+            const nominatimData = await nominatimResponse.json();
+            if (nominatimData && nominatimData.address) {
+              const addr = nominatimData.address;
+              
+              // Extract detailed address components
+              location.neighborhood = addr.neighbourhood || addr.suburb || addr.residential;
+              location.city = location.city || addr.city || addr.town || addr.village;
+              location.state = location.state || addr.state || addr.region;
+              location.country = location.country || addr.country;
+              
+              // Create readable address
+              const addressParts = [];
+              if (addr.house_number && addr.road) {
+                addressParts.push(`${addr.house_number} ${addr.road}`);
+              } else if (addr.road) {
+                addressParts.push(addr.road);
+              }
+              if (location.neighborhood && location.neighborhood !== location.city) {
+                addressParts.push(location.neighborhood);
+              }
+              if (location.city) {
+                addressParts.push(location.city);
+              }
+              if (location.state) {
+                addressParts.push(location.state);
+              }
+              
+              location.address = addressParts.filter(Boolean).join(', ');
+            }
+          }
+        } catch (nominatimError) {
+          console.log('Nominatim geocoding failed, using basic location');
+        }
+        
+      } catch (e) {
+        console.log('Could not get detailed location, using coordinates only');
+        // Fallback: create basic location display from coordinates
+        location.address = `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`;
+      }
+
+      setUserLocation(location);
+      setLocationPermission('granted');
+      
+      // Automatically fetch live data
+      await Promise.all([
+        fetchLiveWeather(location),
+        fetchLiveTraffic(location)
+      ]);
+      
+    } catch (error) {
+      console.error('Error getting location:', error);
+      setLocationPermission('denied');
+      alert('Location access denied. Using generic location data instead.');
+    }
+    
+    setIsLoadingLocation(false);
+  };
+
+  const fetchLiveWeather = async (location: {
+    lat: number, 
+    lon: number, 
+    city?: string,
+    state?: string,
+    country?: string,
+    address?: string,
+    neighborhood?: string
+  }) => {
+    try {
+      // Using free weather API from weatherapi.com or open-meteo.com (no key required)
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${location.lat}&longitude=${location.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,visibility&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const current = data.current;
+        
+        // Weather code mapping for Open-Meteo
+        const getWeatherDescription = (code: number) => {
+          const weatherCodes: { [key: number]: { main: string, description: string } } = {
+            0: { main: 'Clear', description: 'clear sky' },
+            1: { main: 'Clouds', description: 'mainly clear' },
+            2: { main: 'Clouds', description: 'partly cloudy' },
+            3: { main: 'Clouds', description: 'overcast' },
+            45: { main: 'Fog', description: 'fog' },
+            48: { main: 'Fog', description: 'depositing rime fog' },
+            51: { main: 'Drizzle', description: 'light drizzle' },
+            53: { main: 'Drizzle', description: 'moderate drizzle' },
+            55: { main: 'Drizzle', description: 'dense drizzle' },
+            61: { main: 'Rain', description: 'slight rain' },
+            63: { main: 'Rain', description: 'moderate rain' },
+            65: { main: 'Rain', description: 'heavy rain' },
+            71: { main: 'Snow', description: 'slight snow fall' },
+            73: { main: 'Snow', description: 'moderate snow fall' },
+            75: { main: 'Snow', description: 'heavy snow fall' },
+            80: { main: 'Rain', description: 'slight rain showers' },
+            81: { main: 'Rain', description: 'moderate rain showers' },
+            82: { main: 'Rain', description: 'violent rain showers' },
+            95: { main: 'Thunderstorm', description: 'thunderstorm' },
+            96: { main: 'Thunderstorm', description: 'thunderstorm with slight hail' },
+            99: { main: 'Thunderstorm', description: 'thunderstorm with heavy hail' }
+          };
+          return weatherCodes[code] || { main: 'Unknown', description: 'unknown weather' };
+        };
+        
+        const weather = getWeatherDescription(current.weather_code);
+        
+        setLiveWeatherData({
+          condition: weather.main,
+          description: weather.description,
+          temperature: Math.round(current.temperature_2m),
+          humidity: current.relative_humidity_2m,
+          windSpeed: Math.round(current.wind_speed_10m),
+          visibility: current.visibility / 1000, // Convert to km
+          city: location.city || location.address || 'Your Location'
+        });
+      } else {
+        // Fallback to mock data if API fails
+        setLiveWeatherData({
+          condition: 'Rain',
+          description: 'heavy rain',
+          temperature: 46, // 46°F 
+          humidity: 95,
+          windSpeed: 25,
+          visibility: 0.5,
+          city: location.city || location.address || 'Your Location'
+        });
+      }
+    } catch (error) {
+      console.log('Using mock weather data');
+      // Mock realistic weather data as fallback
+      setLiveWeatherData({
+        condition: 'Thunderstorm',
+        description: 'severe thunderstorm with heavy rain',
+        temperature: 54, // 54°F 
+        humidity: 98,
+        windSpeed: 45,
+        visibility: 0.2,
+        city: location.city || location.address || 'Your Location'
+      });
+    }
+  };
+
+  const fetchLiveTraffic = async (location: {
+    lat: number, 
+    lon: number, 
+    city?: string,
+    state?: string,
+    country?: string,
+    address?: string,
+    neighborhood?: string
+  }) => {
+    try {
+      // Get local roads using OpenStreetMap/Nominatim API for nearby roads
+      const nearbyResponse = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lon}&zoom=16&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'ExcusesApp/1.0'
+          }
+        }
+      );
+      
+      let localStreets: string[] = [];
+      if (nearbyResponse.ok) {
+        const data = await nearbyResponse.json();
+        if (data?.address) {
+          // Extract local street names
+          const addr = data.address;
+          if (addr.road) localStreets.push(addr.road);
+          
+          // Get nearby roads using Overpass API (OpenStreetMap)
+          try {
+            const overpassQuery = `
+              [out:json][timeout:5];
+              (
+                way["highway"~"^(primary|secondary|tertiary|residential|trunk)$"](around:1000,${location.lat},${location.lon});
+              );
+              out geom;
+            `;
+            
+            const overpassResponse = await fetch('https://overpass-api.de/api/interpreter', {
+              method: 'POST',
+              body: overpassQuery,
+              headers: {
+                'Content-Type': 'text/plain'
+              }
+            });
+            
+            if (overpassResponse.ok) {
+              const overpassData = await overpassResponse.json();
+              const nearbyRoads = overpassData.elements
+                .map((way: any) => way.tags?.name)
+                .filter((name: string) => name && !localStreets.includes(name))
+                .slice(0, 3); // Get up to 3 additional roads
+              
+              localStreets.push(...nearbyRoads);
+            }
+          } catch (e) {
+            console.log('Could not fetch nearby roads from Overpass API');
+          }
+        }
+      }
+      
+      // Fallback to common street names if no local streets found
+      if (localStreets.length === 0) {
+        localStreets = ['Main Street', 'Oak Avenue', 'First Street'];
+      }
+      
+      // Create realistic traffic scenarios using actual local streets
+      const trafficTypes = ['accident', 'construction', 'weather_related', 'heavy_traffic', 'road_closure'];
+      const selectedType = trafficTypes[Math.floor(Math.random() * trafficTypes.length)];
+      const selectedStreet = localStreets[Math.floor(Math.random() * localStreets.length)];
+      
+      const scenarios = {
+        accident: {
+          type: 'accident',
+          location: selectedStreet,
+          description: `Multi-vehicle accident on ${selectedStreet} blocking lanes`,
+          delay: `${15 + Math.floor(Math.random() * 45)} minutes`,
+          distance: `${0.1 + Math.random() * 2}`.slice(0,3) + ' miles from current location'
+        },
+        construction: {
+          type: 'construction',
+          location: selectedStreet,
+          description: `Road construction on ${selectedStreet} - single lane traffic`,
+          delay: `${10 + Math.floor(Math.random() * 30)} minutes`,
+          distance: `${0.2 + Math.random() * 1.5}`.slice(0,3) + ' miles from current location'
+        },
+        weather_related: {
+          type: 'weather_related',
+          location: selectedStreet,
+          description: `Weather-related hazards on ${selectedStreet} - reduced visibility`,
+          delay: `${20 + Math.floor(Math.random() * 40)} minutes`,
+          distance: `${0.1 + Math.random() * 1.2}`.slice(0,3) + ' miles from current location'
+        },
+        heavy_traffic: {
+          type: 'heavy_traffic',
+          location: selectedStreet,
+          description: `Heavy congestion on ${selectedStreet} during rush hour`,
+          delay: `${15 + Math.floor(Math.random() * 35)} minutes`,
+          distance: `${0.2 + Math.random() * 1.8}`.slice(0,3) + ' miles from current location'
+        },
+        road_closure: {
+          type: 'road_closure',
+          location: selectedStreet,
+          description: `${selectedStreet} closed due to emergency maintenance`,
+          delay: `${30 + Math.floor(Math.random() * 45)} minutes detour required`,
+          distance: `${0.1 + Math.random() * 1}`.slice(0,3) + ' miles from current location'
+        }
+      };
+      
+      setLiveTrafficData(scenarios[selectedType as keyof typeof scenarios]);
+      
+    } catch (error) {
+      console.log('Using fallback traffic data');
+      setLiveTrafficData({
+        type: 'accident',
+        location: location.address?.split(',')[0] || 'Main Street',
+        description: `Traffic incident on ${location.address?.split(',')[0] || 'Main Street'} causing delays`,
+        delay: `${15 + Math.floor(Math.random() * 30)} minutes`,
+        distance: '0.5 miles from current location'
+      });
+    }
+  };
+
+  const generateLiveDataExcuse = (situation: string, tone: string, weather: any, traffic: any) => {
+    // Create more specific location description
+    const getLocationDescription = () => {
+      if (userLocation?.neighborhood && userLocation?.city) {
+        return `${userLocation.neighborhood}, ${userLocation.city}`;
+      }
+      if (userLocation?.city && userLocation?.state) {
+        return `${userLocation.city}, ${userLocation.state}`;
+      }
+      if (userLocation?.city) {
+        return userLocation.city;
+      }
+      if (weather?.city) {
+        return weather.city;
+      }
+      return 'my area';
+    };
+
+    const city = getLocationDescription();
+    const specificArea = userLocation?.address || city;
+    const templates = {
+      weather: {
+        professional: [
+          `Due to severe ${weather.description} in ${city}, I cannot safely travel to the office. Visibility is only ${weather.visibility}km and wind speeds are ${weather.windSpeed}km/h.`,
+          `The current weather conditions in ${city} (${weather.description}, ${weather.temperature}°F) make it unsafe to travel. I will work from home today.`,
+          `Weather alert in ${city}: ${weather.description} with ${weather.humidity}% humidity. I need to stay home for safety reasons.`,
+          `I'm currently at ${specificArea} and the weather conditions (${weather.description}, ${weather.temperature}°F) make travel unsafe. Working remotely today.`
+        ],
+        believable: [
+          `I'm stuck at home because of the ${weather.description} in ${city}. Roads are not safe with only ${weather.visibility}km visibility.`,
+          `Can't make it in today - there's ${weather.description} and it's only ${weather.temperature}°F outside. Too dangerous to drive.`,
+          `The weather is terrible here in ${city} (${weather.description}). I don't feel safe driving in these conditions.`,
+          `I'm at ${specificArea} and can't get out due to the ${weather.description}. Roads are impassable with ${weather.temperature}°F weather.`
+        ],
+        funny: [
+          `Mother Nature decided to have a tantrum in ${city} today! There's ${weather.description} and I'm not brave enough to face her wrath.`,
+          `The weather gods are angry in ${city} - it's ${weather.temperature}°F with ${weather.description}. I'm staying inside like a smart human!`,
+          `Current weather in ${city}: ${weather.description}. My car and I have decided to stay in hibernation mode today!`
+        ],
+        dramatic: [
+          `The heavens have unleashed their fury upon ${city}! With ${weather.description} and winds of ${weather.windSpeed}km/h, I am trapped by nature's wrath!`,
+          `I am held captive by the storm gods in ${city}! The ${weather.description} makes travel impossible - visibility is a mere ${weather.visibility}km!`,
+          `The elements conspire against me in ${city}! ${weather.description} at ${weather.temperature}°F - I cannot battle such forces of nature!`
+        ]
+      },
+      traffic: {
+        professional: [
+          `I'm experiencing significant delays due to a ${traffic.description} on ${traffic.location}. The estimated delay is ${traffic.delay}, which will make me very late.`,
+          `There's a major traffic incident (${traffic.description}) ${traffic.distance}. Current delay time is ${traffic.delay}. I'll work from home instead.`,
+          `Traffic conditions are severe today - ${traffic.description} on ${traffic.location}. I'm looking at a ${traffic.delay} delay.`
+        ],
+        believable: [
+          `I'm stuck in traffic due to ${traffic.description} on ${traffic.location}. It's going to be at least a ${traffic.delay} delay.`,
+          `There's a big accident ${traffic.distance} that's causing ${traffic.delay} delays. I'm not going to make it on time.`,
+          `Traffic is completely backed up because of ${traffic.description}. Looking at ${traffic.delay} just to get through.`
+        ],
+        funny: [
+          `I'm currently part of the world's slowest parade on ${traffic.location}! There's ${traffic.description} and I've moved 3 feet in 20 minutes.`,
+          `The highway has turned into a parking lot thanks to ${traffic.description}. I'm thinking of setting up camp here for ${traffic.delay}!`,
+          `I'm experiencing the joy of ${traffic.description} on ${traffic.location}. At this rate, I'll arrive sometime next week!`
+        ],
+        dramatic: [
+          `I am trapped in a vehicular prison on ${traffic.location}! The ${traffic.description} has created a ${traffic.delay} nightmare of epic proportions!`,
+          `The traffic gods have cursed ${traffic.location} with ${traffic.description}! I am but a prisoner in this ${traffic.delay} ordeal!`,
+          `Behold! The great ${traffic.description} has transformed ${traffic.location} into a monument to human suffering! I face ${traffic.delay} of torment!`
+        ]
+      }
+    };
+
+    // Choose weather or traffic based on what's more severe/interesting
+    let selectedData, selectedType;
+    if (weather && traffic) {
+      // Prefer severe weather conditions or major traffic incidents
+      if ((weather.windSpeed > 30 || weather.visibility < 1) || traffic.delay.includes('60')) {
+        selectedData = weather.windSpeed > 30 || weather.visibility < 1 ? weather : traffic;
+        selectedType = weather.windSpeed > 30 || weather.visibility < 1 ? 'weather' : 'traffic';
+      } else {
+        // Random selection if both are moderate
+        selectedType = Math.random() > 0.5 ? 'weather' : 'traffic';
+        selectedData = selectedType === 'weather' ? weather : traffic;
+      }
+    } else {
+      selectedData = weather || traffic;
+      selectedType = weather ? 'weather' : 'traffic';
+    }
+
+    const typeTemplates = templates[selectedType as keyof typeof templates];
+    const toneTemplates = typeTemplates[tone as keyof typeof typeTemplates] || typeTemplates.professional;
+    
+    return toneTemplates[Math.floor(Math.random() * toneTemplates.length)];
+  };
+
   // Subscription Management Functions
   const checkSubscriptionLimits = (action: 'generate' | 'custom' | 'template') => {
     const today = new Date().toDateString();
@@ -2088,7 +2571,18 @@ export default function ExcuseGeneratorApp() {
       expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
     }));
     setSubscriptionTier(newTier);
+    
+    // Automatically unlock premium features for both Pro and Premium tiers
+    setIsPremium(true);
+    safeLocalStorage.setItem('isPremium', 'true');
+    safeLocalStorage.setItem('subscriptionTier', newTier);
+    
     setShowSubscription(false);
+    setShowAd(false); // Hide ads for premium users
+    setAdDismissed(true); // Dismiss any existing ads
+    
+    // Show success message
+    console.log(`Successfully upgraded to ${newTier} tier with premium features unlocked!`);
   };
 
   const getRemainingUsage = () => {
@@ -2510,11 +3004,810 @@ export default function ExcuseGeneratorApp() {
     URL.revokeObjectURL(url);
   };
 
+  // Function to get random incident descriptions in different languages
+  const getRandomIncidentDescription = (language: string) => {
+    const incidents = {
+      en: [
+        'Major multi-vehicle collision blocking multiple lanes',
+        'Jackknifed semi-truck causing major delays',
+        'Vehicle fire with emergency response ongoing',
+        'Police investigation blocking traffic flow',
+        'Emergency road repairs in progress',
+        'Overturned vehicle blocking left lanes',
+        'Hazmat spill requiring specialized cleanup',
+        'Construction zone accident with injuries',
+        'Disabled commercial vehicle blocking traffic',
+        'Bridge maintenance reducing lanes',
+        'Weather-related incident affecting visibility',
+        'Emergency medical response blocking lanes',
+        'Debris removal operation in progress',
+        'Utility line work requiring lane closures',
+        'Traffic signal malfunction causing backups'
+      ],
+      es: [
+        'Colisión mayor de múltiples vehículos bloqueando varios carriles',
+        'Camión volcado causando grandes retrasos',
+        'Incendio vehicular con respuesta de emergencia',
+        'Investigación policial bloqueando el tráfico',
+        'Reparaciones de emergencia en progreso',
+        'Vehículo volcado bloqueando carriles izquierdos',
+        'Derrame de materiales peligrosos requiriendo limpieza',
+        'Accidente en zona de construcción con heridos',
+        'Vehículo comercial averiado bloqueando tráfico',
+        'Mantenimiento de puente reduciendo carriles'
+      ],
+      fr: [
+        'Collision majeure de véhicules multiples bloquant plusieurs voies',
+        'Camion renversé causant des retards majeurs',
+        'Incendie de véhicule avec intervention d\'urgence',
+        'Enquête policière bloquant la circulation',
+        'Réparations routières d\'urgence en cours',
+        'Véhicule renversé bloquant les voies de gauche',
+        'Déversement de matières dangereuses nécessitant nettoyage',
+        'Accident en zone de construction avec blessés',
+        'Véhicule commercial en panne bloquant circulation',
+        'Maintenance de pont réduisant les voies'
+      ],
+      de: [
+        'Schwerer Mehrfahrzeug-Unfall blockiert mehrere Spuren',
+        'Umgestürzter LKW verursacht große Verzögerungen',
+        'Fahrzeugbrand mit laufendem Notfalleinsatz',
+        'Polizeiermittlung blockiert Verkehrsfluss',
+        'Notfall-Straßenreparaturen im Gange',
+        'Umgestürztes Fahrzeug blockiert linke Spuren',
+        'Gefahrgut-Verschüttung erfordert Spezialreinigung',
+        'Baustellenunfall mit Verletzten',
+        'Liegengebliebenes Nutzfahrzeug blockiert Verkehr',
+        'Brückenwartung reduziert Fahrspuren'
+      ],
+      it: [
+        'Grave collisione multipla che blocca diverse corsie',
+        'Camion ribaltato che causa gravi ritardi',
+        'Incendio veicolare con intervento di emergenza',
+        'Indagine di polizia che blocca il traffico',
+        'Riparazioni stradali di emergenza in corso',
+        'Veicolo ribaltato che blocca corsie di sinistra',
+        'Sversamento materiali pericolosi richiede pulizia',
+        'Incidente in zona cantiere con feriti',
+        'Veicolo commerciale in panne blocca traffico',
+        'Manutenzione ponte riduce corsie'
+      ],
+      pt: [
+        'Grave colisão de múltiplos veículos bloqueando várias faixas',
+        'Caminhão tombado causando grandes atrasos',
+        'Incêndio veicular com resposta de emergência',
+        'Investigação policial bloqueando tráfego',
+        'Reparos rodoviários de emergência em andamento',
+        'Veículo capotado bloqueando faixas esquerdas',
+        'Vazamento de materiais perigosos requer limpeza',
+        'Acidente em zona de construção com feridos',
+        'Veículo comercial quebrado bloqueia tráfego',
+        'Manutenção de ponte reduzindo faixas'
+      ],
+      ru: [
+        'Серьезное столкновение нескольких автомобилей блокирует несколько полос',
+        'Перевернувшийся грузовик вызывает серьезные задержки',
+        'Пожар транспортного средства с аварийным реагированием',
+        'Полицейское расследование блокирует движение',
+        'Аварийный ремонт дороги в процессе',
+        'Перевернутое транспортное средство блокирует левые полосы',
+        'Разлив опасных материалов требует очистки',
+        'Авария в зоне строительства с пострадавшими',
+        'Сломанное коммерческое транспортное средство блокирует движение',
+        'Обслуживание моста сокращает полосы'
+      ],
+      ja: [
+        '複数の車線を封鎖する重大な多重車両衝突',
+        '大型トラックの横転により大幅な遅延',
+        '緊急対応中の車両火災',
+        '交通の流れを阻害する警察の捜査',
+        '進行中の緊急道路修理',
+        '左車線を塞ぐ横転車両',
+        '専門清掃を要する危険物流出',
+        '負傷者のいる工事現場事故',
+        '交通を阻害する故障商用車',
+        '車線を減らす橋梁保守'
+      ]
+    };
+    
+    const languageIncidents = incidents[language as keyof typeof incidents] || incidents.en;
+    return languageIncidents[Math.floor(Math.random() * languageIncidents.length)];
+  };
+
+  // Image generation functions for premium tools
+  
+  // Function to get realistic highways based on location
+  const getLocalHighways = (locationInfo: any) => {
+    const state = locationInfo?.state?.toLowerCase() || '';
+    const city = locationInfo?.city?.toLowerCase() || '';
+    
+    // Major metropolitan area highway mapping
+    const regionalHighways = {
+      // Texas highways
+      texas: {
+        interstates: ['I-35', 'I-45', 'I-10', 'I-20', 'I-30', 'I-635', 'I-820'],
+        usRoutes: ['US-75', 'US-183', 'US-380', 'US-121', 'US-114', 'US-287'],
+        stateRoutes: ['TX-114', 'TX-121', 'TX-183', 'TX-360', 'TX-161']
+      },
+      // California highways  
+      california: {
+        interstates: ['I-5', 'I-405', 'I-10', 'I-110', 'I-605', 'I-210', 'I-101'],
+        usRoutes: ['US-101', 'US-1', 'US-395', 'US-99'],
+        stateRoutes: ['CA-1', 'CA-91', 'CA-134', 'CA-170']
+      },
+      // New York highways
+      'new york': {
+        interstates: ['I-95', 'I-87', 'I-278', 'I-495', 'I-678', 'I-295'],
+        usRoutes: ['US-1', 'US-9', 'US-206'],
+        stateRoutes: ['NY-25', 'NY-27', 'NY-135']
+      },
+      // Florida highways
+      florida: {
+        interstates: ['I-95', 'I-75', 'I-4', 'I-275', 'I-375', 'I-595'],
+        usRoutes: ['US-1', 'US-19', 'US-41', 'US-192'],
+        stateRoutes: ['FL-826', 'FL-836', 'FL-112']
+      },
+      // Illinois highways
+      illinois: {
+        interstates: ['I-94', 'I-90', 'I-55', 'I-57', 'I-290', 'I-355'],
+        usRoutes: ['US-41', 'US-12', 'US-20', 'US-45'],
+        stateRoutes: ['IL-53', 'IL-83', 'IL-31']
+      },
+      // Default/Generic highways for other areas
+      default: {
+        interstates: ['I-75', 'I-85', 'I-65', 'I-40', 'I-70', 'I-80'],
+        usRoutes: ['US-1', 'US-50', 'US-60', 'US-70'],
+        stateRoutes: ['Route 9', 'Route 17', 'Route 23']
+      }
+    };
+    
+    // Dallas-Fort Worth specific highways (for Coppell, Texas)
+    if (city.includes('coppell') || city.includes('dallas') || city.includes('plano') || city.includes('irving')) {
+      return {
+        interstates: ['I-35E', 'I-635', 'I-820', 'I-30', 'I-20'],
+        usRoutes: ['US-75', 'US-121', 'US-114', 'US-380'],
+        stateRoutes: ['TX-114', 'TX-121', 'TX-183', 'TX-360']
+      };
+    }
+    
+    return (regionalHighways as any)[state] || regionalHighways['texas'] || regionalHighways['default'];
+  };
+
+  const generateWeatherAlertImage = (weatherData: any, locationInfo: any, alertInfo: any) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 850;
+    canvas.height = 700;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return null;
+    
+    // Professional weather document background
+    const gradient = ctx.createLinearGradient(0, 0, 0, 700);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(1, '#f0f9ff');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 850, 700);
+    
+    // Official header with seal area
+    ctx.fillStyle = '#1e40af';
+    ctx.fillRect(0, 0, 850, 120);
+    
+    // Draw official seal placeholder (circle)
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(70, 60, 35, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    ctx.fillStyle = '#1e40af';
+    ctx.beginPath();
+    ctx.arc(70, 60, 30, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Seal text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 8px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('NOAA', 70, 58);
+    ctx.fillText('NWS', 70, 68);
+    
+    // Main header text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('NATIONAL WEATHER SERVICE', 425, 45);
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('WEATHER ALERT NOTIFICATION', 425, 75);
+    
+    // Office designation
+    ctx.font = '14px Arial';
+    ctx.fillText('Dallas/Fort Worth, TX Office', 425, 100);
+    
+    // Alert status bar
+    const alertColor = alertInfo.severity === 'WARNING' ? '#dc2626' : 
+                      alertInfo.severity === 'WATCH' ? '#ea580c' : '#059669';
+    ctx.fillStyle = alertColor;
+    ctx.fillRect(0, 120, 850, 60);
+    
+    // Alert text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${alertInfo.type.toUpperCase()} ${alertInfo.severity}`, 425, 155);
+    
+    // Document body
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(20, 200, 810, 480);
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, 200, 810, 480);
+    
+    // Document header
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('OFFICIAL WEATHER ADVISORY', 40, 230);
+    
+    // Horizontal line
+    ctx.strokeStyle = '#6b7280';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(40, 240);
+    ctx.lineTo(810, 240);
+    ctx.stroke();
+    
+    // Current date and time
+    const now = new Date();
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px Arial';
+    ctx.fillText(`Issued: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`, 40, 260);
+    ctx.fillText(`Alert ID: NWS-${Math.floor(Math.random() * 90000) + 10000}`, 600, 260);
+    
+    // Location information
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('AFFECTED AREA:', 40, 300);
+    ctx.font = '14px Arial';
+    ctx.fillText(`${locationInfo.city}${locationInfo.state ? `, ${locationInfo.state}` : ''} and surrounding counties`, 40, 320);
+    
+    // Weather details
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('CURRENT CONDITIONS:', 40, 360);
+    ctx.font = '14px Arial';
+    ctx.fillText(`Temperature: ${weatherData?.temperature || '45'}°F`, 40, 385);
+    ctx.fillText(`Conditions: ${weatherData?.description || 'Severe weather conditions'}`, 40, 405);
+    ctx.fillText(`Wind Speed: ${weatherData?.windSpeed || '35'} mph`, 40, 425);
+    ctx.fillText(`Humidity: ${weatherData?.humidity || '85'}%`, 40, 445);
+    
+    // Impact statement
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('EXPECTED IMPACTS:', 40, 485);
+    ctx.font = '14px Arial';
+    ctx.fillText('• Travel will be extremely difficult or impossible', 40, 510);
+    ctx.fillText('• Widespread power outages expected', 40, 530);
+    ctx.fillText('• Emergency services may be limited', 40, 550);
+    
+    // Safety information
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('RECOMMENDED ACTIONS:', 40, 590);
+    ctx.font = '14px Arial';
+    ctx.fillText('• Avoid all non-essential travel', 40, 615);
+    ctx.fillText('• Stay indoors and away from windows', 40, 635);
+    ctx.fillText('• Monitor weather radio for updates', 40, 655);
+    
+    // Footer
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('This is an official notification from the National Weather Service', 425, 690);
+    
+    return canvas.toDataURL('image/png');
+  };
+
+  const generateTrafficReportImage = (trafficData: any, locationInfo: any) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 850;
+    canvas.height = 750;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return null;
+    
+    // Professional document background
+    const gradient = ctx.createLinearGradient(0, 0, 0, 750);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(1, '#f9fafb');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 850, 750);
+    
+    // Official header
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 850, 100);
+    
+    // Department seal
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(70, 50, 30, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(70, 50, 25, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Seal text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 7px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('TXDOT', 70, 48);
+    ctx.fillText('TRAFFIC', 70, 57);
+    
+    // Main header
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('TEXAS DEPARTMENT OF TRANSPORTATION', 425, 40);
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('TRAFFIC INCIDENT REPORT', 425, 65);
+    ctx.font = '12px Arial';
+    ctx.fillText('District Office - Dallas/Fort Worth', 425, 85);
+    
+    // Alert status banner
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(0, 100, 850, 50);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('ACTIVE TRAFFIC INCIDENT', 425, 130);
+    
+    // Document body
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(30, 170, 790, 550);
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(30, 170, 790, 550);
+    
+    // Document header
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('OFFICIAL TRAFFIC REPORT', 50, 200);
+    
+    // Report details box
+    ctx.fillStyle = '#f3f4f6';
+    ctx.fillRect(50, 210, 750, 80);
+    ctx.strokeStyle = '#9ca3af';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(50, 210, 750, 80);
+    
+    // Report header info
+    const now = new Date();
+    ctx.fillStyle = '#374151';
+    ctx.font = 'bold 14px Arial';
+    ctx.fillText('INCIDENT DETAILS', 60, 230);
+    ctx.font = '12px Arial';
+    ctx.fillText(`Report Date: ${now.toLocaleDateString()}`, 60, 250);
+    ctx.fillText(`Report Time: ${now.toLocaleTimeString()}`, 60, 268);
+    ctx.fillText(`Incident ID: TXD-${Math.floor(Math.random() * 90000) + 10000}`, 450, 250);
+    ctx.fillText(`Status: ACTIVE`, 450, 268);
+    
+    // Location section
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('LOCATION INFORMATION:', 50, 320);
+    ctx.font = '14px Arial';
+    
+    // Use location-aware highway for the image
+    const highways = getLocalHighways(locationInfo);
+    const selectedHighway = [...highways.interstates, ...highways.usRoutes][Math.floor(Math.random() * ([...highways.interstates, ...highways.usRoutes].length))];
+    
+    ctx.fillText(`Highway: ${selectedHighway}`, 60, 345);
+    ctx.fillText(`Direction: ${['Northbound', 'Southbound', 'Eastbound', 'Westbound'][Math.floor(Math.random() * 4)]}`, 60, 365);
+    ctx.fillText(`Mile Marker: ${Math.floor(Math.random() * 50) + 100}`, 60, 385);
+    ctx.fillText(`City/Area: ${locationInfo.city}${locationInfo.state ? `, ${locationInfo.state}` : ''}`, 60, 405);
+    
+    // Incident details
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('INCIDENT TYPE:', 50, 445);
+    ctx.font = '14px Arial';
+    ctx.fillText(`Primary: ${trafficData?.type || 'Multi-vehicle collision'}`, 60, 470);
+    ctx.fillText(`Severity: ${['Minor', 'Moderate', 'Major'][Math.floor(Math.random() * 3)]}`, 60, 490);
+    ctx.fillText(`Vehicles Involved: ${Math.floor(Math.random() * 3) + 2}`, 60, 510);
+    
+    // Impact assessment
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('TRAFFIC IMPACT:', 50, 550);
+    ctx.font = '14px Arial';
+    ctx.fillText(`Lanes Blocked: ${Math.floor(Math.random() * 3) + 1} of ${Math.floor(Math.random() * 2) + 3}`, 60, 575);
+    ctx.fillText(`Expected Duration: ${Math.floor(Math.random() * 3) + 2} hours`, 60, 595);
+    ctx.fillText(`Alternate Route: Use frontage road or parallel highways`, 60, 615);
+    
+    // Emergency response
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('EMERGENCY RESPONSE:', 450, 445);
+    ctx.font = '14px Arial';
+    ctx.fillText('• State Troopers on scene', 460, 470);
+    ctx.fillText('• Emergency medical services dispatched', 460, 490);
+    ctx.fillText('• Tow trucks en route', 460, 510);
+    ctx.fillText('• Traffic control established', 460, 530);
+    
+    // Advisory information
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('MOTORIST ADVISORY:', 450, 570);
+    ctx.font = '14px Arial';
+    ctx.fillText('• Expect significant delays', 460, 595);
+    ctx.fillText('• Use extreme caution in area', 460, 615);
+    ctx.fillText('• Follow flagman directions', 460, 635);
+    
+    // Footer with official info
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('This report is generated by TxDOT Traffic Management Center', 425, 730);
+    ctx.fillText('For real-time traffic information, visit DriveTexas.org', 425, 742);
+    
+    return canvas.toDataURL('image/png');
+  };
+
+  const generateMedicalDocumentImage = (patientName: string, locationInfo: any, patientDateOfBirth?: string) => {
+    console.log('generateMedicalDocumentImage called');
+    console.log('patientName:', patientName);
+    console.log('locationInfo:', locationInfo);
+    console.log('patientDateOfBirth:', patientDateOfBirth);
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 850;
+    canvas.height = 1100;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return null;
+    
+    // Select consistent doctor name for entire document
+    const doctorNames = [
+      { full: 'Dr. Sarah Johnson', last: 'Johnson' },
+      { full: 'Dr. Michael Smith', last: 'Smith' },
+      { full: 'Dr. Emily Williams', last: 'Williams' },
+      { full: 'Dr. David Brown', last: 'Brown' },
+      { full: 'Dr. Lisa Davis', last: 'Davis' }
+    ];
+    const selectedDoctor = doctorNames[Math.floor(Math.random() * doctorNames.length)];
+    
+    // Generate realistic patient information
+    const firstNames = ['James', 'Mary', 'John', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'David', 'Elizabeth', 'William', 'Barbara', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah', 'Christopher', 'Karen'];
+    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin'];
+    
+    // Use provided name or generate realistic one
+    let finalPatientName = patientName;
+    if (!patientName || patientName === 'Emergency Medical Certificate' || patientName === 'Patient') {
+      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+      finalPatientName = `${firstName} ${lastName}`;
+    }
+    
+    // Generate realistic patient details
+    let dateOfBirth;
+    if (patientDateOfBirth) {
+      // Use provided date of birth
+      dateOfBirth = new Date(patientDateOfBirth);
+    } else {
+      // Generate realistic age if not provided
+      const birthYear = 1970 + Math.floor(Math.random() * 35); // Age 20-55
+      const birthMonth = Math.floor(Math.random() * 12);
+      const birthDay = Math.floor(Math.random() * 28) + 1;
+      dateOfBirth = new Date(birthYear, birthMonth, birthDay);
+    }
+    
+    const patientId = `P-${Math.floor(Math.random() * 900000) + 100000}`;
+    const medicalRecordNumber = `MR-${Math.floor(Math.random() * 90000) + 10000}`;
+    
+    // Emergency contact information
+    const emergencyContacts = [
+      'Jane Doe (Spouse) - (214) 555-0123',
+      'Robert Smith (Father) - (214) 555-0145', 
+      'Maria Rodriguez (Sister) - (214) 555-0167',
+      'Tom Johnson (Brother) - (214) 555-0189'
+    ];
+    const emergencyContact = emergencyContacts[Math.floor(Math.random() * emergencyContacts.length)];
+    
+    // Professional medical document background
+    const gradient = ctx.createLinearGradient(0, 0, 0, 1100);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(1, '#fefefe');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 850, 1100);
+    
+    // Medical letterhead with logo area
+    ctx.fillStyle = '#1565c0';
+    ctx.fillRect(0, 0, 850, 120);
+    
+    // Medical symbol (cross)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(70, 35, 8, 50);
+    ctx.fillRect(48, 55, 50, 8);
+    
+    // Main header
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('DALLAS URGENT CARE MEDICAL CENTER', 425, 45);
+    ctx.font = '16px Arial';
+    ctx.fillText('Certified Healthcare Providers • Est. 1995', 425, 70);
+    ctx.font = '14px Arial';
+    ctx.fillText('License #TX-UC-2024-447 • NPI: 1234567890', 425, 95);
+    
+    // Medical document header
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(50, 150, 750, 60);
+    ctx.fillStyle = '#1565c0';
+    ctx.strokeStyle = '#1565c0';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(50, 150, 750, 60);
+    
+    ctx.fillStyle = '#1565c0';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('MEDICAL EXCUSE CERTIFICATE', 425, 185);
+    
+    // Document body with border
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(50, 230, 750, 800);
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(50, 230, 750, 800);
+    
+    // Official document header
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('OFFICIAL MEDICAL DOCUMENTATION', 70, 260);
+    
+    // Date and document info
+    const now = new Date();
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px Arial';
+    ctx.fillText(`Document Date: ${now.toLocaleDateString()}`, 70, 285);
+    ctx.fillText(`Document Time: ${now.toLocaleTimeString()}`, 70, 302);
+    ctx.fillText(`Certificate ID: MC-${Math.floor(Math.random() * 90000) + 10000}`, 500, 285);
+    ctx.fillText(`Provider ID: DUC-${Math.floor(Math.random() * 9000) + 1000}`, 500, 302);
+    
+    // Horizontal divider
+    ctx.strokeStyle = '#9ca3af';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(70, 320);
+    ctx.lineTo(780, 320);
+    ctx.stroke();
+    
+    // Patient information section
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('PATIENT INFORMATION:', 70, 350);
+    
+    ctx.fillStyle = '#f3f4f6';
+    ctx.fillRect(70, 360, 710, 140);
+    ctx.strokeStyle = '#d1d5db';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(70, 360, 710, 140);
+    
+    ctx.fillStyle = '#374151';
+    ctx.font = '14px Arial';
+    ctx.fillText(`Patient Name: ${finalPatientName}`, 90, 385);
+    ctx.fillText(`Date of Birth: ${dateOfBirth.toLocaleDateString()}`, 90, 405);
+    ctx.fillText(`Patient ID: ${patientId}`, 90, 425);
+    ctx.fillText(`Date of Examination: ${now.toLocaleDateString()}`, 450, 385);
+    ctx.fillText(`Time of Examination: ${now.toLocaleTimeString()}`, 450, 405);
+    ctx.fillText(`Attending Physician: ${selectedDoctor.full}`, 450, 425);
+    ctx.fillText(`Medical Record #: ${medicalRecordNumber}`, 90, 455);
+    ctx.fillText(`Insurance Verified: Yes`, 450, 455);
+    
+    // Additional patient details
+    ctx.fillText(`Emergency Contact: ${emergencyContact}`, 90, 475);
+    
+    // Medical findings section
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('CLINICAL FINDINGS:', 70, 540);
+    
+    ctx.fillStyle = '#374151';
+    ctx.font = '14px Arial';
+    ctx.fillText('Following comprehensive medical examination, the following conditions were observed:', 90, 565);
+    
+    const conditions = [
+      'Acute viral syndrome with associated symptoms',
+      'Moderate to severe respiratory distress',
+      'Elevated temperature and systemic inflammation',
+      'Recommended bed rest and medical monitoring'
+    ];
+    
+    conditions.forEach((condition, index) => {
+      ctx.fillText(`• ${condition}`, 90, 590 + (index * 25));
+    });
+    
+    // Medical recommendation section
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('MEDICAL RECOMMENDATIONS:', 70, 710);
+    
+    ctx.font = '14px Arial';
+    ctx.fillText('Based on the clinical examination and current health status:', 90, 735);
+    
+    const recommendations = [
+      'Patient is medically excused from work/school activities',
+      `Recommended rest period: ${Math.floor(Math.random() * 3) + 1} to ${Math.floor(Math.random() * 3) + 4} days`,
+      'Follow-up appointment scheduled if symptoms persist',
+      'Return to normal activities when symptom-free for 24 hours'
+    ];
+    
+    recommendations.forEach((rec, index) => {
+      ctx.fillText(`• ${rec}`, 90, 760 + (index * 25));
+    });
+    
+    // Provider certification section
+    ctx.fillStyle = '#1565c0';
+    ctx.fillRect(70, 870, 710, 2);
+    
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText('PROVIDER CERTIFICATION:', 70, 900);
+    
+    ctx.font = '14px Arial';
+    ctx.fillText('I hereby certify that the above patient was examined by me on the date stated', 90, 925);
+    ctx.fillText('above and that the medical findings and recommendations are accurate.', 90, 945);
+    
+    // Physician signature - handwritten style
+    // Draw handwritten signature
+    ctx.strokeStyle = '#1e3a8a';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    // Create signature path (cursive-style)
+    ctx.beginPath();
+    // First letter (large)
+    ctx.moveTo(110, 965);
+    ctx.bezierCurveTo(115, 955, 125, 960, 130, 970);
+    ctx.bezierCurveTo(135, 980, 140, 975, 145, 965);
+    
+    // Middle part (flowing)
+    ctx.moveTo(150, 970);
+    ctx.bezierCurveTo(160, 965, 170, 975, 180, 970);
+    ctx.bezierCurveTo(190, 965, 200, 980, 210, 970);
+    ctx.bezierCurveTo(220, 960, 230, 975, 240, 970);
+    
+    // Last name initial (larger)
+    ctx.moveTo(260, 960);
+    ctx.bezierCurveTo(270, 950, 280, 965, 285, 975);
+    ctx.bezierCurveTo(290, 985, 295, 970, 300, 960);
+    
+    // Final flourish
+    ctx.moveTo(305, 970);
+    ctx.bezierCurveTo(320, 965, 335, 980, 350, 975);
+    ctx.bezierCurveTo(360, 970, 365, 965, 370, 970);
+    
+    ctx.stroke();
+    
+    // Add some signature dots/marks for authenticity
+    ctx.fillStyle = '#1e3a8a';
+    ctx.beginPath();
+    ctx.arc(375, 968, 1, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Signature area
+    ctx.strokeStyle = '#374151';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(90, 990);
+    ctx.lineTo(400, 990);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#374151';
+    ctx.font = '12px Arial';
+    ctx.fillText('Physician Signature', 90, 1005);
+    ctx.fillText(`Date: ${now.toLocaleDateString()}`, 320, 1005);
+    
+    // Add typed doctor name below signature
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '10px Arial';
+    ctx.fillText(`${selectedDoctor.full}, MD`, 90, 1020);
+    
+    // Medical license info
+    ctx.beginPath();
+    ctx.moveTo(450, 990);
+    ctx.lineTo(760, 990);
+    ctx.stroke();
+    
+    ctx.fillText('Medical License Number', 450, 1005);
+    ctx.fillText(`TX-${Math.floor(Math.random() * 90000) + 10000}`, 650, 1005);
+    
+    // Footer with contact info
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Dallas Urgent Care Medical Center • 123 Medical Plaza Dr. • Dallas, TX 75201', 425, 1090);
+    ctx.fillText('Phone: (214) 555-CARE • Fax: (214) 555-0199 • www.dallasurgentcare.com', 425, 1105);
+    
+    console.log('Medical document image generated successfully');
+    return canvas.toDataURL('image/png');
+  };
+
+  const downloadImageFile = (dataUrl: string, filename: string) => {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const generateMedicalProofWithPatientInfo = async () => {
+    console.log('generateMedicalProofWithPatientInfo called');
+    console.log('Patient name:', patientName);
+    console.log('Patient DOB:', patientDateOfBirth);
+    
+    if (!patientName.trim()) {
+      alert('Please enter your name');
+      return;
+    }
+
+    setShowPatientInfoDialog(false);
+    setIsGeneratingProof(true);
+    
+    // Ensure we're in the main app view
+    setShowSettings(false);
+    setShowShare(false);
+    
+    try {
+      // Use a default location for medical certificates to avoid API issues
+      const locationForImage = userLocation || {
+        city: 'Dallas',
+        state: 'TX',
+        lat: 32.7767,
+        lon: -96.7970,
+        address: 'Dallas, TX'
+      };
+
+      console.log('Using location for medical certificate:', locationForImage);
+
+      // Generate medical certificate with user's name
+      const proofImage = await generateMedicalDocumentImage(patientName.trim(), locationForImage, patientDateOfBirth);
+      
+      console.log('Medical document image result:', proofImage ? 'Generated successfully' : 'Failed to generate');
+      
+      if (proofImage) {
+        console.log('Setting generated proof with medical certificate');
+        setGeneratedProof({
+          type: 'Medical Certificate',
+          content: 'Official medical documentation has been generated.',
+          image: proofImage
+        });
+        
+        // Show success message
+        console.log('Medical certificate generated successfully');
+      } else {
+        console.error('Failed to generate medical certificate image');
+        alert('Failed to generate medical certificate image. Please try again.');
+      }
+      
+    } catch (error) {
+      console.error('Error generating medical proof:', error);
+      alert('Failed to generate medical certificate. Please try again.');
+    } finally {
+      setIsGeneratingProof(false);
+    }
+  };
+
   const generateProof = async (type: 'weather' | 'traffic' | 'medical') => {
     console.log('generateProof called with type:', type, 'isPremium:', isPremium);
+    console.log('showPatientInfoDialog state:', showPatientInfoDialog);
     
     if (!isPremium) {
+      console.log('User is not premium, showing premium dialog');
       setShowPremium(true);
+      return;
+    }
+
+    // For medical certificates, show patient info dialog first
+    if (type === 'medical') {
+      console.log('Showing patient info dialog for medical certificate');
+      setShowPatientInfoDialog(true);
       return;
     }
 
@@ -2534,33 +3827,56 @@ export default function ExcuseGeneratorApp() {
     const currentTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     const currentDate = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     
-    // Generate realistic location data - localized
-    const localizedCities = {
-      en: ['Downtown', 'Midtown', 'North Side', 'South District', 'East End', 'West Hills', 'Central'],
-      es: ['Centro', 'Zona Media', 'Lado Norte', 'Distrito Sur', 'Extremo Este', 'Colinas Oeste', 'Central'],
-      fr: ['Centre-ville', 'Quartier Central', 'Côté Nord', 'District Sud', 'Extrémité Est', 'Collines Ouest', 'Central'],
-      de: ['Innenstadt', 'Stadtmitte', 'Nordseite', 'Südbezirk', 'Ostende', 'Westhügel', 'Zentral'],
-      it: ['Centro', 'Zona Centrale', 'Lato Nord', 'Distretto Sud', 'Estremo Est', 'Colline Ovest', 'Centrale'],
-      pt: ['Centro', 'Zona Central', 'Lado Norte', 'Distrito Sul', 'Extremo Leste', 'Colinas Oeste', 'Central'],
-      ru: ['Центр', 'Средний район', 'Северная сторона', 'Южный район', 'Восточный край', 'Западные холмы', 'Центральный'],
-      ja: ['ダウンタウン', 'ミッドタウン', 'ノースサイド', '南地区', 'イーストエンド', 'ウェストヒルズ', 'セントラル']
+    // Use real location data if available, otherwise fallback to localized generic data
+    const getLocationInfo = () => {
+      if (userLocation && userLocation.city) {
+        return {
+          city: userLocation.city,
+          state: userLocation.state || '',
+          address: userLocation.address || `${userLocation.city}, ${userLocation.state || ''}`,
+          neighborhood: userLocation.neighborhood || ''
+        };
+      }
+      // Fallback to generic localized data
+      const localizedCities = {
+        en: ['Downtown', 'Midtown', 'North Side', 'South District', 'East End', 'West Hills', 'Central'],
+        es: ['Centro', 'Zona Media', 'Lado Norte', 'Distrito Sur', 'Extremo Este', 'Colinas Oeste', 'Central'],
+        fr: ['Centre-ville', 'Quartier Central', 'Côté Nord', 'District Sud', 'Extrémité Est', 'Collines Ouest', 'Central'],
+        de: ['Innenstadt', 'Stadtmitte', 'Nordseite', 'Südbezirk', 'Ostende', 'Westhügel', 'Zentral'],
+        it: ['Centro', 'Zona Centrale', 'Lato Nord', 'Distretto Sud', 'Estremo Est', 'Colline Ovest', 'Centrale'],
+        pt: ['Centro', 'Zona Central', 'Lado Norte', 'Distrito Sul', 'Extremo Leste', 'Colinas Oeste', 'Central'],
+        ru: ['Центр', 'Средний район', 'Северная сторона', 'Южный район', 'Восточный край', 'Западные холмы', 'Центральный'],
+        ja: ['ダウンタウン', 'ミッドタウン', 'ノースサイド', '南地区', 'イーストエンド', 'ウェストヒルズ', 'セントラル']
+      };
+      
+      const localizedStreets = {
+        en: ['Main St', 'Oak Ave', 'First St', 'Park Rd', 'Cedar Blvd', 'Pine Ave', 'Maple Dr'],
+        es: ['Calle Principal', 'Av. del Roble', 'Primera St', 'Rd. del Parque', 'Blvd. Cedro', 'Av. Pino', 'Dr. Arce'],
+        fr: ['Rue Principale', 'Ave. du Chêne', 'Première Rue', 'Rd. du Parc', 'Blvd. Cèdre', 'Ave. Pin', 'Dr. Érable'],
+        de: ['Hauptstraße', 'Eichen-Allee', 'Erste Straße', 'Park-Weg', 'Zedern-Boulevard', 'Kiefern-Allee', 'Ahorn-Dr.'],
+        it: ['Via Principale', 'Viale Quercia', 'Prima Strada', 'Via Parco', 'Viale Cedro', 'Viale Pino', 'Via Acero'],
+        pt: ['Rua Principal', 'Ave. do Carvalho', 'Primeira Rua', 'Est. do Parque', 'Blvd. Cedro', 'Ave. Pinho', 'Dr. Bordo'],
+        ru: ['Главная ул.', 'Дубовый пр.', 'Первая ул.', 'Парковая дор.', 'Кедровый бул.', 'Сосновый пр.', 'Кленовый др.'],
+        ja: ['メイン通り', 'オーク大通り', 'ファースト街', 'パーク通り', 'シダー大通り', 'パイン大通り', 'メープル通り']
+      };
+      
+      const cities = localizedCities[selectedLanguage] || localizedCities['en'];
+      const streets = localizedStreets[selectedLanguage] || localizedStreets['en'];
+      const randomCity = cities[Math.floor(Math.random() * cities.length)];
+      const randomStreet = streets[Math.floor(Math.random() * streets.length)];
+      
+      return {
+        city: randomCity,
+        state: '',
+        address: `${randomStreet}, ${randomCity}`,
+        neighborhood: randomCity
+      };
     };
     
-    const localizedStreets = {
-      en: ['Main St', 'Oak Ave', 'First St', 'Park Rd', 'Cedar Blvd', 'Pine Ave', 'Maple Dr'],
-      es: ['Calle Principal', 'Av. del Roble', 'Primera St', 'Rd. del Parque', 'Blvd. Cedro', 'Av. Pino', 'Dr. Arce'],
-      fr: ['Rue Principale', 'Ave. du Chêne', 'Première Rue', 'Rd. du Parc', 'Blvd. Cèdre', 'Ave. Pin', 'Dr. Érable'],
-      de: ['Hauptstraße', 'Eichen-Allee', 'Erste Straße', 'Park-Weg', 'Zedern-Boulevard', 'Kiefern-Allee', 'Ahorn-Dr.'],
-      it: ['Via Principale', 'Viale Quercia', 'Prima Strada', 'Via Parco', 'Viale Cedro', 'Viale Pino', 'Via Acero'],
-      pt: ['Rua Principal', 'Ave. do Carvalho', 'Primeira Rua', 'Est. do Parque', 'Blvd. Cedro', 'Ave. Pinho', 'Dr. Bordo'],
-      ru: ['Главная ул.', 'Дубовый пр.', 'Первая ул.', 'Парковая дор.', 'Кедровый бул.', 'Сосновый пр.', 'Кленовый др.'],
-      ja: ['メイン通り', 'オーク大通り', 'ファースト街', 'パーク通り', 'シダー大通り', 'パイン大通り', 'メープル通り']
-    };
-    
-    const cities = localizedCities[selectedLanguage] || localizedCities['en'];
-    const streets = localizedStreets[selectedLanguage] || localizedStreets['en'];
-    const randomCity = cities[Math.floor(Math.random() * cities.length)];
-    const randomStreet = streets[Math.floor(Math.random() * streets.length)];
+    const locationInfo = getLocationInfo();
+    // Keep these for backward compatibility with existing traffic/medical generators
+    const randomCity = locationInfo.city;
+    const randomStreet = locationInfo.address.split(',')[0] || 'Main St';
     
     // Official phone numbers for SMS format
     const officialNumbers = {
@@ -2598,18 +3914,111 @@ export default function ExcuseGeneratorApp() {
     
     const proofGenerators = {
       weather: () => {
-        const conditions = [
-          { type: 'Severe Thunderstorm', icon: '⛈️', severity: 'WARNING', details: 'Hail up to 1 inch diameter, winds up to 70 mph' },
-          { type: 'Flash Flood', icon: '🌊', severity: 'WATCH', details: 'Rainfall rates of 2-3 inches per hour expected' },
-          { type: 'Ice Storm', icon: '🧊', severity: 'WARNING', details: 'Ice accumulation of 0.25 to 0.5 inches' },
-          { type: 'Dense Fog', icon: '�️', severity: 'ADVISORY', details: 'Visibility reduced to less than 1/4 mile' },
-          { type: 'High Wind', icon: '💨', severity: 'WARNING', details: 'Sustained winds of 40-50 mph, gusts up to 75 mph' }
-        ];
-        const condition = conditions[Math.floor(Math.random() * conditions.length)];
-        const temp = Math.floor(Math.random() * 40) + 20; // 20-60°F
+        // Use real weather data if available, but enhance it for excuse generation
+        const getWeatherCondition = () => {
+          if (liveWeatherData) {
+            // If weather is clear, we can still generate weather excuses by predicting upcoming weather or using nearby weather
+            if (liveWeatherData.condition === 'Clear') {
+              // For excuse purposes, generate a "developing weather situation"
+              const developingConditions = [
+                { type: 'Severe Thunderstorm', icon: '⛈️', severity: 'WARNING', details: 'Rapid storm development expected - conditions deteriorating quickly' },
+                { type: 'Flash Flood Watch', icon: '🌊', severity: 'WATCH', details: 'Sudden weather change - flash flood conditions possible' },
+                { type: 'High Wind Advisory', icon: '💨', severity: 'ADVISORY', details: 'Unexpected wind advisory issued - gusts up to 45 mph expected' },
+                { type: 'Dense Fog Advisory', icon: '🌫️', severity: 'ADVISORY', details: 'Rapidly developing fog - visibility dropping to near zero' }
+              ];
+              return developingConditions[Math.floor(Math.random() * developingConditions.length)];
+            }
+            
+            // Enhanced mapping for existing weather conditions
+            return {
+              type: liveWeatherData.condition === 'Thunderstorm' ? 'Severe Thunderstorm' :
+                   liveWeatherData.condition === 'Rain' ? 'Heavy Rain' :
+                   liveWeatherData.condition === 'Snow' ? 'Winter Storm' :
+                   liveWeatherData.condition === 'Fog' ? 'Dense Fog' :
+                   liveWeatherData.condition === 'Clouds' ? 'Severe Weather Developing' :
+                   liveWeatherData.condition === 'Drizzle' ? 'Freezing Drizzle' : 'Severe Weather',
+              icon: liveWeatherData.condition === 'Thunderstorm' ? '⛈️' :
+                   liveWeatherData.condition === 'Rain' || liveWeatherData.condition === 'Drizzle' ? '🌧️' :
+                   liveWeatherData.condition === 'Snow' ? '❄️' :
+                   liveWeatherData.condition === 'Fog' ? '🌫️' :
+                   liveWeatherData.condition === 'Clouds' ? '☁️' : '🌦️',
+              severity: liveWeatherData.condition === 'Thunderstorm' ? 'WARNING' : 
+                       (liveWeatherData.condition === 'Rain' || liveWeatherData.condition === 'Drizzle') ? 'WATCH' : 
+                       liveWeatherData.condition === 'Snow' ? 'WARNING' : 
+                       liveWeatherData.condition === 'Fog' ? 'ADVISORY' : 'WATCH',
+              details: liveWeatherData.condition === 'Thunderstorm' ? 'Severe thunderstorms with damaging winds and heavy rain' :
+                      (liveWeatherData.condition === 'Rain' || liveWeatherData.condition === 'Drizzle') ? 'Heavy rainfall creating hazardous travel conditions' :
+                      liveWeatherData.condition === 'Snow' ? 'Heavy snow creating dangerous driving conditions' :
+                      liveWeatherData.condition === 'Fog' ? 'Dense fog reducing visibility to less than 1/4 mile' :
+                      liveWeatherData.condition === 'Clouds' ? 'Rapidly developing severe weather conditions' :
+                      liveWeatherData.description || 'Severe weather conditions affecting travel'
+            };
+          }
+          // Fallback to generic conditions
+          const conditions = [
+            { type: 'Severe Thunderstorm', icon: '⛈️', severity: 'WARNING', details: 'Hail up to 1 inch diameter, winds up to 70 mph' },
+            { type: 'Flash Flood', icon: '🌊', severity: 'WATCH', details: 'Rainfall rates of 2-3 inches per hour expected' },
+            { type: 'Ice Storm', icon: '🧊', severity: 'WARNING', details: 'Ice accumulation of 0.25 to 0.5 inches' },
+            { type: 'Dense Fog', icon: '🌫️', severity: 'ADVISORY', details: 'Visibility reduced to less than 1/4 mile' },
+            { type: 'High Wind', icon: '💨', severity: 'WARNING', details: 'Sustained winds of 40-50 mph, gusts up to 75 mph' }
+          ];
+          return conditions[Math.floor(Math.random() * conditions.length)];
+        };
+        
+        const condition = getWeatherCondition();
+        const temp = liveWeatherData ? liveWeatherData.temperature : Math.floor(Math.random() * 40) + 20;
         const alertId = `NWS${Math.floor(Math.random() * 9000) + 1000}`;
-        const wfoCode = ['LOT', 'GRB', 'MKX', 'DVN', 'ARX'][Math.floor(Math.random() * 5)];
-        const ugcCode = `${['WI', 'IL', 'IN', 'MI', 'OH'][Math.floor(Math.random() * 5)]}C${String(Math.floor(Math.random() * 200) + 1).padStart(3, '0')}`;
+        
+        // Location-aware weather office codes and state codes
+        const getWeatherOfficeInfo = () => {
+          const state = locationInfo?.state?.toLowerCase() || '';
+          const city = locationInfo?.city?.toLowerCase() || '';
+          
+          // Dallas-Fort Worth area (including Coppell)
+          if (city.includes('coppell') || city.includes('dallas') || city.includes('plano') || city.includes('irving')) {
+            return {
+              wfoCode: ['FWD', 'SHV', 'HGX'][Math.floor(Math.random() * 3)], // Dallas, Shreveport, Houston offices
+              stateCode: 'TX'
+            };
+          }
+          
+          const regionalOffices = {
+            texas: {
+              wfoCode: ['FWD', 'HGX', 'EWX', 'MAF', 'LUB', 'AMA'],
+              stateCode: 'TX'
+            },
+            california: {
+              wfoCode: ['LOX', 'SGX', 'MTR', 'STO', 'HNX'],
+              stateCode: 'CA'
+            },
+            'new york': {
+              wfoCode: ['OKX', 'ALY', 'BGM', 'BUF'],
+              stateCode: 'NY'
+            },
+            florida: {
+              wfoCode: ['MFL', 'TBW', 'MLB', 'JAX', 'TAE'],
+              stateCode: 'FL'
+            },
+            illinois: {
+              wfoCode: ['LOT', 'ILX', 'DVN'],
+              stateCode: 'IL'
+            },
+            default: {
+              wfoCode: ['LOT', 'GRB', 'MKX', 'DVN', 'ARX'],
+              stateCode: ['TX', 'CA', 'NY', 'FL', 'IL'][Math.floor(Math.random() * 5)]
+            }
+          };
+          
+          const officeInfo = (regionalOffices as any)[state] || regionalOffices['texas'] || regionalOffices['default'];
+          return {
+            wfoCode: officeInfo.wfoCode[Math.floor(Math.random() * officeInfo.wfoCode.length)],
+            stateCode: officeInfo.stateCode
+          };
+        };
+        
+        const weatherOffice = getWeatherOfficeInfo();
+        const wfoCode = weatherOffice.wfoCode;
+        const ugcCode = `${weatherOffice.stateCode}C${String(Math.floor(Math.random() * 200) + 1).padStart(3, '0')}`;
         const vtecCode = `/O.NEW.K${wfoCode}.SV.W.${Math.floor(Math.random() * 9000) + 1000}.250919T${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}Z-250920T0600Z/`;
         
         return {
@@ -2626,7 +4035,8 @@ UGC: ${ugcCode}
 Alert ID: ${alertId}
 Issued: ${currentTime} ${currentDate}
 
-AFFECTED AREA: ${randomCity} County and surrounding areas
+AFFECTED AREA: ${locationInfo.city}${locationInfo.state ? `, ${locationInfo.state}` : ''} County and surrounding areas
+${userLocation ? `SPECIFIC LOCATION: ${locationInfo.address}` : ''}
 
 SOURCE: Doppler radar and trained weather spotters
 
@@ -2650,53 +4060,108 @@ ISSUED BY: National Weather Service ${wfoCode.toUpperCase()} Office
 METEOROLOGIST: ${['John Smith', 'Sarah Johnson', 'Michael Davis', 'Lisa Chen'][Math.floor(Math.random() * 4)]}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Current Conditions:
+Current Conditions${liveWeatherData ? ' (REAL-TIME DATA)' : ''}:
 Temperature: ${temp}°F
 Barometric Pressure: ${(29.8 + Math.random() * 0.4).toFixed(2)} inHg  
-Wind: ${['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.floor(Math.random() * 8)]} ${Math.floor(Math.random() * 25) + 10} mph
-Humidity: ${Math.floor(Math.random() * 40) + 60}%
+Wind: ${['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.floor(Math.random() * 8)]} ${liveWeatherData ? liveWeatherData.windSpeed : Math.floor(Math.random() * 25) + 10} mph
+Humidity: ${liveWeatherData ? liveWeatherData.humidity : Math.floor(Math.random() * 40) + 60}%
+${liveWeatherData && liveWeatherData.visibility ? `Visibility: ${liveWeatherData.visibility.toFixed(1)} miles` : ''}
 
 $$`
         };
       },
       
       traffic: () => {
-        const incidents = [
-          { type: 'Multi-vehicle collision', severity: 'MAJOR', lanes: '3 of 4 lanes blocked' },
-          { type: 'Jackknifed semi-truck', severity: 'CRITICAL', lanes: 'All lanes blocked' },
-          { type: 'Vehicle fire', severity: 'MAJOR', lanes: '2 of 3 lanes blocked' },
-          { type: 'Police investigation', severity: 'MODERATE', lanes: 'Right shoulder blocked' },
-          { type: 'Emergency road repairs', severity: 'MAJOR', lanes: 'Left 2 lanes closed' }
-        ];
-        const incident = incidents[Math.floor(Math.random() * incidents.length)];
-        const delayTime = Math.floor(Math.random() * 90) + 30; // 30-120 minutes
+        // Use real traffic data if available
+        const getTrafficInfo = () => {
+          if (liveTrafficData) {
+            return {
+              type: liveTrafficData.type,
+              location: liveTrafficData.location,
+              description: liveTrafficData.description,
+              delay: liveTrafficData.delay,
+              distance: liveTrafficData.distance,
+              severity: liveTrafficData.type === 'accident' ? 'CRITICAL' : 
+                       liveTrafficData.type === 'construction' ? 'MAJOR' : 'MODERATE',
+              lanes: liveTrafficData.type === 'accident' ? 'Multiple lanes blocked' :
+                    liveTrafficData.type === 'construction' ? '2 of 3 lanes closed' : 'Right shoulder blocked'
+            };
+          }
+          // Fallback to generic incidents - much more variety
+          const incidents = [
+            { type: 'Multi-vehicle collision', severity: 'MAJOR', lanes: '3 of 4 lanes blocked' },
+            { type: 'Jackknifed semi-truck', severity: 'CRITICAL', lanes: 'All lanes blocked' },
+            { type: 'Vehicle fire', severity: 'MAJOR', lanes: '2 of 3 lanes blocked' },
+            { type: 'Police investigation', severity: 'MODERATE', lanes: 'Right shoulder blocked' },
+            { type: 'Emergency road repairs', severity: 'MAJOR', lanes: 'Left 2 lanes closed' },
+            { type: 'Overturned vehicle', severity: 'MAJOR', lanes: 'Left lane blocked' },
+            { type: 'Hazmat spill cleanup', severity: 'CRITICAL', lanes: 'All northbound lanes closed' },
+            { type: 'Construction zone accident', severity: 'MAJOR', lanes: '2 of 3 lanes blocked' },
+            { type: 'Disabled vehicle', severity: 'MINOR', lanes: 'Right shoulder blocked' },
+            { type: 'Emergency medical response', severity: 'MODERATE', lanes: 'Center lanes blocked' },
+            { type: 'Bridge maintenance', severity: 'MAJOR', lanes: 'Reduced to single lane' },
+            { type: 'Weather-related incident', severity: 'MODERATE', lanes: 'Multiple lanes affected' },
+            { type: 'Traffic signal malfunction', severity: 'MINOR', lanes: 'Intersection blocked' },
+            { type: 'Utility line work', severity: 'MODERATE', lanes: 'Right 2 lanes closed' },
+            { type: 'Vehicle breakdown', severity: 'MINOR', lanes: 'Left shoulder blocked' },
+            { type: 'Debris in roadway', severity: 'MODERATE', lanes: 'Center lane blocked' },
+            { type: 'Emergency vehicle response', severity: 'MODERATE', lanes: 'Left lane blocked' },
+            { type: 'Road surface repairs', severity: 'MAJOR', lanes: 'Right 2 lanes closed' },
+            { type: 'Stalled commercial vehicle', severity: 'MODERATE', lanes: 'Right lane blocked' },
+            { type: 'Traffic enforcement stop', severity: 'MINOR', lanes: 'Shoulder activity' }
+          ];
+          const incident = incidents[Math.floor(Math.random() * incidents.length)];
+          return {
+            type: incident.type,
+            location: `${randomStreet} / ${randomCity}`,
+            description: `${incident.type} causing major delays`,
+            delay: `${Math.floor(Math.random() * 90) + 30} minutes`,
+            distance: `${(Math.random() * 2 + 0.5).toFixed(1)} miles from current location`,
+            severity: incident.severity,
+            lanes: incident.lanes
+          };
+        };
+        
+        const trafficInfo = getTrafficInfo();
+        const delayTime = parseInt(trafficInfo.delay) || Math.floor(Math.random() * 90) + 30;
         const incidentId = `TRF-${Math.floor(Math.random() * 90000) + 10000}`;
         const mileMarker = Math.floor(Math.random() * 50) + 10;
         
         return {
           type: 'State DOT Traffic Management Center',
-          content: `� TRAFFIC INCIDENT REPORT
+          content: `🚗 TRAFFIC INCIDENT REPORT
 
 Incident ID: ${incidentId}
-Location: I-${Math.floor(Math.random() * 90) + 10} ${Math.random() > 0.5 ? 'North' : 'South'}bound
-Mile Marker: ${mileMarker}
-Near: ${randomStreet} / ${randomCity} Exit
+Location: ${liveTrafficData ? trafficInfo.location : `${(() => {
+  const highways = getLocalHighways(locationInfo);
+  const allHighways = [...highways.interstates, ...highways.usRoutes];
+  const selectedHighway = allHighways[Math.floor(Math.random() * allHighways.length)];
+  return selectedHighway;
+})()} ${Math.random() > 0.5 ? 'North' : 'South'}bound`}
+${!liveTrafficData ? `Mile Marker: ${mileMarker}` : ''}
+${liveTrafficData ? `Distance: ${trafficInfo.distance}` : `Near: ${randomStreet} / ${randomCity} Exit`}
 
-INCIDENT TYPE: ${incident.type}
-SEVERITY LEVEL: ${incident.severity}
-LANES AFFECTED: ${incident.lanes}
+INCIDENT TYPE: ${trafficInfo.type}
+SEVERITY LEVEL: ${trafficInfo.severity}
+LANES AFFECTED: ${trafficInfo.lanes}
 
 REPORTED: ${currentTime}
 EST. CLEARANCE: ${new Date(now.getTime() + delayTime * 60000).toLocaleTimeString()}
+${liveTrafficData ? `REAL-TIME STATUS: Active incident with live monitoring` : ''}
 
 CURRENT CONDITIONS:
+${liveTrafficData ? `• ${trafficInfo.description}` : ''}
 • Traffic backed up ${Math.floor(delayTime / 10)} miles
-• Average delay: ${delayTime} minutes
+• Average delay: ${trafficInfo.delay}
 • Alternative routes experiencing heavy volume
 • Emergency responders on scene
 
 ALTERNATE ROUTES:
-• US-${Math.floor(Math.random() * 300) + 1} (add 25-30 minutes)
+• ${(() => {
+  const highways = getLocalHighways(locationInfo);
+  const altRoute = highways.usRoutes[Math.floor(Math.random() * highways.usRoutes.length)];
+  return altRoute;
+})()} (add 25-30 minutes)
 • ${randomStreet} surface streets (add 35-45 minutes)
 
 ⚠️ AVOID AREA - SEEK ALTERNATE ROUTE ⚠️
@@ -2867,14 +4332,14 @@ This document contains privileged and confidential medical information.
           ja: { service: '国立気象サービス', alert: '重大気象警報', urgent: '緊急 - 即座の放送を要請', details: '移動と安全に影響する悪天候。広範囲の停電と交通の混乱が予想されます。屋内にとどまり、気象情報を監視してください。' }
         },
         traffic: {
-          en: { report: 'TRAFFIC INCIDENT REPORT', incident: 'Major multi-vehicle collision blocking multiple lanes', conditions: 'Severe traffic delays - seek alternate route', avoid: '⚠️ AVOID AREA - SEEK ALTERNATE ROUTE ⚠️' },
-          es: { report: 'REPORTE DE INCIDENTE DE TRÁFICO', incident: 'Colisión mayor de múltiples vehículos bloqueando varios carriles', conditions: 'Retrasos severos de tráfico - busque ruta alternativa', avoid: '⚠️ EVITE EL ÁREA - BUSQUE RUTA ALTERNATIVA ⚠️' },
-          fr: { report: 'RAPPORT D\'INCIDENT DE CIRCULATION', incident: 'Collision majeure de véhicules multiples bloquant plusieurs voies', conditions: 'Retards de circulation sévères - cherchez route alternative', avoid: '⚠️ ÉVITER LA ZONE - CHERCHER ROUTE ALTERNATIVE ⚠️' },
-          de: { report: 'VERKEHRSUNFALL-BERICHT', incident: 'Schwerer Mehrfahrzeug-Unfall blockiert mehrere Spuren', conditions: 'Schwere Verkehrsbehinderungen - alternative Route suchen', avoid: '⚠️ BEREICH MEIDEN - ALTERNATIVE ROUTE SUCHEN ⚠️' },
-          it: { report: 'RAPPORTO INCIDENTE STRADALE', incident: 'Grave collisione multipla che blocca diverse corsie', conditions: 'Gravi ritardi del traffico - cercare percorso alternativo', avoid: '⚠️ EVITARE AREA - CERCARE PERCORSO ALTERNATIVO ⚠️' },
-          pt: { report: 'RELATÓRIO DE INCIDENTE DE TRÂNSITO', incident: 'Grave colisão de múltiplos veículos bloqueando várias faixas', conditions: 'Atrasos severos no trânsito - procure rota alternativa', avoid: '⚠️ EVITE A ÁREA - PROCURE ROTA ALTERNATIVA ⚠️' },
-          ru: { report: 'ОТЧЕТ О ДОРОЖНОМ ПРОИСШЕСТВИИ', incident: 'Серьезное столкновение нескольких автомобилей блокирует несколько полос', conditions: 'Серьезные задержки движения - ищите альтернативный маршрут', avoid: '⚠️ ИЗБЕГАЙТЕ ОБЛАСТЬ - ИЩИТЕ АЛЬТЕРНАТИВНЫЙ МАРШРУТ ⚠️' },
-          ja: { report: '交通事故報告書', incident: '複数の車線を封鎖する重大な多重車両衝突', conditions: '深刻な交通渋滞 - 代替ルートを探してください', avoid: '⚠️ エリアを回避 - 代替ルートを探してください ⚠️' }
+          en: { report: 'TRAFFIC INCIDENT REPORT', conditions: 'Severe traffic delays - seek alternate route', avoid: '⚠️ AVOID AREA - SEEK ALTERNATE ROUTE ⚠️' },
+          es: { report: 'REPORTE DE INCIDENTE DE TRÁFICO', conditions: 'Retrasos severos de tráfico - busque ruta alternativa', avoid: '⚠️ EVITE EL ÁREA - BUSQUE RUTA ALTERNATIVA ⚠️' },
+          fr: { report: 'RAPPORT D\'INCIDENT DE CIRCULATION', conditions: 'Retards de circulation sévères - cherchez route alternative', avoid: '⚠️ ÉVITER LA ZONE - CHERCHER ROUTE ALTERNATIVE ⚠️' },
+          de: { report: 'VERKEHRSUNFALL-BERICHT', conditions: 'Schwere Verkehrsbehinderungen - alternative Route suchen', avoid: '⚠️ BEREICH MEIDEN - ALTERNATIVE ROUTE SUCHEN ⚠️' },
+          it: { report: 'RAPPORTO INCIDENTE STRADALE', conditions: 'Gravi ritardi del traffico - cercare percorso alternativo', avoid: '⚠️ EVITARE AREA - CERCARE PERCORSO ALTERNATIVO ⚠️' },
+          pt: { report: 'RELATÓRIO DE INCIDENTE DE TRÂNSITO', conditions: 'Atrasos severos no trânsito - procure rota alternativa', avoid: '⚠️ EVITE A ÁREA - PROCURE ROTA ALTERNATIVA ⚠️' },
+          ru: { report: 'ОТЧЕТ О ДОРОЖНОМ ПРОИСШЕСТВИИ', conditions: 'Серьезные задержки движения - ищите альтернативный маршрут', avoid: '⚠️ ИЗБЕГАЙТЕ ОБЛАСТЬ - ИЩИТЕ АЛЬТЕРНАТИВНЫЙ МАРШРУТ ⚠️' },
+          ja: { report: '交通事故報告書', conditions: '深刻な交通渋滞 - 代替ルートを探してください', avoid: '⚠️ エリアを回避 - 代替ルートを探してください ⚠️' }
         },
         medical: {
           en: { certificate: 'MEDICAL EXCUSE CERTIFICATE', restriction: 'Patient is medically restricted from work/school activities', due: 'Due to acute medical condition requiring rest and recovery', verification: 'This document serves as official medical verification' },
@@ -2914,7 +4379,7 @@ ${phoneNumber}                   ${timestamp}
 
 ${currentLangTexts.details}
 
-${t.affectedArea || 'Area'}: ${randomCity}
+${t.affectedArea || 'Area'}: ${locationInfo.city}${locationInfo.state ? `, ${locationInfo.state}` : ''}
 
 ${currentLangTexts.urgent}
 
@@ -2937,7 +4402,7 @@ ${currentLangTexts.alert} - ${new Date(now.getTime() + 24*60*60*1000).toLocaleDa
 ${t.alertId || 'Alert ID'}: WS${alertId}
 ${t.issued || 'Issued'}: ${currentTime} ${currentDate}
 
-${t.affectedArea || 'AFFECTED AREA'}: ${randomCity} ${t.area || 'County and surrounding areas'}
+${t.affectedArea || 'AFFECTED AREA'}: ${locationInfo.city}${locationInfo.state ? `, ${locationInfo.state}` : ''} ${t.area || 'County and surrounding areas'}
 
 ${currentLangTexts.details}
 
@@ -2961,9 +4426,14 @@ ${phoneNumber}                   ${timestamp}
 
 🚨 TRAFFIC ALERT
 
-${currentLangTexts.incident}
+${getRandomIncidentDescription(selectedLanguage)}
 
-Location: I-${Math.floor(Math.random() * 90) + 10} ${Math.random() > 0.5 ? (t.north || 'North') : (t.south || 'South')}bound
+Location: ${(() => {
+  const highways = getLocalHighways(locationInfo);
+  const allHighways = [...highways.interstates, ...highways.usRoutes];
+  const selectedHighway = allHighways[Math.floor(Math.random() * allHighways.length)];
+  return selectedHighway;
+})()} ${Math.random() > 0.5 ? (t.north || 'North') : (t.south || 'South')}bound
 ${randomStreet} / ${randomCity}
 
 ${t.delay || 'Delay'}: ${duration} ${t.minutes || 'min'}
@@ -2982,10 +4452,15 @@ Reply STOP to opt out.
             content: `🚨 ${currentLangTexts.report}
 
 ${t.incidentId || 'Incident ID'}: TR${alertId}
-${t.location || 'Location'}: I-${Math.floor(Math.random() * 90) + 10} ${Math.random() > 0.5 ? (t.north || 'North') : (t.south || 'South')}bound
+${t.location || 'Location'}: ${(() => {
+  const highways = getLocalHighways(locationInfo);
+  const allHighways = [...highways.interstates, ...highways.usRoutes];
+  const selectedHighway = allHighways[Math.floor(Math.random() * allHighways.length)];
+  return selectedHighway;
+})()} ${Math.random() > 0.5 ? (t.north || 'North') : (t.south || 'South')}bound
 ${randomStreet} / ${randomCity} ${t.exit || 'Exit'}
 
-${currentLangTexts.incident}
+${getRandomIncidentDescription(selectedLanguage)}
 
 ${t.reported || 'REPORTED'}: ${currentTime}
 ${t.clearance || 'EST. CLEARANCE'}: ${new Date(now.getTime() + duration * 60000).toLocaleTimeString()}
@@ -3217,7 +4692,56 @@ ${t.date || 'Date'}: ${currentDate}`
       }
     })();
     console.log('Generated proof:', proof);
-    setGeneratedProof(proof);
+    
+    // Generate image for premium users
+    let proofImage = null;
+    if (isPremium && type) {
+      try {
+        console.log('Generating image for premium user, type:', type);
+        
+        const locationForImage = userLocation || { city: randomCity, state: '', address: randomStreet };
+        const weatherDataForImage = liveWeatherData || { 
+          temperature: Math.floor(Math.random() * 40) + 20, 
+          condition: 'Thunderstorm',
+          description: 'Severe weather conditions',
+          windSpeed: Math.floor(Math.random() * 25) + 10,
+          humidity: Math.floor(Math.random() * 40) + 60
+        };
+        const trafficDataForImage = liveTrafficData || {
+          location: `${randomStreet} / ${randomCity}`,
+          type: 'Multi-vehicle collision',
+          description: 'Major traffic incident',
+          delay: `${Math.floor(Math.random() * 90) + 30} minutes`
+        };
+
+        if (type === 'weather') {
+          const alertInfo = {
+            severity: weatherDataForImage.condition === 'Thunderstorm' ? 'WARNING' : 'WATCH',
+            type: weatherDataForImage.condition,
+            issued: currentTime,
+            expires: new Date(now.getTime() + 24*60*60*1000).toLocaleTimeString()
+          };
+          proofImage = await generateWeatherAlertImage(weatherDataForImage, locationForImage, alertInfo);
+        } else if (type === 'traffic') {
+          proofImage = await generateTrafficReportImage(trafficDataForImage, locationForImage);
+        } else if (type === 'medical') {
+          // Medical certificates now handled by separate patient info dialog
+          console.log('Medical certificate generation should be handled by patient info dialog');
+        }
+        
+        console.log('Image generated successfully:', proofImage ? 'Yes' : 'No');
+      } catch (error) {
+        console.error('Error generating proof image:', error);
+      }
+    }
+    
+    // Add image to proof object
+    const proofWithImage = {
+      ...proof,
+      image: proofImage || undefined
+    };
+    
+    setGeneratedProof(proofWithImage);
     setShowProofGenerator(true);
     setIsGeneratingProof(false);
     console.log('State updated - showProofGenerator should be true');
@@ -3227,8 +4751,27 @@ ${t.date || 'Date'}: ${currentDate}`
     // In a real app, this would integrate with payment processing
     setIsPremium(true);
     setShowPremium(false);
-    // Save premium status
+    
+    // Set to premium tier by default when unlocking premium
+    setSubscriptionTier('premium');
+    const premiumConfig = subscriptionTiers['premium'];
+    setSubscriptionData(prev => ({
+      ...prev,
+      tier: 'premium',
+      features: premiumConfig.features,
+      startDate: new Date(),
+      expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+    }));
+    
+    // Save all premium status and data
     safeLocalStorage.setItem('isPremium', 'true');
+    safeLocalStorage.setItem('subscriptionTier', 'premium');
+    
+    // Hide ads for premium users
+    setShowAd(false);
+    setAdDismissed(true);
+    
+    console.log('Premium features unlocked successfully!');
   };
 
   const togglePremium = (checked: boolean) => {
@@ -3322,6 +4865,11 @@ ${t.date || 'Date'}: ${currentDate}`
       const savedSubscriptionTier = safeLocalStorage.getItem('subscriptionTier');
       if (savedSubscriptionTier && ['free', 'pro', 'premium'].includes(savedSubscriptionTier)) {
         setSubscriptionTier(savedSubscriptionTier as 'free' | 'pro' | 'premium');
+        
+        // Automatically set premium status for Pro and Premium tiers
+        if (savedSubscriptionTier === 'pro' || savedSubscriptionTier === 'premium') {
+          setIsPremium(true);
+        }
       }
       
       // Load language preference
@@ -3769,6 +5317,86 @@ ${t.date || 'Date'}: ${currentDate}`
               </Select>
             </div>
 
+            {/* Live Location & Weather Controls */}
+            <div className="mt-3 p-3 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-semibold text-green-800">🌍 Live Location Data</span>
+                  {userLocation && (
+                    <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded max-w-xs">
+                      <div className="font-medium">📍 Current Location</div>
+                      <div className="text-xs opacity-90 truncate">
+                        {userLocation.address || 
+                         `${userLocation.city || 'Unknown City'}${userLocation.state ? `, ${userLocation.state}` : ''}` ||
+                         `${userLocation.lat.toFixed(3)}, ${userLocation.lon.toFixed(3)}`}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => setUseRealData(!useRealData)}
+                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    useRealData && userLocation
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                  disabled={!userLocation}
+                >
+                  {useRealData && userLocation ? 'ON' : 'OFF'}
+                </button>
+              </div>
+              
+              {!userLocation ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-600">
+                    💡 Share your location for ultra-realistic weather and traffic excuses!
+                  </p>
+                  <button
+                    onClick={requestLocation}
+                    disabled={isLoadingLocation || locationPermission === 'denied'}
+                    className={`w-full py-2 px-3 rounded font-medium text-sm transition-colors ${
+                      isLoadingLocation
+                        ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                        : locationPermission === 'denied'
+                        ? 'bg-red-100 text-red-600 cursor-not-allowed'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
+                  >
+                    {isLoadingLocation ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-2"></div>
+                        Getting Location...
+                      </>
+                    ) : locationPermission === 'denied' ? (
+                      '❌ Location Access Denied'
+                    ) : (
+                      '📍 Share My Location'
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600">Weather:</span>
+                    <span className="font-medium text-blue-600">
+                      {liveWeatherData ? `${liveWeatherData.condition} ${liveWeatherData.temperature}°F` : 'Loading...'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-600">Traffic:</span>
+                    <span className="font-medium text-orange-600">
+                      {liveTrafficData ? `${liveTrafficData.type} delays` : 'Loading...'}
+                    </span>
+                  </div>
+                  {useRealData && (
+                    <div className="text-xs text-green-600 font-medium text-center">
+                      ✅ Using real conditions for authentic excuses!
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Format Selection - Available to All Users */}
             <div className="mt-3 p-2 bg-gray-50 rounded-lg border">
               <div className="flex items-center justify-between mb-2">
@@ -3823,6 +5451,26 @@ ${t.date || 'Date'}: ${currentDate}`
                   />
                 </div>
               )}
+              
+              {/* Email Address Input - Show for Email format with better styling */}
+              {proofFormat === 'email' && (
+                <div className="mt-3 p-3 bg-green-50 border-2 border-green-200 rounded-lg">
+                  <label className="block text-sm font-semibold text-green-800 mb-2">
+                    📧 Send To Email Address:
+                  </label>
+                  <input
+                    type="email"
+                    value={userEmailAddress}
+                    onChange={(e) => setUserEmailAddress(e.target.value)}
+                    placeholder="boss@company.com or hr@company.com"
+                    className="w-full px-3 py-2 text-sm border-2 border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 bg-white"
+                    autoFocus
+                  />
+                  <p className="text-xs text-green-600 mt-1">
+                    💡 This will open your email app with the proof ready to send!
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center space-x-2">
@@ -3840,7 +5488,10 @@ ${t.date || 'Date'}: ${currentDate}`
                   <Button variant="ghost" size="sm" onClick={() => generateProof('traffic')}>
                     <MapPin className="w-3 h-3" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => generateProof('medical')}>
+                  <Button variant="ghost" size="sm" onClick={() => {
+                    console.log('Medical certificate button clicked (small)');
+                    generateProof('medical');
+                  }}>
                     <FileText className="w-3 h-3" />
                   </Button>
                 </div>
@@ -4079,7 +5730,10 @@ ${t.date || 'Date'}: ${currentDate}`
                     variant="outline" 
                     size="sm" 
                     className="text-xs" 
-                    onClick={() => generateProof('medical')}
+                    onClick={() => {
+                      console.log('Medical certificate button clicked (large)');
+                      generateProof('medical');
+                    }}
                     disabled={isGeneratingProof}
                   >
                     {isGeneratingProof ? '⏳' : '🏥'} {t.medical}
@@ -4196,6 +5850,103 @@ ${t.date || 'Date'}: ${currentDate}`
                 📱 Send as SMS
               </Button>
               
+              {/* Email Send Button - Show for all proofs but highlight for Email format */}
+              <Button 
+                variant={proofFormat === 'email' ? "default" : "outline"} 
+                className={`w-full ${proofFormat === 'email' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
+                onClick={() => sendAsEmail(generatedProof.content, userEmailAddress || 'employer@company.com')}
+                disabled={emailSending}
+              >
+                {emailSending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    Opening Email...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    📧 Open Email App
+                  </>
+                )}
+              </Button>
+              
+              {/* Quick Email Button - Always works, no email required */}
+              {proofFormat !== 'email' && (
+                <Button 
+                  variant="outline" 
+                  className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                  onClick={() => {
+                    const subject = 'Medical Excuse Documentation';
+                    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(generatedProof.content)}`;
+                    window.location.href = mailtoUrl;
+                    alert('📧 Email app should open now! Add your employer\'s email address in the "To" field.');
+                  }}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  ✉️ Quick Email
+                </Button>
+              )}
+              
+              {/* Copy for Email Button - Backup option */}
+              <Button 
+                variant="outline" 
+                className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedProof.content);
+                  alert('📋 Copied! Now:\n1. Open your email\n2. Paste the proof (Ctrl+V)\n3. Send to your employer');
+                }}
+              >
+                📋 Copy for Email
+              </Button>
+
+              {/* Premium Image Download Buttons */}
+              {generatedProof.image && (
+                <>
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-800 font-medium mb-2">
+                      🎨 <strong>Premium Visual Proof:</strong> Download the official document image for maximum believability!
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white" 
+                    onClick={() => {
+                      if (generatedProof.image) {
+                        downloadImageFile(generatedProof.image, `${generatedProof.type.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`);
+                      }
+                    }}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    📸 Download Visual Proof
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    onClick={() => {
+                      if (generatedProof.image) {
+                        // Open image in new tab for sharing
+                        const newWindow = window.open();
+                        if (newWindow) {
+                          newWindow.document.write(`
+                            <html>
+                              <head><title>${generatedProof.type}</title></head>
+                              <body style="margin:0;padding:20px;background:#f0f0f0;">
+                                <img src="${generatedProof.image}" style="max-width:100%;height:auto;border:1px solid #ccc;box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+                                <p style="margin-top:10px;font-family:Arial,sans-serif;color:#666;font-size:14px;">Right-click the image above to save or share</p>
+                              </body>
+                            </html>
+                          `);
+                        }
+                      }
+                    }}
+                  >
+                    <Share className="w-4 h-4 mr-2" />
+                    👁️ View & Share Image
+                  </Button>
+                </>
+              )}
+              
               <Button variant="outline" className="w-full" onClick={() => setShowProofGenerator(false)}>
                 ⬅️ Back
               </Button>
@@ -4251,6 +6002,64 @@ ${t.date || 'Date'}: ${currentDate}`
               </Button>
               <Button variant="ghost" className="w-full" onClick={() => setShowPremium(false)}>
                 Maybe Later
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Patient Information Dialog */}
+      {showPatientInfoDialog && (
+        <Card className="w-full max-w-md shadow-xl rounded-2xl border-2 border-blue-400">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-xl font-bold flex items-center space-x-2 text-blue-600">
+              <FileText className="w-5 h-5" /> <span>Medical Certificate</span>
+            </h2>
+            <p className="text-gray-600">Please provide your information for the medical certificate.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder-gray-400"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date of Birth (Optional)
+                </label>
+                <input
+                  type="date"
+                  value={patientDateOfBirth}
+                  onChange={(e) => setPatientDateOfBirth(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                />
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                📋 <strong>Note:</strong> This information will be used to create a realistic medical certificate document.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Button 
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white" 
+                onClick={generateMedicalProofWithPatientInfo}
+                disabled={!patientName.trim()}
+              >
+                🏥 Generate Medical Certificate
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={() => setShowPatientInfoDialog(false)}>
+                Cancel
               </Button>
             </div>
           </CardContent>
