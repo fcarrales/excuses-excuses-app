@@ -3607,7 +3607,7 @@ export default function ExcuseGeneratorApp() {
     
     const canvas = document.createElement('canvas');
     canvas.width = 850;
-    canvas.height = 1100;
+    canvas.height = 1150;  // Increased height to accommodate footer content
     const ctx = canvas.getContext('2d');
     
     if (!ctx) return null;
@@ -3880,8 +3880,8 @@ export default function ExcuseGeneratorApp() {
     ctx.fillStyle = '#6b7280';
     ctx.font = '10px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Dallas Urgent Care Medical Center • 123 Medical Plaza Dr. • Dallas, TX 75201', 425, 1090);
-    ctx.fillText('Phone: (214) 555-CARE • Fax: (214) 555-0199 • www.dallasurgentcare.com', 425, 1105);
+    ctx.fillText('Dallas Urgent Care Medical Center • 123 Medical Plaza Dr. • Dallas, TX 75201', 425, 1070);
+    ctx.fillText('Phone: (214) 555-CARE • Fax: (214) 555-0199 • www.dallasurgentcare.com', 425, 1085);
     
     console.log('Medical document image generated successfully');
     return canvas.toDataURL('image/png');
