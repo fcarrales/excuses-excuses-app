@@ -47,6 +47,7 @@ export default function ExcuseGeneratorApp() {
   };
 
   const [situation, setSituation] = useState("work");
+  const [excuseType, setExcuseType] = useState<'late' | 'absent'>('late');
   const [tone, setTone] = useState("funny");
   const [excuse, setExcuse] = useState("");
   const [showPremium, setShowPremium] = useState(false);
@@ -338,6 +339,13 @@ export default function ExcuseGeneratorApp() {
         dramatic: "🎭 Dramatic"
       },
       
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ Late",
+        absent: "🚫 Absent"
+      },
+      excuseTypeLabel: "I will be:",
+      
       // Buttons
       generateExcuse: "Generate Excuse",
       generating: "Generating...",
@@ -469,6 +477,13 @@ export default function ExcuseGeneratorApp() {
         dramatic: "🎭 Dramático"
       },
       
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ Tarde",
+        absent: "🚫 Ausente"
+      },
+      excuseTypeLabel: "Voy a estar:",
+      
       // Buttons
       generateExcuse: "Generar Excusa",
       generating: "Generando...",
@@ -579,6 +594,13 @@ export default function ExcuseGeneratorApp() {
         believable: "✅ Crédible",
         dramatic: "🎭 Dramatique"
       },
+      
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ En Retard",
+        absent: "🚫 Absent"
+      },
+      excuseTypeLabel: "Je serai:",
       
       // Buttons
       generateExcuse: "Générer Excuse",
@@ -691,6 +713,13 @@ export default function ExcuseGeneratorApp() {
         dramatic: "🎭 Dramatisch"
       },
       
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ Verspätet",
+        absent: "🚫 Abwesend"
+      },
+      excuseTypeLabel: "Ich werde:",
+      
       // Buttons
       generateExcuse: "Ausrede Generieren",
       generating: "Generiere...",
@@ -801,6 +830,13 @@ export default function ExcuseGeneratorApp() {
         believable: "✅ Credibile",
         dramatic: "🎭 Drammatico"
       },
+      
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ In Ritardo",
+        absent: "🚫 Assente"
+      },
+      excuseTypeLabel: "Sarò:",
       
       // Buttons
       generateExcuse: "Genera Scusa",
@@ -913,6 +949,13 @@ export default function ExcuseGeneratorApp() {
         dramatic: "🎭 Dramático"
       },
       
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ Atrasado",
+        absent: "🚫 Ausente"
+      },
+      excuseTypeLabel: "Eu vou estar:",
+      
       // Buttons
       generateExcuse: "Gerar Desculpa",
       generating: "Gerando...",
@@ -1024,6 +1067,13 @@ export default function ExcuseGeneratorApp() {
         dramatic: "🎭 Драматичный"
       },
       
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ Опоздание",
+        absent: "🚫 Отсутствие"
+      },
+      excuseTypeLabel: "Я буду:",
+      
       // Buttons
       generateExcuse: "Сгенерировать Оправдание",
       generating: "Генерация...",
@@ -1134,6 +1184,13 @@ export default function ExcuseGeneratorApp() {
         believable: "✅ 信頼できる",
         dramatic: "🎭 ドラマチック"
       },
+      
+      // Excuse Types
+      excuseTypes: {
+        late: "⏰ 遅刻",
+        absent: "🚫 欠席"
+      },
+      excuseTypeLabel: "私は:",
       
       // Buttons
       generateExcuse: "言い訳を生成",
@@ -1979,12 +2036,28 @@ export default function ExcuseGeneratorApp() {
         excuse: finalExcuse,
         timestamp: new Date(),
         situation: situation,
-        tone: tone
+        tone: tone,
+        excuseType: (situation === 'work' || situation === 'school') ? excuseType : undefined
       };
       
       setExcuseHistory(prev => [newHistoryEntry, ...prev].slice(0, 50)); // Keep last 50 excuses
       setExcuse(finalExcuse);
       setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
+      
+      // Modify excuse based on type (late/absent) for work and school situations
+      if ((situation === 'work' || situation === 'school') && excuseType) {
+        if (excuseType === 'late') {
+          // Add late-specific prefix/modification
+          if (!finalExcuse.toLowerCase().includes('late') && !finalExcuse.toLowerCase().includes('delayed') && !finalExcuse.toLowerCase().includes('running')) {
+            finalExcuse = `I'll be running late because ${finalExcuse.charAt(0).toLowerCase()}${finalExcuse.slice(1)}`;
+          }
+        } else if (excuseType === 'absent') {
+          // Add absent-specific prefix/modification
+          if (!finalExcuse.toLowerCase().includes('won\'t') && !finalExcuse.toLowerCase().includes('can\'t') && !finalExcuse.toLowerCase().includes('unable')) {
+            finalExcuse = `I won't be able to make it today - ${finalExcuse.charAt(0).toLowerCase()}${finalExcuse.slice(1)}`;
+          }
+        }
+      }
       
       // Track usage analytics
       trackUsageAnalytics(situation, tone, finalExcuse);
@@ -5303,6 +5376,22 @@ ${t.date || 'Date'}: ${currentDate}`
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Show excuse type selector only for work and school */}
+            {(situation === 'work' || situation === 'school') && (
+              <div>
+                <label htmlFor="excuse-type-select" className="block mb-1 text-sm font-medium">{t.excuseTypeLabel}</label>
+                <Select onValueChange={(val: 'late' | 'absent') => setExcuseType(val)} value={excuseType}>
+                  <SelectTrigger id="excuse-type-select" aria-label="Choose if you will be late or absent">
+                    <SelectValue placeholder="Choose type" />
+                  </SelectTrigger>
+                  <SelectContent role="listbox" aria-label="Excuse type options">
+                    <SelectItem value="late" role="option">{t.excuseTypes.late}</SelectItem>
+                    <SelectItem value="absent" role="option">{t.excuseTypes.absent}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div>
               <label htmlFor="tone-select" className="block mb-1 text-sm font-medium">{t.tone}</label>
