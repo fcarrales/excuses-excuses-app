@@ -2037,15 +2037,15 @@ export default function ExcuseGeneratorApp() {
         timestamp: new Date(),
         situation: situation,
         tone: tone,
-        excuseType: (situation === 'work' || situation === 'school') ? excuseType : undefined
+        excuseType: excuseType
       };
       
       setExcuseHistory(prev => [newHistoryEntry, ...prev].slice(0, 50)); // Keep last 50 excuses
       setExcuse(finalExcuse);
       setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
       
-      // Modify excuse based on type (late/absent) for work and school situations
-      if ((situation === 'work' || situation === 'school') && excuseType) {
+      // Modify excuse based on type (late/absent) for all situations
+      if (excuseType) {
         if (excuseType === 'late') {
           // Add late-specific prefix/modification
           if (!finalExcuse.toLowerCase().includes('late') && !finalExcuse.toLowerCase().includes('delayed') && !finalExcuse.toLowerCase().includes('running')) {
@@ -5464,21 +5464,19 @@ ${t.date || 'Date'}: ${currentDate}`
               </Select>
             </div>
 
-            {/* Show excuse type selector only for work and school */}
-            {(situation === 'work' || situation === 'school') && (
-              <div>
-                <label htmlFor="excuse-type-select" className="block mb-1 text-sm font-medium">{t.excuseTypeLabel}</label>
-                <Select onValueChange={(val: 'late' | 'absent') => setExcuseType(val)} value={excuseType}>
-                  <SelectTrigger id="excuse-type-select" aria-label="Choose if you will be late or absent">
-                    <SelectValue placeholder="Choose type" />
-                  </SelectTrigger>
-                  <SelectContent role="listbox" aria-label="Excuse type options">
-                    <SelectItem value="late" role="option">{t.excuseTypes.late}</SelectItem>
-                    <SelectItem value="absent" role="option">{t.excuseTypes.absent}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Show excuse type selector for all situations */}
+            <div>
+              <label htmlFor="excuse-type-select" className="block mb-1 text-sm font-medium">{t.excuseTypeLabel}</label>
+              <Select onValueChange={(val: 'late' | 'absent') => setExcuseType(val)} value={excuseType}>
+                <SelectTrigger id="excuse-type-select" aria-label="Choose if you will be late or absent">
+                  <SelectValue placeholder="Choose type" />
+                </SelectTrigger>
+                <SelectContent role="listbox" aria-label="Excuse type options">
+                  <SelectItem value="late" role="option">{t.excuseTypes.late}</SelectItem>
+                  <SelectItem value="absent" role="option">{t.excuseTypes.absent}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <div>
               <label htmlFor="tone-select" className="block mb-1 text-sm font-medium">{t.tone}</label>
