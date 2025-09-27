@@ -37,4 +37,4 @@ jobs:
       run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
       
     - name: Update Alias to Latest Deployment
-      run: vercel alias --token=${{ secrets.VERCEL_TOKEN }} excuses-excuses.vercel.app
+      run: vercel alias --token=${{ secrets.VERCEL_TOKEN }} xqs.app
