@@ -3,19 +3,25 @@
 ## 🎯 **Step 1: Register xqs.app Domain**
 
 ### **Recommended Registrars for .app domains:**
-1. **Google Domains** - Best for .app (Google manages .app TLD)
-   - Go to: https://domains.google.com
+
+⚠️ **Important:** Google Domains was acquired by Squarespace in 2023. All Google Domains users have been migrated to Squarespace.
+
+1. **Squarespace Domains** - Now manages former Google Domains (.app TLD)
+   - Go to: https://domains.squarespace.com
    - Search: `xqs.app`
    - Price: ~$12-20/year
+   - **Note:** Former Google Domains interface
 
-2. **Namecheap** - Popular alternative
+2. **Namecheap** - Popular, reliable alternative
    - Go to: https://www.namecheap.com
    - Search: `xqs.app` 
    - Price: ~$15-25/year
+   - Great customer support
 
-3. **Cloudflare** - Great for developers
+3. **Cloudflare** - Best for developers
    - Go to: https://www.cloudflare.com/products/registrar/
    - At-cost pricing (no markup)
+   - Built-in DNS management
 
 ---
 
