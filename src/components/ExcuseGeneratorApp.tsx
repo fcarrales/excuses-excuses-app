@@ -3677,13 +3677,17 @@ export default function ExcuseGeneratorApp() {
     
     // Main header
     ctx.fillStyle = '#ffffff';
+    // Generate random NPI number (10 digits, starts with 1-2)
+    const npiNumber = `${Math.floor(Math.random() * 2) + 1}${Math.floor(Math.random() * 900000000) + 100000000}`;
+    const licenseNumber = `TX-UC-2024-${Math.floor(Math.random() * 900) + 100}`;
+    
     ctx.font = 'bold 28px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('DALLAS URGENT CARE MEDICAL CENTER', 425, 45);
     ctx.font = '16px Arial';
     ctx.fillText('Certified Healthcare Providers • Est. 1995', 425, 70);
     ctx.font = '14px Arial';
-    ctx.fillText('License #TX-UC-2024-447 • NPI: 1234567890', 425, 95);
+    ctx.fillText(`License #${licenseNumber} • NPI: ${npiNumber}`, 425, 95);
     
     // Medical document header
     ctx.fillStyle = '#ffffff';
@@ -3866,7 +3870,11 @@ export default function ExcuseGeneratorApp() {
     ctx.stroke();
     
     ctx.fillText('Medical License Number', 450, 1005);
-    ctx.fillText(`TX-${Math.floor(Math.random() * 90000) + 10000}`, 650, 1005);
+    ctx.fillText(`${licenseNumber}`, 650, 1005);
+    
+    // Add NPI number below license
+    ctx.fillText('NPI Number', 450, 1020);
+    ctx.fillText(`${npiNumber}`, 650, 1020);
     
     // Footer with contact info
     ctx.fillStyle = '#6b7280';
@@ -4349,6 +4357,7 @@ Next Update: ${new Date(now.getTime() + 15 * 60000).toLocaleTimeString()}`
         const clinics = ['Family Health Center', 'Urgent Care Plus', 'Premier Medical Group', 'Community Health Clinic', 'Advanced Care Medical Center', 'Regional Health Associates'];
         const clinic = clinics[Math.floor(Math.random() * clinics.length)];
         const licenseNum = `MD${Math.floor(Math.random() * 90000) + 10000}`;
+        const npiNum = `${Math.floor(Math.random() * 2) + 1}${Math.floor(Math.random() * 900000000) + 100000000}`;
         
         // Create comprehensive symptoms list
         const allSymptoms = selectedSymptoms.map(s => s.symptoms).join(', with secondary ');
@@ -4396,6 +4405,7 @@ ATTENDING PHYSICIAN:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${doctor}
 Medical License: ${licenseNum}
+NPI Number: ${npiNum}
 Board Certification: Internal Medicine
 DEA Registration: B${doctor.split(' ')[1].substring(0,1)}${Math.floor(Math.random() * 9000000) + 1000000}
 
@@ -4458,6 +4468,7 @@ PHYSICIAN SIGNATURE & VALIDATION
 ${doctor}                               Time: ${currentTime}
 ${clinic}
 Medical License: ${licenseNum}
+NPI Number: ${npiNum}
 
 This certificate is issued in compliance with state medical practice
 guidelines and HIPAA privacy regulations.
