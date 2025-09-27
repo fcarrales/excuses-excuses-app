@@ -3650,14 +3650,36 @@ export default function ExcuseGeneratorApp() {
     const patientId = `P-${Math.floor(Math.random() * 900000) + 100000}`;
     const medicalRecordNumber = `MR-${Math.floor(Math.random() * 90000) + 10000}`;
     
-    // Emergency contact information
-    const emergencyContacts = [
-      'Jane Doe (Spouse) - (214) 555-0123',
-      'Robert Smith (Father) - (214) 555-0145', 
-      'Maria Rodriguez (Sister) - (214) 555-0167',
-      'Tom Johnson (Brother) - (214) 555-0189'
+    // Emergency contact information - use same last name for family members
+    const patientLastName = finalPatientName.split(' ').pop(); // Get last name from patient
+    const emergencyContactTypes = [
+      { relationship: 'Spouse', useSameLastName: false },
+      { relationship: 'Father', useSameLastName: true },
+      { relationship: 'Mother', useSameLastName: true },
+      { relationship: 'Sister', useSameLastName: true },
+      { relationship: 'Brother', useSameLastName: true },
+      { relationship: 'Son', useSameLastName: true },
+      { relationship: 'Daughter', useSameLastName: true }
     ];
-    const emergencyContact = emergencyContacts[Math.floor(Math.random() * emergencyContacts.length)];
+    
+    const selectedContactType = emergencyContactTypes[Math.floor(Math.random() * emergencyContactTypes.length)];
+    
+    // Generate appropriate first name based on relationship
+    const maleNames = ['James', 'John', 'Robert', 'Michael', 'David', 'William', 'Richard', 'Joseph', 'Thomas', 'Christopher'];
+    const femaleNames = ['Mary', 'Patricia', 'Jennifer', 'Linda', 'Elizabeth', 'Barbara', 'Susan', 'Jessica', 'Sarah', 'Karen'];
+    
+    let contactFirstName;
+    if (['Father', 'Brother', 'Son'].includes(selectedContactType.relationship)) {
+      contactFirstName = maleNames[Math.floor(Math.random() * maleNames.length)];
+    } else {
+      contactFirstName = femaleNames[Math.floor(Math.random() * femaleNames.length)];
+    }
+    
+    // Use same last name for family members, different for spouse
+    const contactLastName = selectedContactType.useSameLastName ? patientLastName : lastNames[Math.floor(Math.random() * lastNames.length)];
+    const phoneNumber = `(${Math.floor(Math.random() * 800) + 200}) ${Math.floor(Math.random() * 888) + 111}-${Math.floor(Math.random() * 9000) + 1000}`;
+    
+    const emergencyContact = `${contactFirstName} ${contactLastName} (${selectedContactType.relationship}) - ${phoneNumber}`;
     
     // Professional medical document background
     const gradient = ctx.createLinearGradient(0, 0, 0, 1100);
@@ -3950,6 +3972,8 @@ export default function ExcuseGeneratorApp() {
         
         // Show the proof generator interface
         setShowProofGenerator(true);
+        console.log('Setting showProofGenerator to true');
+        console.log('Generated proof object:', { type: 'Medical Certificate', content: 'Official medical documentation has been generated.', image: proofImage ? 'Present' : 'Missing' });
         
         // Show success message
         console.log('Medical certificate generated successfully');
@@ -5373,6 +5397,91 @@ ${t.date || 'Date'}: ${currentDate}`
     );
   }
 
+  // Proof Generator Screen
+  if (showProofGenerator && generatedProof) {
+    console.log('Rendering Proof Generator Screen');
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-100 to-blue-100 flex flex-col items-center justify-center p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <Card className="w-full max-w-md shadow-xl rounded-2xl border-2 border-green-400">
+          <CardContent className="p-6 space-y-4">
+            <h2 className="text-lg font-bold flex items-center space-x-2 text-green-600">
+              <Camera className="w-5 h-5" /> <span>{generatedProof.type} Generated</span>
+            </h2>
+            
+            <div className="bg-gray-50 p-4 rounded-lg border font-mono text-sm whitespace-pre-line max-h-96 overflow-y-auto text-gray-800">
+              {generatedProof.content || 'No content generated'}
+            </div>
+
+            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+              <p className="text-sm text-green-800">
+                💡 <strong>Pro Tip:</strong> Use &quot;Send as SMS&quot; to open your phone&apos;s messaging app with the proof ready to send, or copy/screenshot for other uses!
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              {/* SMS Send Button */}
+              <Button 
+                variant="outline" 
+                className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
+                onClick={() => sendAsSMS(generatedProof.content, userPhoneNumber || undefined)}
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                📱 Send as SMS
+              </Button>
+              
+              {/* Email Send Button */}
+              <Button 
+                variant={proofFormat === 'email' ? "default" : "outline"} 
+                className={`w-full ${proofFormat === 'email' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
+                onClick={() => sendAsEmail(generatedProof.content, userEmailAddress || 'employer@company.com', generatedProof.type)}
+                disabled={emailSending}
+              >
+                {emailSending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                    Opening Email...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-4 h-4 mr-2" />
+                    📧 Open Email App
+                  </>
+                )}
+              </Button>
+
+              {/* Premium Image Download Buttons */}
+              {generatedProof.image && (
+                <>
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg border border-yellow-200">
+                    <p className="text-sm text-yellow-800 font-medium mb-2">
+                      🎨 <strong>Premium Visual Proof:</strong> Download the official document image for maximum believability!
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white" 
+                    onClick={() => {
+                      if (generatedProof.image) {
+                        downloadImageFile(generatedProof.image, `${generatedProof.type.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`);
+                      }
+                    }}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    📸 Download Visual Proof
+                  </Button>
+                </>
+              )}
+              
+              <Button variant="outline" className="w-full" onClick={() => setShowProofGenerator(false)}>
+                ⬅️ Back to App
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Helper functions for beta feedback
   const getLanguageName = (langCode: string): string => {
     const languageNames = {
@@ -6004,161 +6113,7 @@ ${t.date || 'Date'}: ${currentDate}`
         </CardContent>
       </Card>
 
-      {/* Proof Generator Screen */}
-      {showProofGenerator && generatedProof && (
-        <Card className="w-full max-w-md shadow-xl rounded-2xl border-2 border-green-400">
-          <CardContent className="p-6 space-y-4">
-            <h2 className="text-lg font-bold flex items-center space-x-2 text-green-600">
-              <Camera className="w-5 h-5" /> <span>{generatedProof.type} Generated</span>
-            </h2>
-            
-            <div className="bg-gray-50 p-4 rounded-lg border font-mono text-sm whitespace-pre-line max-h-96 overflow-y-auto text-gray-800">
-              {generatedProof.content || 'No content generated'}
-            </div>
 
-            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800">
-                💡 <strong>Pro Tip:</strong> Use &quot;Send as SMS&quot; to open your phone&apos;s messaging app with the proof ready to send, or copy/screenshot for other uses!
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Button 
-                className="w-full bg-green-500 hover:bg-green-600 text-white" 
-                onClick={() => copyToClipboard(generatedProof.content)}
-              >
-                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                {copied ? t.copied : t.copyProof}
-              </Button>
-              
-              {/* SMS Send Button - Show for all proofs but highlight for SMS format */}
-              <Button 
-                variant={proofFormat === 'sms' ? "default" : "outline"} 
-                className={`w-full ${proofFormat === 'sms' ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''}`}
-                onClick={() => sendAsSMS(generatedProof.content, userPhoneNumber || undefined)}
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                📱 Send as SMS
-              </Button>
-              
-              {/* Email Send Button - Show for all proofs but highlight for Email format */}
-              <Button 
-                variant={proofFormat === 'email' ? "default" : "outline"} 
-                className={`w-full ${proofFormat === 'email' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
-                onClick={() => sendAsEmail(generatedProof.content, userEmailAddress || 'employer@company.com', generatedProof.type)}
-                disabled={emailSending}
-              >
-                {emailSending ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                    Opening Email...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="w-4 h-4 mr-2" />
-                    📧 Open Email App
-                  </>
-                )}
-              </Button>
-              
-              {/* Quick Email Button - Always works, no email required */}
-              {proofFormat !== 'email' && (
-                <Button 
-                  variant="outline" 
-                  className="w-full border-green-300 text-green-700 hover:bg-green-50"
-                  onClick={() => {
-                    // Dynamic subject based on proof type
-                    const subjectMap: { [key: string]: string } = {
-                      'National Weather Service Alert': 'Weather Emergency Documentation',
-                      'Traffic Citation': 'Traffic Incident Documentation', 
-                      'Medical Certificate': 'Medical Excuse Documentation',
-                      'Weather Advisory': 'Weather Alert Documentation',
-                      'Traffic Report': 'Traffic Delay Documentation'
-                    };
-                    
-                    const subject = subjectMap[generatedProof.type] || 
-                                   (generatedProof.type.toLowerCase().includes('weather') ? 'Weather Emergency Documentation' :
-                                    generatedProof.type.toLowerCase().includes('traffic') ? 'Traffic Incident Documentation' :
-                                    generatedProof.type.toLowerCase().includes('medical') ? 'Medical Excuse Documentation' :
-                                    'Absence Documentation');
-                                    
-                    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(generatedProof.content)}`;
-                    window.location.href = mailtoUrl;
-                    alert('📧 Email app should open now! Add your employer\'s email address in the "To" field.');
-                  }}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  ✉️ Quick Email
-                </Button>
-              )}
-              
-              {/* Copy for Email Button - Backup option */}
-              <Button 
-                variant="outline" 
-                className="w-full border-green-300 text-green-700 hover:bg-green-50"
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedProof.content);
-                  alert('📋 Copied! Now:\n1. Open your email\n2. Paste the proof (Ctrl+V)\n3. Send to your employer');
-                }}
-              >
-                📋 Copy for Email
-              </Button>
-
-              {/* Premium Image Download Buttons */}
-              {generatedProof.image && (
-                <>
-                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg border border-yellow-200">
-                    <p className="text-sm text-yellow-800 font-medium mb-2">
-                      🎨 <strong>Premium Visual Proof:</strong> Download the official document image for maximum believability!
-                    </p>
-                  </div>
-                  
-                  <Button 
-                    className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white" 
-                    onClick={() => {
-                      if (generatedProof.image) {
-                        downloadImageFile(generatedProof.image, `${generatedProof.type.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`);
-                      }
-                    }}
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    📸 Download Visual Proof
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                    onClick={() => {
-                      if (generatedProof.image) {
-                        // Open image in new tab for sharing
-                        const newWindow = window.open();
-                        if (newWindow) {
-                          newWindow.document.write(`
-                            <html>
-                              <head><title>${generatedProof.type}</title></head>
-                              <body style="margin:0;padding:20px;background:#f0f0f0;">
-                                <img src="${generatedProof.image}" style="max-width:100%;height:auto;border:1px solid #ccc;box-shadow:0 4px 8px rgba(0,0,0,0.1);">
-                                <p style="margin-top:10px;font-family:Arial,sans-serif;color:#666;font-size:14px;">Right-click the image above to save or share</p>
-                              </body>
-                            </html>
-                          `);
-                        }
-                      }
-                    }}
-                  >
-                    <Share className="w-4 h-4 mr-2" />
-                    👁️ View & Share Image
-                  </Button>
-                </>
-              )}
-              
-              <Button variant="outline" className="w-full" onClick={() => setShowProofGenerator(false)}>
-                ⬅️ Back
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Premium Screen */}
       {showPremium && (
