@@ -2031,19 +2031,6 @@ export default function ExcuseGeneratorApp() {
         console.log('Generated excuse:', finalExcuse);
       }
       
-      // Add to history
-      const newHistoryEntry = {
-        excuse: finalExcuse,
-        timestamp: new Date(),
-        situation: situation,
-        tone: tone,
-        excuseType: excuseType
-      };
-      
-      setExcuseHistory(prev => [newHistoryEntry, ...prev].slice(0, 50)); // Keep last 50 excuses
-      setExcuse(finalExcuse);
-      setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
-      
       // Modify excuse based on type (late/absent) for all situations
       if (excuseType) {
         if (excuseType === 'late') {
@@ -2058,6 +2045,22 @@ export default function ExcuseGeneratorApp() {
           }
         }
       }
+      
+      console.log('Final excuse after modification:', finalExcuse);
+      console.log('Excuse type applied:', excuseType);
+      
+      // Add to history with the modified excuse
+      const newHistoryEntry = {
+        excuse: finalExcuse,
+        timestamp: new Date(),
+        situation: situation,
+        tone: tone,
+        excuseType: excuseType
+      };
+      
+      setExcuseHistory(prev => [newHistoryEntry, ...prev].slice(0, 50)); // Keep last 50 excuses
+      setExcuse(finalExcuse);
+      setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
       
       // Track usage analytics
       trackUsageAnalytics(situation, tone, finalExcuse);
