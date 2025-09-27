@@ -2135,11 +2135,25 @@ export default function ExcuseGeneratorApp() {
     }
   };
 
-  const sendAsEmail = async (content: string, recipientEmail: string) => {
+  const sendAsEmail = async (content: string, recipientEmail: string, proofType?: string) => {
     setEmailSending(true);
     try {
-      // Create a simple, clean email format
-      const subject = 'Medical Excuse Documentation';
+      // Create dynamic subject based on proof type
+      const subjectMap: { [key: string]: string } = {
+        'National Weather Service Alert': 'Weather Emergency Documentation',
+        'Traffic Citation': 'Traffic Incident Documentation', 
+        'Medical Certificate': 'Medical Excuse Documentation',
+        'Weather Advisory': 'Weather Alert Documentation',
+        'Traffic Report': 'Traffic Delay Documentation'
+      };
+      
+      const subject = proofType ? 
+                     (subjectMap[proofType] || 
+                      (proofType.toLowerCase().includes('weather') ? 'Weather Emergency Documentation' :
+                       proofType.toLowerCase().includes('traffic') ? 'Traffic Incident Documentation' :
+                       proofType.toLowerCase().includes('medical') ? 'Medical Excuse Documentation' :
+                       'Absence Documentation')) :
+                     'Absence Documentation';
       
       // Clean up the content for email
       let emailContent = content;
@@ -6007,7 +6021,7 @@ ${t.date || 'Date'}: ${currentDate}`
               <Button 
                 variant={proofFormat === 'email' ? "default" : "outline"} 
                 className={`w-full ${proofFormat === 'email' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
-                onClick={() => sendAsEmail(generatedProof.content, userEmailAddress || 'employer@company.com')}
+                onClick={() => sendAsEmail(generatedProof.content, userEmailAddress || 'employer@company.com', generatedProof.type)}
                 disabled={emailSending}
               >
                 {emailSending ? (
@@ -6029,7 +6043,21 @@ ${t.date || 'Date'}: ${currentDate}`
                   variant="outline" 
                   className="w-full border-green-300 text-green-700 hover:bg-green-50"
                   onClick={() => {
-                    const subject = 'Medical Excuse Documentation';
+                    // Dynamic subject based on proof type
+                    const subjectMap: { [key: string]: string } = {
+                      'National Weather Service Alert': 'Weather Emergency Documentation',
+                      'Traffic Citation': 'Traffic Incident Documentation', 
+                      'Medical Certificate': 'Medical Excuse Documentation',
+                      'Weather Advisory': 'Weather Alert Documentation',
+                      'Traffic Report': 'Traffic Delay Documentation'
+                    };
+                    
+                    const subject = subjectMap[generatedProof.type] || 
+                                   (generatedProof.type.toLowerCase().includes('weather') ? 'Weather Emergency Documentation' :
+                                    generatedProof.type.toLowerCase().includes('traffic') ? 'Traffic Incident Documentation' :
+                                    generatedProof.type.toLowerCase().includes('medical') ? 'Medical Excuse Documentation' :
+                                    'Absence Documentation');
+                                    
                     const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(generatedProof.content)}`;
                     window.location.href = mailtoUrl;
                     alert('📧 Email app should open now! Add your employer\'s email address in the "To" field.');
