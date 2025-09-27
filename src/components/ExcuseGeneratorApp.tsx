@@ -3932,6 +3932,7 @@ export default function ExcuseGeneratorApp() {
     console.log('generateMedicalProofWithPatientInfo called');
     console.log('Patient name:', patientName);
     console.log('Patient DOB:', patientDateOfBirth);
+    console.log('Current excuse type:', excuseType);
     
     if (!patientName.trim()) {
       alert('Please enter your name');
@@ -3974,9 +3975,61 @@ export default function ExcuseGeneratorApp() {
       
       if (proofImage && proofImage.length > 0) {
         console.log('Setting generated proof with medical certificate');
+        
+        // Generate contextual text content based on excuse type
+        const medicalContent = excuseType === 'absent' ? 
+          `MEDICAL EXCUSE CERTIFICATE
+
+Patient: ${patientName.trim()}
+Date: ${new Date().toLocaleDateString()}
+
+This is to certify that the above-named patient was examined by me today and found to be suffering from acute viral syndrome requiring immediate rest and isolation.
+
+MEDICAL FINDINGS:
+• Acute viral syndrome requiring immediate rest
+• Severe fatigue and systemic symptoms  
+• Elevated temperature and significant discomfort
+• Contagious period - isolation recommended
+
+MEDICAL RECOMMENDATIONS:
+• Patient is medically excused from all work/school activities today
+• Complete bed rest required for full recovery
+• Recommended absence period: ${Math.floor(Math.random() * 2) + 1} to ${Math.floor(Math.random() * 2) + 3} days
+• Return to normal activities when cleared by physician
+
+This excuse is medically necessary and the patient should be granted full absence from work/school duties.
+
+Dr. ${['Sarah Johnson', 'Michael Smith', 'Emily Williams', 'David Brown', 'Lisa Davis'][Math.floor(Math.random() * 5)]}
+Dallas Urgent Care Medical Center
+License #TX-UC-2024-${Math.floor(Math.random() * 900) + 100}` :
+          `MEDICAL APPOINTMENT DOCUMENTATION
+
+Patient: ${patientName.trim()}
+Date: ${new Date().toLocaleDateString()}
+
+This is to certify that the above-named patient has a scheduled medical appointment this morning requiring delayed arrival to work/school.
+
+MEDICAL FINDINGS:
+• Medical appointment required for ongoing treatment
+• Scheduled diagnostic procedures this morning
+• Follow-up consultation for chronic condition  
+• Preventive care requiring immediate attention
+
+MEDICAL RECOMMENDATIONS:
+• Patient may arrive late to work/school due to medical condition
+• Medical appointment required this morning for treatment
+• Estimated delay: ${Math.floor(Math.random() * 3) + 1} to ${Math.floor(Math.random() * 2) + 2} hours
+• Return to normal schedule after medical clearance
+
+This delay is medically necessary and unavoidable.
+
+Dr. ${['Sarah Johnson', 'Michael Smith', 'Emily Williams', 'David Brown', 'Lisa Davis'][Math.floor(Math.random() * 5)]}
+Dallas Urgent Care Medical Center
+License #TX-UC-2024-${Math.floor(Math.random() * 900) + 100}`;
+
         setGeneratedProof({
           type: 'Medical Certificate',
-          content: 'Official medical documentation has been generated.',
+          content: medicalContent,
           image: proofImage
         });
         
