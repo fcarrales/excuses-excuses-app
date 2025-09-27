@@ -3599,7 +3599,7 @@ export default function ExcuseGeneratorApp() {
     return canvas.toDataURL('image/png');
   };
 
-  const generateMedicalDocumentImage = (patientName: string, locationInfo: any, patientDateOfBirth?: string) => {
+  const generateMedicalDocumentImage = (patientName: string, locationInfo: any, patientDateOfBirth?: string, excuseType: 'late' | 'absent' = 'late') => {
     console.log('generateMedicalDocumentImage called');
     console.log('patientName:', patientName);
     console.log('locationInfo:', locationInfo);
@@ -3788,11 +3788,16 @@ export default function ExcuseGeneratorApp() {
     ctx.font = '14px Arial';
     ctx.fillText('Following comprehensive medical examination, the following conditions were observed:', 90, 565);
     
-    const conditions = [
-      'Acute viral syndrome with associated symptoms',
-      'Moderate to severe respiratory distress',
-      'Elevated temperature and systemic inflammation',
-      'Recommended bed rest and medical monitoring'
+    const conditions = excuseType === 'absent' ? [
+      'Acute viral syndrome requiring immediate rest',
+      'Severe fatigue and systemic symptoms',
+      'Elevated temperature and significant discomfort',
+      'Contagious period - isolation recommended'
+    ] : [
+      'Medical appointment required for ongoing treatment',
+      'Scheduled diagnostic procedures this morning',
+      'Follow-up consultation for chronic condition',
+      'Preventive care requiring immediate attention'
     ];
     
     conditions.forEach((condition, index) => {
@@ -3806,11 +3811,16 @@ export default function ExcuseGeneratorApp() {
     ctx.font = '14px Arial';
     ctx.fillText('Based on the clinical examination and current health status:', 90, 735);
     
-    const recommendations = [
-      'Patient is medically excused from work/school activities',
-      `Recommended rest period: ${Math.floor(Math.random() * 3) + 1} to ${Math.floor(Math.random() * 3) + 4} days`,
-      'Follow-up appointment scheduled if symptoms persist',
-      'Return to normal activities when symptom-free for 24 hours'
+    const recommendations = excuseType === 'absent' ? [
+      'Patient is medically excused from all work/school activities today',
+      'Complete bed rest required for full recovery',
+      `Recommended absence period: ${Math.floor(Math.random() * 2) + 1} to ${Math.floor(Math.random() * 2) + 3} days`,
+      'Return to normal activities when cleared by physician'
+    ] : [
+      'Patient may arrive late to work/school due to medical condition',
+      'Medical appointment required this morning for treatment',
+      `Estimated delay: ${Math.floor(Math.random() * 3) + 1} to ${Math.floor(Math.random() * 2) + 2} hours`,
+      'Return to normal schedule after medical clearance'
     ];
     
     recommendations.forEach((rec, index) => {
@@ -3951,7 +3961,7 @@ export default function ExcuseGeneratorApp() {
       console.log('About to call generateMedicalDocumentImage...');
       let proofImage;
       try {
-        proofImage = generateMedicalDocumentImage(patientName.trim(), locationForImage, patientDateOfBirth);
+        proofImage = generateMedicalDocumentImage(patientName.trim(), locationForImage, patientDateOfBirth, excuseType);
       } catch (imageError) {
         console.error('Error in generateMedicalDocumentImage:', imageError);
         alert('Error generating medical certificate image: ' + (imageError instanceof Error ? imageError.message : String(imageError)));
