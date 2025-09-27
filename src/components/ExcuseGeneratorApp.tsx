@@ -5429,6 +5429,15 @@ ${t.date || 'Date'}: ${currentDate}`
                 📱 Send as SMS
               </Button>
               
+              {/* Copy Proof Button */}
+              <Button 
+                className="w-full bg-green-500 hover:bg-green-600 text-white" 
+                onClick={() => copyToClipboard(generatedProof.content)}
+              >
+                {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                {copied ? t.copied : t.copyProof}
+              </Button>
+              
               {/* Email Send Button */}
               <Button 
                 variant={proofFormat === 'email' ? "default" : "outline"} 
@@ -5447,6 +5456,49 @@ ${t.date || 'Date'}: ${currentDate}`
                     📧 Open Email App
                   </>
                 )}
+              </Button>
+              
+              {/* Quick Email Button - Always works, no email required */}
+              {proofFormat !== 'email' && (
+                <Button 
+                  variant="outline" 
+                  className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                  onClick={() => {
+                    // Dynamic subject based on proof type
+                    const subjectMap: { [key: string]: string } = {
+                      'National Weather Service Alert': 'Weather Emergency Documentation',
+                      'Traffic Citation': 'Traffic Incident Documentation', 
+                      'Medical Certificate': 'Medical Excuse Documentation',
+                      'Weather Advisory': 'Weather Alert Documentation',
+                      'Traffic Report': 'Traffic Delay Documentation'
+                    };
+                    
+                    const subject = subjectMap[generatedProof.type] || 
+                                   (generatedProof.type.toLowerCase().includes('weather') ? 'Weather Emergency Documentation' :
+                                    generatedProof.type.toLowerCase().includes('traffic') ? 'Traffic Incident Documentation' :
+                                    generatedProof.type.toLowerCase().includes('medical') ? 'Medical Excuse Documentation' :
+                                    'Absence Documentation');
+                                    
+                    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(generatedProof.content)}`;
+                    window.location.href = mailtoUrl;
+                    alert('📧 Email app should open now! Add your employer\'s email address in the "To" field.');
+                  }}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  ✉️ Quick Email
+                </Button>
+              )}
+              
+              {/* Copy for Email Button - Backup option */}
+              <Button 
+                variant="outline" 
+                className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedProof.content);
+                  alert('📋 Copied! Now:\n1. Open your email\n2. Paste the proof (Ctrl+V)\n3. Send to your employer');
+                }}
+              >
+                📋 Copy for Email
               </Button>
 
               {/* Premium Image Download Buttons */}
@@ -5468,6 +5520,31 @@ ${t.date || 'Date'}: ${currentDate}`
                   >
                     <Camera className="w-4 h-4 mr-2" />
                     📸 Download Visual Proof
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    onClick={() => {
+                      if (generatedProof.image) {
+                        // Open image in new tab for viewing and sharing
+                        const newWindow = window.open();
+                        if (newWindow) {
+                          newWindow.document.write(`
+                            <html>
+                              <head><title>${generatedProof.type}</title></head>
+                              <body style="margin:0;padding:20px;background:#f0f0f0;">
+                                <img src="${generatedProof.image}" style="max-width:100%;height:auto;border:1px solid #ccc;box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+                                <p style="margin-top:10px;font-family:Arial,sans-serif;color:#666;font-size:14px;">Right-click the image above to save or share</p>
+                              </body>
+                            </html>
+                          `);
+                        }
+                      }
+                    }}
+                  >
+                    <Share className="w-4 h-4 mr-2" />
+                    👁️ View & Share Image
                   </Button>
                 </>
               )}
