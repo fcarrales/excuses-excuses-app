@@ -3948,6 +3948,9 @@ export default function ExcuseGeneratorApp() {
           image: proofImage
         });
         
+        // Show the proof generator interface
+        setShowProofGenerator(true);
+        
         // Show success message
         console.log('Medical certificate generated successfully');
         alert('✅ Medical certificate generated successfully!');
