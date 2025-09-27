@@ -2514,29 +2514,66 @@ export default function ExcuseGeneratorApp() {
 
     const city = getLocationDescription();
     const specificArea = userLocation?.address || city;
+    
+    // Enhanced weather description logic for better excuses
+    const getEnhancedWeatherDescription = () => {
+      if (!weather) return null;
+      
+      // Check for severe conditions that make good excuses
+      const isSevereWeather = weather.windSpeed > 25 || 
+                             weather.visibility < 2 || 
+                             weather.condition === 'Thunderstorm' ||
+                             weather.condition === 'Snow' ||
+                             weather.description.includes('heavy') ||
+                             weather.description.includes('severe');
+      
+      // If weather is mild, enhance it for excuse purposes
+      if (!isSevereWeather) {
+        const enhancedConditions = [
+          'sudden severe weather system moving through',
+          'unexpected weather advisory issued',
+          'rapidly deteriorating weather conditions',
+          'developing storm system',
+          'weather-related safety concerns'
+        ];
+        
+        return {
+          ...weather,
+          description: enhancedConditions[Math.floor(Math.random() * enhancedConditions.length)],
+          severity: 'enhanced'
+        };
+      }
+      
+      return { ...weather, severity: 'actual' };
+    };
+
+    const enhancedWeather = getEnhancedWeatherDescription();
+    
     const templates = {
       weather: {
         professional: [
-          `Due to severe ${weather.description} in ${city}, I cannot safely travel to the office. Visibility is only ${weather.visibility}km and wind speeds are ${weather.windSpeed}km/h.`,
-          `The current weather conditions in ${city} (${weather.description}, ${weather.temperature}°F) make it unsafe to travel. I will work from home today.`,
-          `Weather alert in ${city}: ${weather.description} with ${weather.humidity}% humidity. I need to stay home for safety reasons.`,
-          `I'm currently at ${specificArea} and the weather conditions (${weather.description}, ${weather.temperature}°F) make travel unsafe. Working remotely today.`
+          `Due to ${enhancedWeather?.description} in ${city}, I cannot safely travel to the office. Current conditions show ${weather.temperature}°F with ${weather.windSpeed}mph winds.`,
+          `Weather advisory issued for ${city}: ${enhancedWeather?.description}. Working from home today for safety reasons.`,
+          `Current weather conditions in ${city} (${enhancedWeather?.description}) make travel inadvisable. I will work remotely today.`,
+          `I'm monitoring the weather situation in ${city} - ${enhancedWeather?.description} with ${weather.humidity}% humidity. Staying home as a precaution.`
         ],
         believable: [
-          `I'm stuck at home because of the ${weather.description} in ${city}. Roads are not safe with only ${weather.visibility}km visibility.`,
-          `Can't make it in today - there's ${weather.description} and it's only ${weather.temperature}°F outside. Too dangerous to drive.`,
-          `The weather is terrible here in ${city} (${weather.description}). I don't feel safe driving in these conditions.`,
-          `I'm at ${specificArea} and can't get out due to the ${weather.description}. Roads are impassable with ${weather.temperature}°F weather.`
+          `I'm stuck at home because of the weather in ${city}. There's ${enhancedWeather?.description} and visibility is only ${weather.visibility}km.`,
+          `Can't make it in today - the weather took a turn for the worse here. ${enhancedWeather?.description} and it's ${weather.temperature}°F outside.`,
+          `The weather is really bad here in ${city}. ${enhancedWeather?.description} - I don't feel safe driving.`,
+          `Weather conditions changed suddenly in ${city}. ${enhancedWeather?.description} and roads aren't safe right now.`
         ],
         funny: [
-          `Mother Nature decided to have a tantrum in ${city} today! There's ${weather.description} and I'm not brave enough to face her wrath.`,
-          `The weather gods are angry in ${city} - it's ${weather.temperature}°F with ${weather.description}. I'm staying inside like a smart human!`,
-          `Current weather in ${city}: ${weather.description}. My car and I have decided to stay in hibernation mode today!`
+          `Mother Nature is having a mood swing in ${city}! ${enhancedWeather?.description} and I'm not brave enough to challenge her today.`,
+          `The weather gods are clearly not happy in ${city} - ${enhancedWeather?.description}. I'm staying inside like a smart human!`,
+          `Current weather status in ${city}: ${enhancedWeather?.description}. My car and I have voted to remain in hibernation mode today!`,
+          `Breaking news from ${city}: ${enhancedWeather?.description}. I've decided to become one with my couch until further notice!`
         ],
         dramatic: [
-          `The heavens have unleashed their fury upon ${city}! With ${weather.description} and winds of ${weather.windSpeed}km/h, I am trapped by nature's wrath!`,
-          `I am held captive by the storm gods in ${city}! The ${weather.description} makes travel impossible - visibility is a mere ${weather.visibility}km!`,
-          `The elements conspire against me in ${city}! ${weather.description} at ${weather.temperature}°F - I cannot battle such forces of nature!`
+          `The heavens have unleashed chaos upon ${city}! ${enhancedWeather?.description} with winds of ${weather.windSpeed}mph - I am trapped by nature's fury!`,
+          `I am held captive by the storm gods in ${city}! The ${enhancedWeather?.description} makes travel impossible - the elements conspire against me!`,
+          `Behold! ${enhancedWeather?.description} has transformed ${city} into a battleground of the elements! I cannot venture forth in such peril!`,
+          `The forces of nature rage in ${city}! ${enhancedWeather?.description} at ${weather.temperature}°F - I dare not challenge such mighty powers!`
         ]
       },
       traffic: {
@@ -2563,17 +2600,42 @@ export default function ExcuseGeneratorApp() {
       }
     };
 
-    // Choose weather or traffic based on what's more severe/interesting
+    // Intelligent selection between weather and traffic based on severity and believability
     let selectedData, selectedType;
     if (weather && traffic) {
-      // Prefer severe weather conditions or major traffic incidents
-      if ((weather.windSpeed > 30 || weather.visibility < 1) || traffic.delay.includes('60')) {
-        selectedData = weather.windSpeed > 30 || weather.visibility < 1 ? weather : traffic;
-        selectedType = weather.windSpeed > 30 || weather.visibility < 1 ? 'weather' : 'traffic';
+      // Evaluate weather severity (enhanced weather is always good for excuses)
+      const isWeatherExcuseWorthy = enhancedWeather?.severity === 'enhanced' || 
+                                   weather.windSpeed > 25 || 
+                                   weather.visibility < 2 ||
+                                   weather.condition === 'Thunderstorm' ||
+                                   weather.condition === 'Snow' ||
+                                   weather.description.includes('heavy');
+      
+      // Evaluate traffic severity
+      const isTrafficSevere = traffic.delay.includes('60') || 
+                             traffic.delay.includes('45') ||
+                             traffic.description.includes('accident') ||
+                             traffic.description.includes('closure');
+      
+      if (isWeatherExcuseWorthy && isTrafficSevere) {
+        // Both are good - choose based on tone preference
+        if (tone === 'dramatic' || tone === 'funny') {
+          selectedType = 'weather'; // Weather is more dramatic/funny
+          selectedData = weather;
+        } else {
+          selectedType = Math.random() > 0.5 ? 'weather' : 'traffic';
+          selectedData = selectedType === 'weather' ? weather : traffic;
+        }
+      } else if (isWeatherExcuseWorthy) {
+        selectedType = 'weather';
+        selectedData = weather;
+      } else if (isTrafficSevere) {
+        selectedType = 'traffic';
+        selectedData = traffic;
       } else {
-        // Random selection if both are moderate
-        selectedType = Math.random() > 0.5 ? 'weather' : 'traffic';
-        selectedData = selectedType === 'weather' ? weather : traffic;
+        // Neither is particularly severe - prefer weather (since we enhance it)
+        selectedType = 'weather';
+        selectedData = weather;
       }
     } else {
       selectedData = weather || traffic;
