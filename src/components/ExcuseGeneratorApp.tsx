@@ -3926,11 +3926,21 @@ export default function ExcuseGeneratorApp() {
       console.log('Using location for medical certificate:', locationForImage);
 
       // Generate medical certificate with user's name
-      const proofImage = await generateMedicalDocumentImage(patientName.trim(), locationForImage, patientDateOfBirth);
+      console.log('About to call generateMedicalDocumentImage...');
+      let proofImage;
+      try {
+        proofImage = generateMedicalDocumentImage(patientName.trim(), locationForImage, patientDateOfBirth);
+      } catch (imageError) {
+        console.error('Error in generateMedicalDocumentImage:', imageError);
+        alert('Error generating medical certificate image: ' + (imageError instanceof Error ? imageError.message : String(imageError)));
+        return;
+      }
       
       console.log('Medical document image result:', proofImage ? 'Generated successfully' : 'Failed to generate');
+      console.log('ProofImage type:', typeof proofImage);
+      console.log('ProofImage length:', proofImage ? proofImage.length : 'null');
       
-      if (proofImage) {
+      if (proofImage && proofImage.length > 0) {
         console.log('Setting generated proof with medical certificate');
         setGeneratedProof({
           type: 'Medical Certificate',
@@ -3940,8 +3950,10 @@ export default function ExcuseGeneratorApp() {
         
         // Show success message
         console.log('Medical certificate generated successfully');
+        alert('✅ Medical certificate generated successfully!');
       } else {
         console.error('Failed to generate medical certificate image');
+        console.error('ProofImage details:', proofImage);
         alert('Failed to generate medical certificate image. Please try again.');
       }
       
