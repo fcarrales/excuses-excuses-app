@@ -3859,43 +3859,74 @@ export default function ExcuseGeneratorApp() {
     ctx.fillText('I hereby certify that the above patient was examined by me on the date stated', 90, 925);
     ctx.fillText('above and that the medical findings and recommendations are accurate.', 90, 945);
     
-    // Physician signature - handwritten style
-    // Draw handwritten signature
+    // Physician signature - unique for each doctor
     ctx.strokeStyle = '#1e3a8a';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
-    // Create signature path (cursive-style)
+    // Generate unique signature based on doctor's name
     ctx.beginPath();
-    // First letter (large)
-    ctx.moveTo(110, 965);
-    ctx.bezierCurveTo(115, 955, 125, 960, 130, 970);
-    ctx.bezierCurveTo(135, 980, 140, 975, 145, 965);
     
-    // Middle part (flowing)
-    ctx.moveTo(150, 970);
-    ctx.bezierCurveTo(160, 965, 170, 975, 180, 970);
-    ctx.bezierCurveTo(190, 965, 200, 980, 210, 970);
-    ctx.bezierCurveTo(220, 960, 230, 975, 240, 970);
-    
-    // Last name initial (larger)
-    ctx.moveTo(260, 960);
-    ctx.bezierCurveTo(270, 950, 280, 965, 285, 975);
-    ctx.bezierCurveTo(290, 985, 295, 970, 300, 960);
-    
-    // Final flourish
-    ctx.moveTo(305, 970);
-    ctx.bezierCurveTo(320, 965, 335, 980, 350, 975);
-    ctx.bezierCurveTo(360, 970, 365, 965, 370, 970);
+    if (selectedDoctor.last === 'Johnson') {
+      // Dr. Sarah Johnson - flowing, elegant signature
+      ctx.moveTo(110, 965);
+      ctx.bezierCurveTo(120, 955, 135, 970, 145, 960);
+      ctx.bezierCurveTo(155, 950, 170, 975, 180, 965);
+      ctx.moveTo(190, 970);
+      ctx.bezierCurveTo(210, 960, 230, 980, 250, 970);
+      ctx.bezierCurveTo(270, 960, 285, 975, 300, 965);
+      // Add dot
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.arc(305, 968, 1, 0, 2 * Math.PI);
+      ctx.fill();
+    } else if (selectedDoctor.last === 'Smith') {
+      // Dr. Michael Smith - bold, angular signature
+      ctx.moveTo(110, 970);
+      ctx.lineTo(125, 955);
+      ctx.lineTo(140, 975);
+      ctx.lineTo(155, 960);
+      ctx.moveTo(170, 965);
+      ctx.bezierCurveTo(185, 955, 200, 980, 215, 965);
+      ctx.bezierCurveTo(230, 950, 245, 975, 260, 965);
+      ctx.moveTo(270, 970);
+      ctx.bezierCurveTo(285, 965, 300, 970, 315, 965);
+    } else if (selectedDoctor.last === 'Williams') {
+      // Dr. Emily Williams - loops and curves
+      ctx.moveTo(110, 970);
+      ctx.bezierCurveTo(115, 960, 125, 975, 135, 965);
+      ctx.bezierCurveTo(145, 955, 160, 980, 175, 970);
+      ctx.moveTo(185, 965);
+      ctx.bezierCurveTo(200, 950, 220, 985, 240, 965);
+      ctx.bezierCurveTo(260, 945, 280, 980, 300, 970);
+      // Add flourish
+      ctx.moveTo(305, 965);
+      ctx.bezierCurveTo(315, 960, 325, 975, 335, 970);
+    } else if (selectedDoctor.last === 'Brown') {
+      // Dr. David Brown - compact, professional
+      ctx.moveTo(110, 968);
+      ctx.bezierCurveTo(125, 958, 140, 978, 155, 968);
+      ctx.moveTo(165, 970);
+      ctx.bezierCurveTo(180, 965, 195, 975, 210, 970);
+      ctx.bezierCurveTo(225, 965, 240, 975, 255, 970);
+      ctx.moveTo(265, 968);
+      ctx.lineTo(285, 968);
+      // Add underline
+      ctx.moveTo(110, 975);
+      ctx.lineTo(290, 975);
+    } else { // Dr. Lisa Davis - default signature with loops
+      ctx.moveTo(110, 965);
+      ctx.bezierCurveTo(120, 950, 140, 980, 160, 965);
+      ctx.moveTo(170, 970);
+      ctx.bezierCurveTo(185, 960, 205, 980, 225, 970);
+      ctx.bezierCurveTo(245, 960, 265, 980, 285, 970);
+      // Add circle flourish
+      ctx.moveTo(295, 968);
+      ctx.arc(300, 968, 5, 0, 2 * Math.PI);
+    }
     
     ctx.stroke();
-    
-    // Add some signature dots/marks for authenticity
-    ctx.fillStyle = '#1e3a8a';
-    ctx.beginPath();
-    ctx.arc(375, 968, 1, 0, 2 * Math.PI);
-    ctx.fill();
     
     // Signature area
     ctx.strokeStyle = '#374151';
