@@ -2034,14 +2034,31 @@ export default function ExcuseGeneratorApp() {
       // Modify excuse based on type (late/absent) for all situations
       if (excuseType) {
         if (excuseType === 'late') {
-          // Add late-specific prefix/modification
+          // Ensure excuse is late-oriented
           if (!finalExcuse.toLowerCase().includes('late') && !finalExcuse.toLowerCase().includes('delayed') && !finalExcuse.toLowerCase().includes('running')) {
             finalExcuse = `I'll be running late because ${finalExcuse.charAt(0).toLowerCase()}${finalExcuse.slice(1)}`;
           }
         } else if (excuseType === 'absent') {
-          // Add absent-specific prefix/modification
-          if (!finalExcuse.toLowerCase().includes('won\'t') && !finalExcuse.toLowerCase().includes('can\'t') && !finalExcuse.toLowerCase().includes('unable')) {
-            finalExcuse = `I won't be able to make it today - ${finalExcuse.charAt(0).toLowerCase()}${finalExcuse.slice(1)}`;
+          // Transform excuse to be absent-oriented
+          // First, remove any late-specific language
+          let modifiedExcuse = finalExcuse
+            .replace(/I'll be late/gi, 'there are issues')
+            .replace(/I'll be running late/gi, 'there are problems')
+            .replace(/running late/gi, 'having issues')
+            .replace(/be late/gi, 'have problems')
+            .replace(/late/gi, 'unavailable')
+            .replace(/delay/gi, 'problem')
+            .replace(/delayed/gi, 'problematic');
+          
+          // If the excuse doesn't already indicate absence, add absent-specific framing
+          if (!modifiedExcuse.toLowerCase().includes('won\'t') && 
+              !modifiedExcuse.toLowerCase().includes('can\'t') && 
+              !modifiedExcuse.toLowerCase().includes('unable') &&
+              !modifiedExcuse.toLowerCase().includes('not coming') &&
+              !modifiedExcuse.toLowerCase().includes('not making')) {
+            finalExcuse = `I won't be able to make it today - ${modifiedExcuse.charAt(0).toLowerCase()}${modifiedExcuse.slice(1)}`;
+          } else {
+            finalExcuse = modifiedExcuse;
           }
         }
       }
