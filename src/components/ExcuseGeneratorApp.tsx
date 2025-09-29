@@ -342,7 +342,7 @@ export default function ExcuseGeneratorApp() {
   // Translations for the entire app interface
   const translations = {
     en: {
-      // App title
+      // App title - no emoji
       appTitle: "Excuses, Excuses!",
       appSubtitle: "The Professional Excuse Generator",
       
