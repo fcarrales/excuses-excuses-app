@@ -2212,6 +2212,228 @@ export default function ExcuseGeneratorApp() {
           "Sto conducendo una battaglia eroica contro microbi invisibili!"
         ]
       }
+    },
+    pt: {
+      work: {
+        funny: [
+          "Meu WiFi teve medo do palco durante a reunião.",
+          "Meu gato agendou uma reunião de emergência no meu teclado.",
+          "Estou preso em um elevador com péssima recepção... de novo.",
+          "Minha máquina de café está me fazendo refém até eu consertá-la."
+        ],
+        professional: [
+          "Estou lidando com problemas técnicos inesperados e me juntarei em breve.",
+          "Tenho uma questão urgente de cliente que requer atenção imediata.",
+          "Estou enfrentando problemas de conectividade e preciso resolvê-los primeiro.",
+          "Preciso lidar com uma entrega urgente do projeto antes de me juntar."
+        ],
+        believable: [
+          "O trânsito estava mais pesado que o esperado, vou me atrasar.",
+          "Meu trem/ônibus está significativamente atrasado.",
+          "Tenho uma emergência familiar que preciso resolver rapidamente.",
+          "Meu carro não liga, estou organizando transporte alternativo."
+        ],
+        dramatic: [
+          "O universo está claramente conspirando contra minha presença hoje!",
+          "Estou preso em um labirinto de desvios de construção!",
+          "Minha manhã inteira foi uma série de eventos catastróficos!",
+          "Poderes superiores decidiram que hoje não é meu dia de brilhar!"
+        ]
+      },
+      weather: {
+        funny: [
+          "Mãe Natureza está tendo um acesso de raiva e estou na zona de perigo!",
+          "Está chovendo cães e gatos, e sou alérgico a ambos!",
+          "O tempo está tentando me transformar em um picolé humano!",
+          "Acho que Zeus está mirando pessoalmente no meu carro!"
+        ],
+        professional: [
+          "Condições climáticas adversas estão afetando viagens seguras.",
+          "Recebi alertas meteorológicos oficiais desaconselhando viagens não essenciais.",
+          "Condições de visibilidade reduzida tornam as viagens perigosas.",
+          "Previsões meteorológicas indicam condições rodoviárias perigosas."
+        ],
+        believable: [
+          "Há uma tempestade severa na minha área, viajar é perigoso.",
+          "O tempo causou fechamentos de estradas na minha rota usual.",
+          "Há enchentes localizadas bloqueando várias estradas principais.",
+          "Ventos fortes derrubaram linhas de energia na minha rota."
+        ],
+        dramatic: [
+          "Os céus se abriram e estão desencadeando sua fúria sobre mim!",
+          "Estou preso no balé violento da natureza!",
+          "Os deuses da tempestade me escolheram como alvo pessoal!",
+          "Estou pego em uma batalha épica entre os próprios elementos!",
+          "Mãe Natureza está tendo um colapso total e estou na zona de explosão!",
+          "O tempo conspirou para criar uma tempestade perfeita de inconveniências!"
+        ]
+      },
+      traffic: {
+        funny: [
+          "Estou preso no trânsito tão ruim que comecei uma pequena civilização no meu carro.",
+          "A rodovia se tornou um estacionamento muito caro.",
+          "Estou me movendo mais devagar que um computador Windows 95 carregando internet.",
+          "O trânsito está tão travado que envelheci três anos na última hora.",
+          "Estou preso no que parece ser o desfile mais lento do mundo."
+        ],
+        professional: [
+          "Estou enfrentando atrasos significativos no trânsito afetando meu horário de chegada.",
+          "Um grande acidente de trânsito fechou minha rota usual.",
+          "As condições atuais de trânsito excedem as estimativas normais de tempo.",
+          "Preciso pegar uma rota alternativa devido a fechamentos inesperados de estradas."
+        ],
+        believable: [
+          "Houve um grande acidente na rodovia causando atrasos enormes.",
+          "Trabalhos inesperados na estrada fecharam várias pistas na minha rota.",
+          "Estou preso no trânsito devido a um evento especial na cidade.",
+          "Minha rota usual está fechada devido a uma emergência de serviços públicos."
+        ],
+        dramatic: [
+          "Estou preso no apocalipse automotivo!",
+          "A rodovia se transformou em um cemitério infinito de carros!",
+          "Mal estou sobrevivendo à guerra do trânsito!",
+          "A civilização entrou em colapso e só resta este estacionamento gigante!",
+          "Estou preso na versão automotiva do Inferno de Dante!"
+        ]
+      },
+      medical: {
+        funny: [
+          "Meu médico diz que tenho alergia aguda a reuniões matinais.",
+          "Desenvolvi uma condição rara chamada 'Desculpite' crônica.",
+          "Meus sintomas incluem aversão severa a obrigações.",
+          "Dr. Desculpa me prescreveu um dia obrigatório de descanso."
+        ],
+        professional: [
+          "Tenho consulta médica para uma condição que requer atenção imediata.",
+          "Estou apresentando sintomas que justificam cuidados médicos profissionais.",
+          "Meu médico me aconselhou descanso devido a problemas de saúde recentes.",
+          "Preciso de cuidados médicos para uma condição que se desenvolveu repentinamente."
+        ],
+        believable: [
+          "Realmente não me sinto bem e acho melhor ficar em casa.",
+          "Tenho sintomas que podem ser contagiosos, é melhor eu ficar isolado.",
+          "Meu médico recomendou que eu ficasse em casa para me recuperar.",
+          "Tenho uma condição médica que requer descanso e recuperação."
+        ],
+        dramatic: [
+          "Estou lutando contra uma doença misteriosa que confunde médicos!",
+          "Meu corpo se rebelou contra mim numa revolta biológica!",
+          "Estou à beira do abismo médico lutando pela sobrevivência!",
+          "As forças da doença lançaram um ataque surpresa ao meu bem-estar!",
+          "Estou conduzindo uma batalha heróica contra micróbios invisíveis!"
+        ]
+      }
+    },
+    ru: {
+      work: {
+        funny: [
+          "Мой WiFi испытывает страх сцены во время встречи.",
+          "Мой кот запланировал экстренное совещание на моей клавиатуре.",
+          "Я застрял в лифте с ужасным приемом... опять.",
+          "Моя кофемашина держит меня в заложниках, пока я ее не починю."
+        ],
+        professional: [
+          "Я решаю неожиданные технические проблемы и скоро присоединюсь.",
+          "У меня срочный клиентский вопрос, требующий немедленного внимания.",
+          "У меня проблемы с подключением, и мне нужно их сначала решить.",
+          "Мне нужно заняться срочной задачей проекта перед присоединением."
+        ],
+        believable: [
+          "Трафик был плотнее, чем ожидалось, я опоздаю.",
+          "Мой поезд/автобус значительно задерживается.",
+          "У меня семейная экстренная ситуация, которую нужно быстро решить.",
+          "Моя машина не заводится, я организую альтернативный транспорт."
+        ],
+        dramatic: [
+          "Вселенная явно заговорила против моего присутствия сегодня!",
+          "Я застрял в лабиринте строительных объездов!",
+          "Все мое утро было серией катастрофических событий!",
+          "Высшие силы решили, что сегодня не мой день сиять!"
+        ]
+      },
+      weather: {
+        funny: [
+          "Мать-природа устраивает истерику, а я в опасной зоне!",
+          "Льет как из ведра кошек и собак, а у меня аллергия на обоих!",
+          "Погода пытается превратить меня в человеческое эскимо!",
+          "Думаю, Зевс лично целится в мою машину!"
+        ],
+        professional: [
+          "Неблагоприятные погодные условия влияют на безопасное передвижение.",
+          "Я получил официальные предупреждения о погоде, не рекомендующие несущественные поездки.",
+          "Условия ограниченной видимости делают поездки опасными.",
+          "Прогнозы погоды показывают опасные дорожные условия."
+        ],
+        believable: [
+          "В моем районе сильная буря, путешествовать опасно.",
+          "Погода вызвала закрытие дорог на моем обычном маршруте.",
+          "Есть локальные наводнения, блокирующие несколько основных дорог.",
+          "Сильные ветры повалили линии электропередач на моем маршруте."
+        ],
+        dramatic: [
+          "Небеса открылись и обрушивают свою ярость на меня!",
+          "Я попал в ловушку жестокого балета природы!",
+          "Боги бури выбрали меня своей личной мишенью!",
+          "Я попал в эпическую битву между самими стихиями!",
+          "Мать-природа устраивает полный срыв, а я в зоне взрыва!",
+          "Погода сговорилась создать идеальный шторм неудобств!"
+        ]
+      },
+      traffic: {
+        funny: [
+          "Я застрял в пробке настолько ужасной, что основал маленькую цивилизацию в своей машине.",
+          "Шоссе превратилось в очень дорогую парковку.",
+          "Я двигаюсь медленнее, чем компьютер Windows 95, загружающий интернет.",
+          "Пробка такая плотная, что я постарел на три года за последний час.",
+          "Я попал в ловушку того, что кажется самым медленным парадом в мире."
+        ],
+        professional: [
+          "Я сталкиваюсь с значительными задержками в трафике, влияющими на время прибытия.",
+          "Крупное дорожно-транспортное происшествие закрыло мой обычный маршрут.",
+          "Текущие условия движения превышают обычные временные оценки.",
+          "Мне нужно выбрать альтернативный маршрут из-за неожиданных закрытий дорог."
+        ],
+        believable: [
+          "На шоссе произошла крупная авария, вызвавшая огромные задержки.",
+          "Неожиданные дорожные работы закрыли несколько полос на моем маршруте.",
+          "Я застрял в пробке из-за специального события в городе.",
+          "Мой обычный маршрут закрыт из-за аварийной ситуации коммунальных служб."
+        ],
+        dramatic: [
+          "Я попал в ловушку автомобильного апокалипсиса!",
+          "Шоссе превратилось в бесконечное кладбище машин!",
+          "Я едва выживаю в войне пробок!",
+          "Цивилизация рухнула, и осталась только эта гигантская парковка!",
+          "Я застрял в автомобильной версии Ада Данте!"
+        ]
+      },
+      medical: {
+        funny: [
+          "Мой врач говорит, у меня острая аллергия на утренние встречи.",
+          "Я развил редкое заболевание под названием хроническая 'Отмазкит'.",
+          "Мои симптомы включают серьезное отвращение к обязательствам.",
+          "Доктор Отмазка прописал мне обязательный день отдыха."
+        ],
+        professional: [
+          "У меня медицинский прием по состоянию, требующему немедленного внимания.",
+          "У меня есть симптомы, оправдывающие профессиональную медицинскую помощь.",
+          "Мой врач посоветовал мне отдых из-за недавних проблем со здоровьем.",
+          "Мне нужна медицинская помощь по состоянию, которое внезапно развилось."
+        ],
+        believable: [
+          "Я действительно плохо себя чувствую и думаю, лучше остаться дома.",
+          "У меня есть симптомы, которые могут быть заразными, лучше изолироваться.",
+          "Мой врач рекомендовал остаться дома для восстановления.",
+          "У меня медицинское состояние, требующее отдыха и восстановления."
+        ],
+        dramatic: [
+          "Я борюсь с загадочной болезнью, которая ставит врачей в тупик!",
+          "Мое тело восстало против меня в биологическом мятеже!",
+          "Я на краю медицинской пропасти, борюсь за выживание!",
+          "Силы болезни начали внезапную атаку на мое благополучие!",
+          "Я веду героическую битву против невидимых микробов!"
+        ]
+      }
     }
   };
 
