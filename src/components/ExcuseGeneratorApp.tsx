@@ -43,6 +43,16 @@ export default function ExcuseGeneratorApp() {
       } catch (error) {
         console.warn(`localStorage.setItem failed for key "${key}":`, error);
       }
+    },
+    removeItem: (key: string) => {
+      if (!safeLocalStorage.isAvailable()) {
+        return;
+      }
+      try {
+        window.localStorage.removeItem(key);
+      } catch (error) {
+        console.warn(`localStorage.removeItem failed for key "${key}":`, error);
+      }
     }
   };
 
@@ -52,6 +62,26 @@ export default function ExcuseGeneratorApp() {
   const [excuse, setExcuse] = useState("");
   const [showPremium, setShowPremium] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [shareAnalytics, setShareAnalytics] = useState<{[platform: string]: number}>({});
+  
+  // Email capture states
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  
+  // Referral system states
+  const [showReferrals, setShowReferrals] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
+  const [referralStats, setReferralStats] = useState({
+    totalReferrals: 0,
+    successfulReferrals: 0,
+    totalRewards: 0,
+    rewardBalance: 0
+  });
+  const [referredBy, setReferredBy] = useState('');
+  const [referralRewards, setReferralRewards] = useState<{date: Date, reward: string, reason: string, fromUser?: string}[]>([]);
+  
   const [onboarding, setOnboarding] = useState(() => {
     // Check URL parameter for forcing onboarding
     if (typeof window !== 'undefined') {
@@ -66,6 +96,14 @@ export default function ExcuseGeneratorApp() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [dailyExcuse, setDailyExcuse] = useState("");
   const [copied, setCopied] = useState(false);
+  
+  // Tutorial/Onboarding states
+  const [showTutorial, setShowTutorial] = useState(() => {
+    const hasSeenTutorial = safeLocalStorage.getItem('hasSeenTutorial');
+    return hasSeenTutorial !== 'true';
+  });
+  const [tutorialStep, setTutorialStep] = useState(0);
+  const [tutorialHighlight, setTutorialHighlight] = useState<string>('');
   const [excuseHistory, setExcuseHistory] = useState<{excuse: string, timestamp: Date, situation: string, tone: string}[]>([]);
   const [excuseRatings, setExcuseRatings] = useState<{[excuse: string]: {rating: 'up' | 'down', timestamp: Date}}>({});
   const [currentExcuseRated, setCurrentExcuseRated] = useState<'up' | 'down' | null>(null);
@@ -336,7 +374,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 Funny",
         professional: "💼 Professional",
         believable: "✅ Believable", 
-        dramatic: "🎭 Dramatic"
+        dramatic: "� Dramatic"
       },
       
       // Excuse Types
@@ -439,7 +477,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Funny & Hilarious",
       professionalStyle: "💼 Professional & Polished",
       believableStyle: "✅ Believable & Realistic", 
-      dramaticStyle: "🎭 Dramatic & Over-the-Top"
+      dramaticStyle: "� Dramatic & Over-the-Top"
     },
     es: {
       // App title
@@ -474,7 +512,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 Divertido",
         professional: "💼 Profesional",
         believable: "✅ Creíble",
-        dramatic: "🎭 Dramático"
+        dramatic: "� Dramático"
       },
       
       // Excuse Types
@@ -557,7 +595,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Divertido e Hilarante",
       professionalStyle: "💼 Profesional y Pulido",
       believableStyle: "✅ Creíble y Realista", 
-      dramaticStyle: "🎭 Dramático y Exagerado"
+      dramaticStyle: "� Dramático y Exagerado"
     },
     fr: {
       // App title
@@ -592,7 +630,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 Amusant",
         professional: "💼 Professionnel",
         believable: "✅ Crédible",
-        dramatic: "🎭 Dramatique"
+        dramatic: "� Dramatique"
       },
       
       // Excuse Types
@@ -675,7 +713,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Amusant et Hilarant",
       professionalStyle: "💼 Professionnel et Poli",
       believableStyle: "✅ Crédible et Réaliste", 
-      dramaticStyle: "🎭 Dramatique et Exagéré"
+      dramaticStyle: "� Dramatique et Exagéré"
     },
     de: {
       // App title
@@ -710,7 +748,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 Lustig",
         professional: "💼 Professionell", 
         believable: "✅ Glaubwürdig",
-        dramatic: "🎭 Dramatisch"
+        dramatic: "� Dramatisch"
       },
       
       // Excuse Types
@@ -793,7 +831,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Lustig und Urkomisch",
       professionalStyle: "💼 Professionell und Gepflegt",
       believableStyle: "✅ Glaubwürdig und Realistisch", 
-      dramaticStyle: "🎭 Dramatisch und Übertrieben"
+      dramaticStyle: "� Dramatisch und Übertrieben"
     },
     it: {
       // App title
@@ -828,7 +866,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 Divertente",
         professional: "💼 Professionale",
         believable: "✅ Credibile",
-        dramatic: "🎭 Drammatico"
+        dramatic: "� Drammatico"
       },
       
       // Excuse Types
@@ -911,7 +949,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Divertente e Esilarante",
       professionalStyle: "💼 Professionale e Raffinato",
       believableStyle: "✅ Credibile e Realistico", 
-      dramaticStyle: "🎭 Drammatico e Esagerato"
+      dramaticStyle: "� Drammatico e Esagerato"
     },
     pt: {
       // App title
@@ -946,7 +984,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 Engraçado",
         professional: "💼 Profissional",
         believable: "✅ Acreditável",
-        dramatic: "🎭 Dramático"
+        dramatic: "� Dramático"
       },
       
       // Excuse Types
@@ -1029,7 +1067,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Engraçado e Hilário",
       professionalStyle: "💼 Profissional e Polido",
       believableStyle: "✅ Acreditável e Realista", 
-      dramaticStyle: "🎭 Dramático e Exagerado"
+      dramaticStyle: "� Dramático e Exagerado"
     },
     ru: {
       // App title
@@ -1064,7 +1102,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 Смешной",
         professional: "💼 Профессиональный",
         believable: "✅ Правдоподобный",
-        dramatic: "🎭 Драматичный"
+        dramatic: "� Драматичный"
       },
       
       // Excuse Types
@@ -1147,7 +1185,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Смешно и Весело",
       professionalStyle: "💼 Профессионально и Изящно",
       believableStyle: "✅ Правдоподобно и Реалистично", 
-      dramaticStyle: "🎭 Драматично и Преувеличенно"
+      dramaticStyle: "� Драматично и Преувеличенно"
     },
     ja: {
       // App title
@@ -1182,7 +1220,7 @@ export default function ExcuseGeneratorApp() {
         funny: "😂 面白い",
         professional: "💼 プロフェッショナル",
         believable: "✅ 信頼できる",
-        dramatic: "🎭 ドラマチック"
+        dramatic: "� ドラマチック"
       },
       
       // Excuse Types
@@ -1265,7 +1303,7 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 面白くてユーモラス",
       professionalStyle: "💼 プロフェッショナルで洗練",
       believableStyle: "✅ 信憑性があり現実的", 
-      dramaticStyle: "🎭 ドラマチックで大袈裟"
+      dramaticStyle: "� ドラマチックで大袈裟"
     }
   };
 
@@ -2079,6 +2117,32 @@ export default function ExcuseGeneratorApp() {
       setExcuse(finalExcuse);
       setCurrentExcuseRated(null); // Reset rating visual feedback for new excuse
       
+      // Check if we should show email capture
+      setTimeout(() => {
+        if (shouldShowEmailCapture()) {
+          setShowEmailCapture(true);
+        }
+      }, 1000); // Show after 1 second delay for better UX
+      
+      // Award referral rewards at milestones
+      const excuseCount = excuseHistory.length + 1;
+      if (excuseCount === 5 && Math.random() > 0.7) {
+        // Simulate someone using your referral code
+        setTimeout(() => {
+          awardReferralReward('Someone used your referral code!', 'Premium Day', 'CleverUser123');
+          setReferralStats(prev => ({
+            ...prev,
+            totalReferrals: prev.totalReferrals + 1,
+            successfulReferrals: prev.successfulReferrals + 1
+          }));
+        }, 3000);
+      } else if (excuseCount === 10 && Math.random() > 0.8) {
+        // Bonus reward for active usage
+        setTimeout(() => {
+          awardReferralReward('Bonus for being an active user!', 'Premium Day');
+        }, 2000);
+      }
+      
       // Track usage analytics
       trackUsageAnalytics(situation, tone, finalExcuse);
       
@@ -2129,6 +2193,79 @@ export default function ExcuseGeneratorApp() {
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
+  };
+
+  // Tutorial/Onboarding functions
+  const tutorialSteps = [
+    {
+      title: "Welcome to Excuses, Excuses! �",
+      content: "Your ultimate excuse generator for any situation! Let's take a quick tour.",
+      highlight: "",
+      action: "Get Started"
+    },
+    {
+      title: "Choose Your Situation 📍",
+      content: "First, select whether you need an excuse for work, school, or social events.",
+      highlight: "situation-select",
+      action: "Next"
+    },
+    {
+      title: "Pick Late or Absent 🕐",
+      content: "Tell us if you'll be running late or completely absent today.",
+      highlight: "excuse-type-select", 
+      action: "Next"
+    },
+    {
+      title: "Select Your Style 🎨",
+      content: "Choose how you want your excuse to sound - funny, professional, believable, or dramatic!",
+      highlight: "tone-select",
+      action: "Next"
+    },
+    {
+      title: "Generate Your Excuse! ⚡",
+      content: "Click this button to create the perfect excuse for your situation.",
+      highlight: "generate-button",
+      action: "Try It!"
+    },
+    {
+      title: "Premium Features 💎",
+      content: "Unlock visual proofs, weather alerts, traffic citations, and medical certificates!",
+      highlight: "premium-tools",
+      action: "Explore"
+    },
+    {
+      title: "You're All Set! 🎉",
+      content: "Enjoy generating perfect excuses! Pro tip: Try different styles to find your favorite.",
+      highlight: "",
+      action: "Start Using"
+    }
+  ];
+
+  const nextTutorialStep = () => {
+    if (tutorialStep < tutorialSteps.length - 1) {
+      setTutorialStep(tutorialStep + 1);
+      setTutorialHighlight(tutorialSteps[tutorialStep + 1].highlight);
+    } else {
+      completeTutorial();
+    }
+  };
+
+  const skipTutorial = () => {
+    completeTutorial();
+  };
+
+  const completeTutorial = () => {
+    setShowTutorial(false);
+    setTutorialStep(0);
+    setTutorialHighlight('');
+    safeLocalStorage.setItem('hasSeenTutorial', 'true');
+  };
+
+  const restartTutorial = () => {
+    setShowTutorial(true);
+    setTutorialStep(0);
+    setTutorialHighlight(tutorialSteps[0].highlight);
+    safeLocalStorage.removeItem('hasSeenTutorial');
   };
 
   const sendAsSMS = (text: string, phoneNumber?: string) => {
@@ -2807,47 +2944,270 @@ export default function ExcuseGeneratorApp() {
     }));
   };
 
+  // Track share analytics
+  const trackShare = (platform: string) => {
+    setShareAnalytics(prev => ({
+      ...prev,
+      [platform]: (prev[platform] || 0) + 1
+    }));
+    // Store in localStorage
+    const currentStats = safeLocalStorage.getItem('shareAnalytics');
+    const stats = currentStats ? JSON.parse(currentStats) : {};
+    stats[platform] = (stats[platform] || 0) + 1;
+    safeLocalStorage.setItem('shareAnalytics', JSON.stringify(stats));
+  };
+
   const shareViaSMS = (text: string) => {
-    const message = encodeURIComponent(`Check out this excuse: "${text}" 😄`);
+    trackShare('sms');
+    const messages = [
+      `🤭 Perfect excuse alert: "${text}" (You're welcome!)`,
+      `📱 Emergency excuse delivery: "${text}" - Use wisely! 😉`,
+      `🎯 Found this gem for you: "${text}" - Thank me later! 😄`
+    ];
+    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+    const message = encodeURIComponent(randomMessage);
     window.open(`sms:?body=${message}`, '_self');
+    setShowShare(false);
   };
 
   const shareViaEmail = (text: string) => {
-    const subject = encodeURIComponent('Perfect Excuse for You!');
-    const body = encodeURIComponent(`Hey! I found the perfect excuse for you:\n\n"${text}"\n\n😄 Pretty good, right? Generated with Excuses, Excuses!`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+    trackShare('email');
+    const subjects = [
+      '� Perfect Excuse Incoming!',
+      '📧 Emergency Excuse Delivery',
+      '😄 You\'re Going to Love This Excuse'
+    ];
+    const randomSubject = subjects[Math.floor(Math.random() * subjects.length)];
+    const body = encodeURIComponent(`Hey there! 👋\n\nI just generated the perfect excuse and thought you might need it:\n\n"${text}"\n\n😄 Pretty brilliant, right? This was created using Excuses, Excuses! - the ultimate excuse generator.\n\nTry it yourself at ${window.location.href}\n\nCheers! 🎉`);
+    window.open(`mailto:?subject=${encodeURIComponent(randomSubject)}&body=${body}`, '_self');
+    setShowShare(false);
   };
 
   const shareViaTwitter = (text: string) => {
-    const tweet = encodeURIComponent(`"${text}" 😂 #ExcusesExcuses #PerfectExcuse`);
-    window.open(`https://twitter.com/intent/tweet?text=${tweet}`, '_blank');
+    trackShare('twitter');
+    const hashtags = ['ExcusesExcuses', 'PerfectExcuse', 'ExcuseGenerator', 'Genius'];
+    const randomHashtags = hashtags.sort(() => 0.5 - Math.random()).slice(0, 2);
+    const tweet = encodeURIComponent(`"${text}" 😂\n\nGenerated with Excuses, Excuses! �\n\n#${randomHashtags.join(' #')}`);
+    window.open(`https://twitter.com/intent/tweet?text=${tweet}&url=${encodeURIComponent(window.location.href)}`, '_blank');
+    setShowShare(false);
   };
 
   const shareViaFacebook = (text: string) => {
-    const quote = encodeURIComponent(`Check out this perfect excuse: "${text}"`);
+    trackShare('facebook');
+    const quote = encodeURIComponent(`� Check out this brilliantly crafted excuse: "${text}" - Generated with Excuses, Excuses! 😄`);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${quote}`, '_blank');
+    setShowShare(false);
   };
 
   const shareViaWhatsApp = (text: string) => {
-    const message = encodeURIComponent(`Check out this excuse: "${text}" 😄`);
+    trackShare('whatsapp');
+    const emojis = ['🤭', '😄', '�', '😂', '🎯', '📱', '✨'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const message = encodeURIComponent(`${randomEmoji} Perfect excuse incoming: "${text}"\n\nGenerated with Excuses, Excuses! Try it: ${window.location.href}`);
     window.open(`https://wa.me/?text=${message}`, '_blank');
+    setShowShare(false);
+  };
+
+  const shareViaDiscord = (text: string) => {
+    trackShare('discord');
+    const discordMessage = `� **Perfect Excuse Alert!** �\n\n> "${text}"\n\n😄 Generated with Excuses, Excuses! Check it out: ${window.location.href}`;
+    copyToClipboard(discordMessage);
+    alert('Excuse formatted for Discord and copied to clipboard! 📋');
+    setShowShare(false);
+  };
+
+  const shareViaSlack = (text: string) => {
+    trackShare('slack');
+    const slackMessage = `:performing_arts: *Perfect Excuse Alert!* :performing_arts:\n\n> "${text}"\n\n:laughing: Generated with Excuses, Excuses! <${window.location.href}|Try it yourself>`;
+    copyToClipboard(slackMessage);
+    alert('Excuse formatted for Slack and copied to clipboard! 📋');
+    setShowShare(false);
   };
 
   const shareNative = async (text: string) => {
-    if (typeof navigator !== 'undefined' && 'share' in navigator && navigator.share) {
+    trackShare('native');
+    if (typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          title: 'Perfect Excuse!',
-          text: `"${text}" 😄`,
+          title: '� Perfect Excuse from Excuses, Excuses!',
+          text: `"${text}" 😄\n\nGenerated with Excuses, Excuses!`,
           url: window.location.href
         });
+        setShowShare(false);
       } catch (err) {
         console.log('Native sharing was cancelled or failed');
+        // Don't close modal if user cancelled
       }
     } else {
-      // Fallback to showing the share screen
+      // Fallback - copy to clipboard with instructions
+      const fullMessage = `� Perfect Excuse: "${text}"\n\n😄 Generated with Excuses, Excuses! Try it: ${window.location.href}`;
+      copyToClipboard(fullMessage);
+      alert('Excuse copied to clipboard! 📋 Paste it anywhere to share.');
+      setShowShare(false);
+    }
+  };
+
+  // Quick share - tries native first, then shows modal
+  const quickShare = async (text: string) => {
+    if (typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function') {
+      await shareNative(text);
+    } else {
       setShowShare(true);
     }
+  };
+
+  // Email capture functionality
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const submitEmail = async (email: string) => {
+    setEmailError('');
+    
+    if (!email.trim()) {
+      setEmailError('Please enter your email address');
+      return;
+    }
+    
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    try {
+      // Store email locally
+      safeLocalStorage.setItem('userEmail', email);
+      safeLocalStorage.setItem('emailSubmittedAt', new Date().toISOString());
+      
+      // In a real app, you'd send this to your backend API
+      // For now, we'll just simulate success
+      setEmailSubmitted(true);
+      setUserEmail(email);
+      
+      // Track email signup
+      trackShare('email-signup');
+      
+      setTimeout(() => {
+        setShowEmailCapture(false);
+      }, 2000);
+      
+    } catch (error) {
+      setEmailError('Something went wrong. Please try again.');
+    }
+  };
+
+  const shouldShowEmailCapture = () => {
+    const emailSubmittedAt = safeLocalStorage.getItem('emailSubmittedAt');
+    const excuseCount = excuseHistory.length;
+    
+    // Show after 3 excuses if email not submitted
+    return !emailSubmittedAt && excuseCount === 3;
+  };
+
+  // Referral system functions
+  const generateReferralCode = (): string => {
+    const adjectives = ['Smart', 'Clever', 'Creative', 'Quick', 'Brilliant', 'Witty', 'Sharp', 'Cool'];
+    const nouns = ['Excuse', 'Master', 'Pro', 'Genius', 'Expert', 'Hero', 'Star', 'Champion'];
+    const numbers = Math.floor(Math.random() * 999) + 1;
+    
+    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+    
+    return `${adjective}${noun}${numbers}`;
+  };
+
+  const initializeReferralCode = () => {
+    if (!referralCode) {
+      const newCode = generateReferralCode();
+      setReferralCode(newCode);
+      safeLocalStorage.setItem('referralCode', newCode);
+      return newCode;
+    }
+    return referralCode;
+  };
+
+  const checkReferralFromURL = () => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+      
+      if (refCode && refCode !== referralCode) {
+        const hasUsedReferral = safeLocalStorage.getItem('hasUsedReferral');
+        if (!hasUsedReferral) {
+          setReferredBy(refCode);
+          safeLocalStorage.setItem('referredBy', refCode);
+          safeLocalStorage.setItem('hasUsedReferral', 'true');
+          
+          // Award bonus to the referrer (simulated)
+          trackShare('referral-used');
+          
+          // Award welcome bonus to new user
+          setTimeout(() => {
+            awardReferralReward('Welcome bonus for joining!', 'Welcome Gift');
+          }, 2000);
+        }
+      }
+    }
+  };
+
+  const awardReferralReward = (reason: string, type: string, fromUser?: string) => {
+    const reward = {
+      date: new Date(),
+      reward: type,
+      reason: reason,
+      fromUser: fromUser
+    };
+    
+    setReferralRewards(prev => [reward, ...prev]);
+    setReferralStats(prev => ({
+      ...prev,
+      totalRewards: prev.totalRewards + 1,
+      rewardBalance: prev.rewardBalance + (type === 'Premium Day' ? 1 : type === 'Premium Week' ? 7 : 0)
+    }));
+    
+    // Store in localStorage
+    const currentRewards = safeLocalStorage.getItem('referralRewards');
+    const rewards = currentRewards ? JSON.parse(currentRewards) : [];
+    rewards.unshift({ ...reward, date: reward.date.toISOString() });
+    safeLocalStorage.setItem('referralRewards', JSON.stringify(rewards));
+  };
+
+  const shareReferralCode = (platform: string) => {
+    const code = initializeReferralCode();
+    const referralURL = `${window.location.origin}?ref=${code}`;
+    const message = `� Check out this amazing excuse generator! Use my referral code to get bonus features: ${referralURL}`;
+    
+    trackShare(`referral-${platform}`);
+    
+    switch (platform) {
+      case 'copy':
+        copyToClipboard(referralURL);
+        break;
+      case 'sms':
+        window.open(`sms:?body=${encodeURIComponent(message)}`, '_self');
+        break;
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        break;
+      case 'email':
+        const subject = encodeURIComponent('� Amazing Excuse Generator - Join me!');
+        const body = encodeURIComponent(`Hey! I found this incredible excuse generator and thought you'd love it!\n\n${message}\n\nYou'll get bonus features when you sign up with my link. Enjoy! 😄`);
+        window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+        break;
+      case 'twitter':
+        const tweet = encodeURIComponent(`� Found the perfect excuse generator! Join me and get bonus features: ${referralURL} #ExcusesExcuses #ReferralBonus`);
+        window.open(`https://twitter.com/intent/tweet?text=${tweet}`, '_blank');
+        break;
+    }
+  };
+
+  const getReferralStats = () => {
+    return {
+      code: referralCode || 'Not generated',
+      url: referralCode ? `${window.location.origin}?ref=${referralCode}` : '',
+      ...referralStats
+    };
   };
 
   const rateExcuse = (excuse: string, rating: 'up' | 'down') => {
@@ -5153,6 +5513,52 @@ ${t.date || 'Date'}: ${currentDate}`
         setExcuseAnalytics(analyticsWithDates);
       }
 
+      const savedShareAnalytics = safeLocalStorage.getItem('shareAnalytics');
+      if (savedShareAnalytics) {
+        setShareAnalytics(JSON.parse(savedShareAnalytics));
+      }
+
+      // Load saved email data
+      const savedEmail = safeLocalStorage.getItem('userEmail');
+      const emailSubmittedAt = safeLocalStorage.getItem('emailSubmittedAt');
+      if (savedEmail && emailSubmittedAt) {
+        setUserEmail(savedEmail);
+        setEmailSubmitted(true);
+      }
+
+      // Load referral data
+      const savedReferralCode = safeLocalStorage.getItem('referralCode');
+      if (savedReferralCode) {
+        setReferralCode(savedReferralCode);
+      } else {
+        // Generate referral code for new users
+        const newCode = generateReferralCode();
+        setReferralCode(newCode);
+        safeLocalStorage.setItem('referralCode', newCode);
+      }
+
+      const savedReferralStats = safeLocalStorage.getItem('referralStats');
+      if (savedReferralStats) {
+        setReferralStats(JSON.parse(savedReferralStats));
+      }
+
+      const savedReferredBy = safeLocalStorage.getItem('referredBy');
+      if (savedReferredBy) {
+        setReferredBy(savedReferredBy);
+      }
+
+      const savedReferralRewards = safeLocalStorage.getItem('referralRewards');
+      if (savedReferralRewards) {
+        const rewards = JSON.parse(savedReferralRewards).map((reward: any) => ({
+          ...reward,
+          date: new Date(reward.date)
+        }));
+        setReferralRewards(rewards);
+      }
+
+      // Check for referral from URL
+      checkReferralFromURL();
+
       const savedAbTestGroups = safeLocalStorage.getItem('abTestGroups');
       if (savedAbTestGroups) {
         setAbTestGroups(JSON.parse(savedAbTestGroups));
@@ -5355,6 +5761,145 @@ ${t.date || 'Date'}: ${currentDate}`
     );
   }
 
+  // Referrals screen
+  if (showReferrals) {
+    const stats = getReferralStats();
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 flex flex-col items-center justify-center p-6">
+        <Card className="w-full max-w-md shadow-xl rounded-2xl">
+          <CardContent className="p-6 space-y-6">
+            <h2 className="text-2xl font-bold flex items-center space-x-2">
+              <Crown className="w-6 h-6 text-purple-500" /> <span>Referral Program</span>
+            </h2>
+
+            {/* Referral Code Section */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">🔗 Your Referral Code</h3>
+              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-700 mb-2">{stats.code}</p>
+                  <p className="text-sm text-gray-600">Share this code to earn rewards!</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => shareReferralCode('copy')}
+                  className="flex items-center space-x-1"
+                >
+                  <Copy className="w-4 h-4" /> <span>Copy Link</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => shareReferralCode('whatsapp')}
+                  className="flex items-center space-x-1"
+                >
+                  <MessageCircle className="w-4 h-4 text-green-600" /> <span>WhatsApp</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => shareReferralCode('sms')}
+                  className="flex items-center space-x-1"
+                >
+                  <MessageCircle className="w-4 h-4" /> <span>SMS</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => shareReferralCode('email')}
+                  className="flex items-center space-x-1"
+                >
+                  <Mail className="w-4 h-4" /> <span>Email</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Stats Section */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">📊 Your Stats</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="text-2xl font-bold text-green-600">{stats.totalReferrals}</div>
+                  <div className="text-xs text-green-700">Total Referrals</div>
+                </div>
+                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-600">{stats.totalRewards}</div>
+                  <div className="text-xs text-blue-700">Rewards Earned</div>
+                </div>
+              </div>
+              
+              {stats.rewardBalance > 0 && (
+                <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="text-lg font-bold text-yellow-600">{stats.rewardBalance} days</div>
+                  <div className="text-xs text-yellow-700">Premium Balance</div>
+                </div>
+              )}
+            </div>
+
+            {/* Rewards History */}
+            {referralRewards.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg">🎁 Recent Rewards</h3>
+                <div className="max-h-40 overflow-y-auto space-y-2">
+                  {referralRewards.slice(0, 5).map((reward, index) => (
+                    <div key={index} className="p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">{reward.reward}</p>
+                          <p className="text-xs text-gray-600">{reward.reason}</p>
+                          {reward.fromUser && (
+                            <p className="text-xs text-purple-600">From: {reward.fromUser}</p>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {reward.date.toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* How it Works */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-lg">💡 How it Works</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start space-x-2">
+                  <span className="font-bold text-purple-600">1.</span>
+                  <span>Share your referral code with friends</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="font-bold text-purple-600">2.</span>
+                  <span>They sign up using your code</span>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="font-bold text-purple-600">3.</span>
+                  <span>You both get premium features & rewards!</span>
+                </div>
+              </div>
+              
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <p className="text-xs text-purple-700 text-center">
+                  🎉 <strong>Bonus:</strong> Every 3 referrals = 1 week of premium free!
+                </p>
+              </div>
+            </div>
+
+            <Button variant="outline" className="w-full" onClick={() => setShowReferrals(false)}>
+              ⬅️ Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Settings/Profile screen
   if (showSettings) {
     return (
@@ -5367,7 +5912,7 @@ ${t.date || 'Date'}: ${currentDate}`
 
             <div className="space-y-4">
               <div>
-                <h3 className="font-semibold mb-2">🎭 Favorite Excuses</h3>
+                <h3 className="font-semibold mb-2">� Favorite Excuses</h3>
                 {favorites.length > 0 ? (
                   <ul className="list-disc pl-6 text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
                     {favorites.map((fav, index) => (
@@ -5459,6 +6004,130 @@ ${t.date || 'Date'}: ${currentDate}`
               </div>
 
               <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold flex items-center space-x-1">
+                    <Share2 className="w-4 h-4" /> <span>Share Analytics</span>
+                  </h3>
+                </div>
+                {(() => {
+                  const savedStats = safeLocalStorage.getItem('shareAnalytics');
+                  const stats = savedStats ? JSON.parse(savedStats) : {};
+                  const totalShares = Object.values(stats).reduce((sum: number, count: any) => sum + (count || 0), 0);
+                  
+                  if (totalShares > 0) {
+                    const sortedPlatforms = Object.entries(stats as {[key: string]: number}).sort((a, b) => (b[1] || 0) - (a[1] || 0));
+                    const platformEmojis: {[key: string]: string} = {
+                      'sms': '📱',
+                      'whatsapp': '💬',
+                      'email': '📧',
+                      'twitter': '🐦',
+                      'facebook': '📘',
+                      'discord': '🎮',
+                      'slack': '💼',
+                      'native': '📲'
+                    };
+                    
+                    return (
+                      <div className="space-y-3">
+                        <div className="text-center p-2 bg-purple-50 rounded border">
+                          <div className="text-purple-600 font-semibold text-lg">{totalShares}</div>
+                          <div className="text-gray-600 text-xs">Total Shares</div>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-medium text-gray-700">📊 Platform Breakdown</h4>
+                          {sortedPlatforms.slice(0, 5).map(([platform, count]: [string, number]) => (
+                            <div key={platform} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded">
+                              <span className="flex items-center space-x-1">
+                                <span>{platformEmojis[platform] || '📤'}</span>
+                                <span className="capitalize">{platform}</span>
+                              </span>
+                              <span className="font-semibold text-purple-600">{count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <p className="text-sm text-gray-500">Share some excuses to see analytics!</p>
+                    );
+                  }
+                })()}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold flex items-center space-x-1">
+                    <Mail className="w-4 h-4" /> <span>Email Updates</span>
+                  </h3>
+                </div>
+                {emailSubmitted ? (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-sm text-green-700">
+                        ✅ <strong>Subscribed:</strong> {userEmail}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-xs" 
+                      onClick={() => {
+                        safeLocalStorage.removeItem('userEmail');
+                        safeLocalStorage.removeItem('emailSubmittedAt');
+                        setEmailSubmitted(false);
+                        setUserEmail('');
+                      }}
+                    >
+                      Unsubscribe
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-700">
+                        📧 Get notified about new features and excuse categories!
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full" 
+                      onClick={() => setShowEmailCapture(true)}
+                    >
+                      📬 Subscribe to Updates
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold flex items-center space-x-1">
+                    <Crown className="w-4 h-4" /> <span>Referral Program</span>
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-purple-700">Your Code: <span className="font-bold">{referralCode}</span></p>
+                      <p className="text-xs text-purple-600">{referralStats.totalReferrals} referrals • {referralStats.totalRewards} rewards earned</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={() => {
+                      setShowSettings(false);
+                      setShowReferrals(true);
+                    }}
+                  >
+                    🎁 Manage Referrals
+                  </Button>
+                </div>
+              </div>
+
+              <div>
                 <h3 className="font-semibold mb-2">👑 Subscription</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -5503,7 +6172,21 @@ ${t.date || 'Date'}: ${currentDate}`
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full mt-4" onClick={() => setShowSettings(false)}>⬅️ Back</Button>
+              <div className="space-y-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-blue-300 text-blue-700 hover:bg-blue-50" 
+                  onClick={() => {
+                    setShowTutorial(true);
+                    setTutorialStep(0);
+                    setShowSettings(false);
+                    safeLocalStorage.removeItem('hasSeenTutorial');
+                  }}
+                >
+                  🎓 Restart Tutorial
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => setShowSettings(false)}>⬅️ Back</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -5700,11 +6383,79 @@ ${t.date || 'Date'}: ${currentDate}`
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 to-pink-100 flex flex-col items-center justify-center p-4 sm:p-6 space-y-4 sm:space-y-6">
+      {/* Tutorial highlight styles */}
+      <style jsx>{`
+        .tutorial-highlight {
+          position: relative;
+          z-index: 40;
+        }
+        .tutorial-highlight::after {
+          content: '';
+          position: absolute;
+          top: -8px;
+          left: -8px;
+          right: -8px;
+          bottom: -8px;
+          border: 3px solid #8b5cf6;
+          border-radius: 12px;
+          animation: pulse 2s infinite;
+          pointer-events: none;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
+      {/* Tutorial Overlay */}
+      {showTutorial && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-sm mx-4 shadow-2xl">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-bold text-purple-600">
+                  {tutorialSteps[tutorialStep].title}
+                </h3>
+                <Button variant="ghost" size="sm" onClick={skipTutorial}>
+                  ✕
+                </Button>
+              </div>
+              
+              <p className="text-gray-700">
+                {tutorialSteps[tutorialStep].content}
+              </p>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">
+                  {tutorialStep + 1} of {tutorialSteps.length}
+                </span>
+                <div className="flex gap-2">
+                  {tutorialStep > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setTutorialStep(tutorialStep - 1)}>
+                      Back
+                    </Button>
+                  )}
+                  <Button size="sm" onClick={nextTutorialStep} className="bg-purple-500 hover:bg-purple-600">
+                    {tutorialSteps[tutorialStep].action}
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${((tutorialStep + 1) / tutorialSteps.length) * 100}%` }}
+                ></div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      
       {/* Main Excuses, Excuses! App */}
       <Card className="w-full max-w-md shadow-xl rounded-2xl">
         <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-xl sm:text-2xl font-bold">🎭 {t.appTitle}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">� {t.appTitle}</h1>
             <div className="flex gap-2">
               <Button 
                 variant="ghost" 
@@ -5715,6 +6466,16 @@ ${t.date || 'Date'}: ${currentDate}`
               >
                 <TestTube className="w-4 h-4" />
                 <span className="hidden sm:inline ml-1 text-xs">Beta</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowReferrals(true)}
+                className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                title="Referral Program"
+              >
+                <Crown className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1 text-xs">Refer</span>
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)}>
                 <Settings className="w-5 h-5" />
@@ -5753,7 +6514,7 @@ ${t.date || 'Date'}: ${currentDate}`
           )}
 
           <div className="space-y-4">
-            <div>
+            <div className={tutorialHighlight === 'situation-select' ? 'tutorial-highlight' : ''}>
               <label htmlFor="situation-select" className="block mb-1 text-sm font-medium">{t.situation}</label>
               <Select onValueChange={(val) => setSituation(val)} value={situation}>
                 <SelectTrigger id="situation-select" aria-label="Choose a situation for your excuse">
@@ -5780,7 +6541,7 @@ ${t.date || 'Date'}: ${currentDate}`
             </div>
 
             {/* Show excuse type selector for all situations */}
-            <div>
+            <div className={tutorialHighlight === 'excuse-type-select' ? 'tutorial-highlight' : ''}>
               <label htmlFor="excuse-type-select" className="block mb-1 text-sm font-medium">{t.excuseTypeLabel}</label>
               <Select onValueChange={(val: 'late' | 'absent') => setExcuseType(val)} value={excuseType}>
                 <SelectTrigger id="excuse-type-select" aria-label="Choose if you will be late or absent">
@@ -5793,7 +6554,7 @@ ${t.date || 'Date'}: ${currentDate}`
               </Select>
             </div>
 
-            <div>
+            <div className={tutorialHighlight === 'tone-select' ? 'tutorial-highlight' : ''}>
               <label htmlFor="tone-select" className="block mb-1 text-sm font-medium">{t.tone}</label>
               <Select onValueChange={(val) => setTone(val)} value={tone}>
                 <SelectTrigger id="tone-select" aria-label="Choose the tone for your excuse">
@@ -5990,7 +6751,8 @@ ${t.date || 'Date'}: ${currentDate}`
             </div>
 
             <Button 
-              className="w-full flex items-center justify-center space-x-2" 
+              id="generate-button"
+              className={`w-full flex items-center justify-center space-x-2 ${tutorialHighlight === 'generate-button' ? 'tutorial-highlight' : ''}`}
               onClick={() => {
                 console.log('Generate button clicked on mobile/desktop');
                 generateExcuse();
@@ -6140,7 +6902,7 @@ ${t.date || 'Date'}: ${currentDate}`
             )}
 
             {(hasFeature('proofGeneration') && subscriptionTier !== 'free') && (
-              <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+              <div id="premium-tools" className={`mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 ${tutorialHighlight === 'premium-tools' ? 'tutorial-highlight' : ''}`}>
                 <h4 className="text-sm font-semibold text-yellow-800 mb-2">✨ Premium Tools</h4>
                 <p className="text-xs text-gray-600 mb-2">Current excuse count: {isPremium ? '240+' : '96'} available</p>
                 
@@ -6253,6 +7015,26 @@ ${t.date || 'Date'}: ${currentDate}`
                 aria-live="polite"
               >
                 <p className="font-medium mb-3" id="generated-excuse">{excuse}</p>
+                
+                {/* Subtle Email Capture Banner - Show after first excuse if not subscribed */}
+                {!emailSubmitted && excuseHistory.length === 1 && (
+                  <div className="mb-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 animate-in slide-in-from-top-1 duration-500">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-blue-700">📬 Want more awesome excuses?</p>
+                        <p className="text-xs text-blue-600">Get notified about new categories & features!</p>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 ml-2" 
+                        onClick={() => setShowEmailCapture(true)}
+                      >
+                        Subscribe
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex justify-center space-x-2 mb-3" role="group" aria-label="Excuse actions">
                   <Button 
                     variant="ghost" 
@@ -6273,7 +7055,12 @@ ${t.date || 'Date'}: ${currentDate}`
                     {copied ? <Check className="w-4 h-4 text-green-500" aria-hidden="true" /> : <Copy className="w-4 h-4 text-blue-500" aria-hidden="true" />} 
                     <span>{copied ? t.copied : "Copy"}</span>
                   </Button>
-                  <Button variant="ghost" size="sm" className="flex items-center space-x-1" onClick={() => setShowShare(true)}>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center space-x-1 hover:bg-purple-50 transition-colors" 
+                    onClick={() => quickShare(excuse)}
+                  >
                     <Share2 className="w-4 h-4 text-purple-500" /> <span>{t.share}</span>
                   </Button>
                 </div>
@@ -6417,58 +7204,213 @@ ${t.date || 'Date'}: ${currentDate}`
         </Card>
       )}
 
-      {/* Share Screen */}
+      {/* Enhanced Share Screen */}
       {showShare && excuse && (
-        <Card className="w-full max-w-md shadow-xl rounded-2xl">
+        <Card className="w-full max-w-md shadow-xl rounded-2xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
           <CardContent className="p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-center">Share Your Excuse</h2>
-            <div className="p-3 bg-gray-50 rounded-lg border text-center">
-              <p className="text-sm font-medium text-gray-800">"{excuse}"</p>
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-purple-600 mb-2">Share Your Perfect Excuse! �</h2>
+              <p className="text-xs text-gray-500">Choose how you'd like to share this masterpiece</p>
             </div>
             
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-600">Quick Actions</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="flex items-center space-x-2 text-sm" onClick={() => copyToClipboard(excuse)}>
-                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />} 
-                  <span>{copied ? t.copied : t.copy}</span>
-                </Button>
-                <Button variant="outline" className="flex items-center space-x-2 text-sm" onClick={() => shareViaSMS(excuse)}>
-                  <MessageCircle className="w-4 h-4" /> <span>SMS</span>
-                </Button>
-                <Button variant="outline" className="flex items-center space-x-2 text-sm" onClick={() => shareViaEmail(excuse)}>
-                  <Mail className="w-4 h-4" /> <span>Email</span>
-                </Button>
-                <Button variant="outline" className="flex items-center space-x-2 text-sm" onClick={() => shareViaWhatsApp(excuse)}>
-                  <MessageCircle className="w-4 h-4 text-green-600" /> <span>WhatsApp</span>
-                </Button>
+            <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+              <p className="text-sm font-medium text-gray-800 text-center italic">"{excuse}"</p>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Quick Actions */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                  ⚡ Quick Actions
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-blue-50 transition-colors" 
+                    onClick={() => copyToClipboard(excuse)}
+                  >
+                    {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-blue-500" />} 
+                    <span>{copied ? t.copied : t.copy}</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-green-50 transition-colors" 
+                    onClick={() => shareViaSMS(excuse)}
+                  >
+                    <MessageCircle className="w-4 h-4 text-green-600" /> <span>SMS</span>
+                  </Button>
+                </div>
               </div>
 
-              <h3 className="text-sm font-medium text-gray-600 pt-2">Social Media</h3>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="flex items-center space-x-2 text-sm" onClick={() => shareViaTwitter(excuse)}>
-                  <Twitter className="w-4 h-4 text-blue-500" /> <span>Twitter</span>
-                </Button>
-                <Button variant="outline" className="flex items-center space-x-2 text-sm" onClick={() => shareViaFacebook(excuse)}>
-                  <Facebook className="w-4 h-4 text-blue-600" /> <span>Facebook</span>
-                </Button>
+              {/* Messaging Apps */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                  💬 Messaging Apps
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-green-50 transition-colors" 
+                    onClick={() => shareViaWhatsApp(excuse)}
+                  >
+                    <MessageCircle className="w-4 h-4 text-green-600" /> <span>WhatsApp</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-indigo-50 transition-colors" 
+                    onClick={() => shareViaDiscord(excuse)}
+                  >
+                    <MessageSquare className="w-4 h-4 text-indigo-600" /> <span>Discord</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-purple-50 transition-colors" 
+                    onClick={() => shareViaSlack(excuse)}
+                  >
+                    <MessageSquare className="w-4 h-4 text-purple-600" /> <span>Slack</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-red-50 transition-colors" 
+                    onClick={() => shareViaEmail(excuse)}
+                  >
+                    <Mail className="w-4 h-4 text-red-500" /> <span>Email</span>
+                  </Button>
+                </div>
               </div>
 
-              {typeof navigator !== 'undefined' && 'share' in navigator && (
-                <>
-                  <h3 className="text-sm font-medium text-gray-600 pt-2">System Share</h3>
-                  <Button variant="outline" className="w-full flex items-center justify-center space-x-2 text-sm" onClick={() => shareNative(excuse)}>
+              {/* Social Media */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                  🌐 Social Media
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-blue-50 transition-colors" 
+                    onClick={() => shareViaTwitter(excuse)}
+                  >
+                    <Twitter className="w-4 h-4 text-blue-500" /> <span>Twitter</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center space-x-2 text-sm hover:bg-blue-50 transition-colors" 
+                    onClick={() => shareViaFacebook(excuse)}
+                  >
+                    <Facebook className="w-4 h-4 text-blue-600" /> <span>Facebook</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Native Share */}
+              {typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function' && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                    📱 More Options
+                  </h3>
+                  <Button 
+                    variant="outline" 
+                    className="w-full flex items-center justify-center space-x-2 text-sm hover:bg-gray-50 transition-colors" 
+                    onClick={() => shareNative(excuse)}
+                  >
                     <Share2 className="w-4 h-4" /> <span>More Apps...</span>
                   </Button>
-                </>
+                </div>
               )}
             </div>
 
-            <Button variant="ghost" className="w-full mt-4" onClick={() => setShowShare(false)}>
+            <Button 
+              variant="ghost" 
+              className="w-full mt-4 hover:bg-gray-50 transition-colors" 
+              onClick={() => setShowShare(false)}
+            >
               ⬅️ Back
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Email Capture Modal */}
+      {showEmailCapture && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md shadow-xl rounded-2xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+            <CardContent className="p-6 space-y-4">
+              {!emailSubmitted ? (
+                <>
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-purple-600 mb-2">🎉 You're on fire!</h2>
+                    <p className="text-gray-600 text-sm">
+                      Want to get notified about new excuse categories, premium features, and updates?
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="email-input" className="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address
+                      </label>
+                      <input
+                        id="email-input"
+                        type="email"
+                        value={userEmail}
+                        onChange={(e) => setUserEmail(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && submitEmail(userEmail)}
+                        placeholder="your@email.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        autoFocus
+                      />
+                      {emailError && (
+                        <p className="text-red-500 text-xs mt-1">{emailError}</p>
+                      )}
+                    </div>
+                    
+                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                      <p className="text-xs text-purple-700 text-center">
+                        ✨ <strong>What you'll get:</strong> New excuse categories, premium features early access, and fun updates (no spam!)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="flex-1" 
+                      onClick={() => setShowEmailCapture(false)}
+                    >
+                      Maybe Later
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" 
+                      onClick={() => submitEmail(userEmail)}
+                    >
+                      Keep Me Updated! 🚀
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500 text-center">
+                    We respect your privacy. Unsubscribe anytime.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="text-center">
+                    <div className="text-4xl mb-2">🎉</div>
+                    <h2 className="text-xl font-bold text-green-600 mb-2">You're all set!</h2>
+                    <p className="text-gray-600 text-sm">
+                      Thanks for subscribing! We'll keep you updated with the coolest new features.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                    <p className="text-sm text-green-700 text-center">
+                      📧 Confirmation sent to <strong>{userEmail}</strong>
+                    </p>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Custom Excuse Modal */}
@@ -6502,7 +7444,7 @@ ${t.date || 'Date'}: ${currentDate}`
                     <SelectItem value="funny">😂 Funny</SelectItem>
                     <SelectItem value="professional">💼 Professional</SelectItem>
                     <SelectItem value="believable">✅ Believable</SelectItem>
-                    <SelectItem value="dramatic">🎭 Dramatic</SelectItem>
+                    <SelectItem value="dramatic">� Dramatic</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -6591,7 +7533,7 @@ ${t.date || 'Date'}: ${currentDate}`
                       <SelectItem value="funny">😂 Funny</SelectItem>
                       <SelectItem value="professional">💼 Professional</SelectItem>
                       <SelectItem value="believable">✅ Believable</SelectItem>
-                      <SelectItem value="dramatic">🎭 Dramatic</SelectItem>
+                      <SelectItem value="dramatic">� Dramatic</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
