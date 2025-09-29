@@ -477,7 +477,40 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Funny & Hilarious",
       professionalStyle: "💼 Professional & Polished",
       believableStyle: "✅ Believable & Realistic", 
-      dramaticStyle: "� Dramatic & Over-the-Top"
+      dramaticStyle: "🎪 Dramatic & Over-the-Top",
+      
+      // Share modal
+      shareYourPerfectExcuse: "Share Your Perfect Excuse!",
+      chooseHowToShare: "Choose how you'd like to share this masterpiece",
+      
+      // Sharing messages
+      perfectExcuseAlert: "Perfect excuse alert",
+      youreWelcome: "(You're welcome!)",
+      perfectExcuseIncoming: "Perfect Excuse Incoming!",
+      heyThere: "Hey there!",
+      justGenerated: "I just generated the perfect excuse and thought you might need it",
+      prettyBrilliant: "Pretty brilliant, right? This was created using Excuses, Excuses! - the ultimate excuse generator.",
+      tryItYourself: "Try it yourself at",
+      cheers: "Cheers!",
+      generatedWith: "Generated with Excuses, Excuses!",
+      checkItOut: "Check it out",
+      tryIt: "Try it",
+      perfectExcuse: "Perfect Excuse",
+      foundPerfectGenerator: "Found the perfect excuse generator! Join me and get bonus features",
+      
+      // Tutorial content
+      clickButtonToCreate: "Click this button to create the perfect excuse for your situation.",
+      enjoyGenerating: "Enjoy generating perfect excuses! Pro tip: Try different styles to find your favorite.",
+      
+      // Clipboard messages
+      excuseCopiedToClipboard: "Excuse copied to clipboard!",
+      pasteAnywhere: "Paste it anywhere to share.",
+      excuseFormatted: "Excuse formatted for Discord and copied to clipboard!",
+      
+      // Common words in sharing
+      brilliant: "brilliant",
+      masterpiece: "masterpiece",
+      genius: "Genius"
     },
     es: {
       // App title
@@ -595,7 +628,40 @@ export default function ExcuseGeneratorApp() {
       funnyStyle: "😂 Divertido e Hilarante",
       professionalStyle: "💼 Profesional y Pulido",
       believableStyle: "✅ Creíble y Realista", 
-      dramaticStyle: "� Dramático y Exagerado"
+      dramaticStyle: "🎪 Dramático y Exagerado",
+      
+      // Share modal
+      shareYourPerfectExcuse: "¡Comparte Tu Excusa Perfecta!",
+      chooseHowToShare: "Elige cómo te gustaría compartir esta obra maestra",
+      
+      // Sharing messages
+      perfectExcuseAlert: "Alerta de excusa perfecta",
+      youreWelcome: "¡De nada!",
+      perfectExcuseIncoming: "¡Excusa Perfecta Llegando!",
+      heyThere: "¡Hola!",
+      justGenerated: "Acabo de generar la excusa perfecta y pensé que podrías necesitarla",
+      prettyBrilliant: "Bastante brillante, ¿verdad? Esto fue creado usando ¡Excusas, Excusas! - el generador de excusas definitivo.",
+      tryItYourself: "Pruébalo tú mismo en",
+      cheers: "¡Saludos!",
+      generatedWith: "Generado con ¡Excusas, Excusas!",
+      checkItOut: "Échale un vistazo",
+      tryIt: "Pruébalo",
+      perfectExcuse: "Excusa Perfecta",
+      foundPerfectGenerator: "¡Encontré el generador de excusas perfecto! Únete a mí y obtén características adicionales",
+      
+      // Tutorial content
+      clickButtonToCreate: "Haz clic en este botón para crear la excusa perfecta para tu situación.",
+      enjoyGenerating: "¡Disfruta generando excusas perfectas! Consejo: Prueba diferentes estilos para encontrar tu favorito.",
+      
+      // Clipboard messages
+      excuseCopiedToClipboard: "¡Excusa copiada al portapapeles!",
+      pasteAnywhere: "Pégala en cualquier lugar para compartir.",
+      excuseFormatted: "¡Excusa formateada para Discord y copiada al portapapeles!",
+      
+      // Common words in sharing
+      brilliant: "brillante",
+      masterpiece: "obra maestra",
+      genius: "Genio"
     },
     fr: {
       // App title
@@ -2223,7 +2289,7 @@ export default function ExcuseGeneratorApp() {
     },
     {
       title: "Generate Your Excuse! ⚡",
-      content: "Click this button to create the perfect excuse for your situation.",
+      content: t.clickButtonToCreate,
       highlight: "generate-button",
       action: "Try It!"
     },
@@ -2235,7 +2301,7 @@ export default function ExcuseGeneratorApp() {
     },
     {
       title: "You're All Set! 🎉",
-      content: "Enjoy generating perfect excuses! Pro tip: Try different styles to find your favorite.",
+      content: t.enjoyGenerating,
       highlight: "",
       action: "Start Using"
     }
@@ -7209,8 +7275,8 @@ ${t.date || 'Date'}: ${currentDate}`
         <Card className="w-full max-w-md shadow-xl rounded-2xl animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
           <CardContent className="p-6 space-y-4">
             <div className="text-center">
-              <h2 className="text-xl font-bold text-purple-600 mb-2">Share Your Perfect Excuse! �</h2>
-              <p className="text-xs text-gray-500">Choose how you'd like to share this masterpiece</p>
+              <h2 className="text-xl font-bold text-purple-600 mb-2">{t.shareYourPerfectExcuse}</h2>
+              <p className="text-xs text-gray-500">{t.chooseHowToShare}</p>
             </div>
             
             <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
