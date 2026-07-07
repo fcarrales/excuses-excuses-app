@@ -1,8 +1,9 @@
 # Excuses, Excuses!
 
 **Tagline:** Perfect messages for awkward moments  
-**Version:** 0.8.0-beta  
-**Stage:** Release candidate prep
+**Version:** 0.9.0-rc  
+**Stage:** Beta release candidate  
+**Domain:** https://x-qs.app
 
 A local, privacy-first message assistant that helps you write respectful, ready-to-send texts for awkward social situations, work messages, and school messages.
 
@@ -57,7 +58,7 @@ Open [http://localhost:3000](http://localhost:3000).
 Copy `.env.example` to `.env.local` (do not commit `.env.local`):
 
 ```env
-NEXT_PUBLIC_APP_URL=https://your-app-url-here.com
+NEXT_PUBLIC_APP_URL=https://x-qs.app
 NEXT_PUBLIC_FEEDBACK_EMAIL=feedback@yourdomain.com
 ```
 
@@ -72,7 +73,15 @@ All user data (history, favorites, people, presets, settings) is stored in **thi
 
 ## Deployment
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for Vercel deploy steps, PWA testing, and pre-release checklist.
+See **[docs/VERCEL_RELEASE_CHECKLIST.md](docs/VERCEL_RELEASE_CHECKLIST.md)** for Vercel deploy steps.
+
+See **[docs/X_QS_DOMAIN_SETUP.md](docs/X_QS_DOMAIN_SETUP.md)** for connecting **https://x-qs.app**.
+
+See **[docs/BETA_LAUNCH_CHECKLIST.md](docs/BETA_LAUNCH_CHECKLIST.md)** before sharing with testers.
+
+See **[docs/RELEASE_CANDIDATE_SUMMARY.md](docs/RELEASE_CANDIDATE_SUMMARY.md)** for the full handoff summary.
+
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for general deployment notes.
 
 ## Android / Play Store (future)
 

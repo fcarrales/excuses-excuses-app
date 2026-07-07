@@ -1,14 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { APP_VERSION } from "@/lib/appInfo";
+import { APP_VERSION, INTENDED_APP_URL } from "@/lib/appInfo";
+import { getAppHealth } from "@/lib/appHealth";
+import { hasPublicAppUrl } from "@/lib/env";
 import {
   getPreReleaseChecklist,
   setPreReleaseItem,
   type PreReleaseId,
 } from "@/lib/storage";
 
-type DisplayCheckId = PreReleaseId | "version" | "manifest" | "lint" | "build";
+type DisplayCheckId =
+  | PreReleaseId
+  | "version"
+  | "appUrl"
+  | "feedbackEmail"
+  | "sw"
+  | "lint"
+  | "build";
 
 interface CheckItem {
   id: DisplayCheckId;
@@ -18,18 +27,24 @@ interface CheckItem {
 }
 
 const MANUAL_ITEMS: Omit<CheckItem, "autoReady" | "live">[] = [
-  { id: "install", label: "Install prompt checked" },
-  { id: "privacy", label: "Privacy section checked" },
-  { id: "safety", label: "Safety section checked" },
+  { id: "privacyRoute", label: "Privacy route works (/privacy)" },
+  { id: "safetyRoute", label: "Safety route works (/safety)" },
+  { id: "manifestRoute", label: "Manifest route works (/manifest.webmanifest)" },
+  { id: "install", label: "PWA install prompt checked" },
   { id: "backup", label: "Export/import tested" },
   { id: "share", label: "Share beta text tested" },
-  { id: "safetyBlock", label: "Fake-proof safety block tested" },
-  { id: "mobile", label: "Mobile 390px checked" },
+  { id: "safetyBlock", label: "Safety block tested (fake-proof requests)" },
+  { id: "mobile", label: "Mobile layout checked (390px)" },
+  {
+    id: "domain",
+    label: `Domain connected (${INTENDED_APP_URL.replace("https://", "")})`,
+  },
 ];
 
 export default function PreReleaseChecklist() {
   const [checked, setChecked] = useState(() => getPreReleaseChecklist());
   const [swRegistered, setSwRegistered] = useState(false);
+  const health = getAppHealth();
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
@@ -43,8 +58,18 @@ export default function PreReleaseChecklist() {
   const staticItems: CheckItem[] = [
     { id: "version", label: `Version visible (v${APP_VERSION})`, autoReady: true },
     {
-      id: "manifest",
-      label: "PWA manifest / service worker",
+      id: "appUrl",
+      label: "App URL configured (NEXT_PUBLIC_APP_URL)",
+      live: health.hasAppUrl,
+    },
+    {
+      id: "feedbackEmail",
+      label: "Feedback email configured (NEXT_PUBLIC_FEEDBACK_EMAIL)",
+      live: health.hasFeedbackEmail,
+    },
+    {
+      id: "sw",
+      label: "PWA service worker registered",
       live: swRegistered,
     },
     { id: "lint", label: "npm run lint passes (verified at release)", autoReady: true },
@@ -80,8 +105,17 @@ export default function PreReleaseChecklist() {
         </span>
       </div>
       <p className="text-xs text-slate-600">
-        Final checks before sharing the public beta or deploying to production.
+        Final checks before beta launch on {INTENDED_APP_URL}.
       </p>
+
+      {!hasPublicAppUrl() && (
+        <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          Set <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_APP_URL</code>{" "}
+          to {INTENDED_APP_URL} in Vercel (or <code className="rounded bg-amber-100 px-1">.env.local</code>)
+          before public sharing.
+        </p>
+      )}
+
       <ul className="space-y-2">
         {allItems.map((item) => {
           const isReady = isItemReady(item);

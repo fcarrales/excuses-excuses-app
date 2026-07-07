@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { APP_VERSION } from "@/lib/appInfo";
+import { getAppHealth } from "@/lib/appHealth";
 import {
   getQaStats,
   isQAModeEnabled,
@@ -65,6 +66,38 @@ export default function QAModePanel({ onChange }: QAModePanelProps) {
 
       {enabled && (
         <div className="space-y-4">
+          {(() => {
+            const health = getAppHealth();
+            return (
+              <div className="rounded-xl border border-violet-200/80 bg-violet-50/60 p-4 text-sm">
+                <p className="font-semibold text-violet-900">App health</p>
+                <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+                  <div className="flex justify-between gap-2 rounded-lg bg-white/70 px-3 py-2">
+                    <dt className="text-slate-500">Stage</dt>
+                    <dd className="font-medium text-slate-800">{health.stage}</dd>
+                  </div>
+                  <div className="flex justify-between gap-2 rounded-lg bg-white/70 px-3 py-2">
+                    <dt className="text-slate-500">App URL set</dt>
+                    <dd className="font-medium text-slate-800">
+                      {health.hasAppUrl ? "Yes" : "No"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-2 rounded-lg bg-white/70 px-3 py-2">
+                    <dt className="text-slate-500">Feedback email set</dt>
+                    <dd className="font-medium text-slate-800">
+                      {health.hasFeedbackEmail ? "Yes" : "No"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-2 rounded-lg bg-white/70 px-3 py-2 sm:col-span-2">
+                    <dt className="text-slate-500">Intended domain</dt>
+                    <dd className="font-medium text-slate-800">{health.intendedDomain}</dd>
+                  </div>
+                </dl>
+                <p className="mt-2 text-xs text-slate-600">{health.pwaReadyNotes}</p>
+              </div>
+            );
+          })()}
+
           <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-4 text-sm">
             <p className="font-semibold text-amber-900">QA status</p>
             <dl className="mt-3 grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">

@@ -200,7 +200,8 @@ export default function Generator({
           What do you need help saying?
         </h2>
         <p className="text-sm text-slate-600">
-          Your message assistant for awkward moments — polite replies in seconds.
+          Your message assistant for awkward moments — respectful, polished texts
+          in seconds.
         </p>
       </section>
 

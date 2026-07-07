@@ -109,10 +109,11 @@ ${linkLine}`;
 
       {!hasUrl && (
         <p className="text-xs text-amber-800">
-          Add your deploy URL via{" "}
+          Set{" "}
           <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_APP_URL</code>{" "}
-          in <code className="rounded bg-amber-100 px-1">.env.local</code> — until
-          then, copies use {APP_URL_PLACEHOLDER}.
+          to <strong>https://x-qs.app</strong> in Vercel or{" "}
+          <code className="rounded bg-amber-100 px-1">.env.local</code> before
+          public sharing — until then, copies use {APP_URL_PLACEHOLDER}.
         </p>
       )}
 

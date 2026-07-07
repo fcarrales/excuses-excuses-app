@@ -755,22 +755,26 @@ export function setSmokeTestItem(id: SmokeTestId, checked: boolean): void {
 
 export type PreReleaseId =
   | "install"
-  | "privacy"
-  | "safety"
+  | "privacyRoute"
+  | "safetyRoute"
+  | "manifestRoute"
   | "backup"
   | "share"
   | "safetyBlock"
-  | "mobile";
+  | "mobile"
+  | "domain";
 
 export function getPreReleaseChecklist(): Record<PreReleaseId, boolean> {
   const defaults: Record<PreReleaseId, boolean> = {
     install: false,
-    privacy: false,
-    safety: false,
+    privacyRoute: false,
+    safetyRoute: false,
+    manifestRoute: false,
     backup: false,
     share: false,
     safetyBlock: false,
     mobile: false,
+    domain: false,
   };
   if (!isBrowser()) return defaults;
   const stored = safeParse<Partial<Record<PreReleaseId, boolean>>>(

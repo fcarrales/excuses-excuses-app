@@ -24,3 +24,7 @@ export function getFeedbackEmail(): string {
   const fromEnv = process.env.NEXT_PUBLIC_FEEDBACK_EMAIL?.trim();
   return fromEnv || DEFAULT_FEEDBACK_EMAIL;
 }
+
+export function hasCustomFeedbackEmail(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_FEEDBACK_EMAIL?.trim());
+}

@@ -6,8 +6,23 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
-    version: "0.8.0-beta",
+    version: "0.9.0-rc",
     date: "Current",
+    highlights: [
+      "Final beta release candidate",
+      "Domain and deployment prep for x-qs.app",
+      "Privacy and safety routes",
+      "Store listing drafts",
+      "PWA install readiness",
+      "Backup, export, and import",
+      "QA and demo tools",
+      "Screenshot mode",
+      "No backend or API required",
+    ],
+  },
+  {
+    version: "0.8.0-beta",
+    date: "Jul 2026",
     highlights: [
       "Environment config for app URL and feedback email",
       "Deployment guide, Android packaging plan, and store listing draft",
