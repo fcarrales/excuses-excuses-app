@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import type { Tab } from "@/types";
+import { APP_NAME, APP_TAGLINE, APP_VERSION } from "@/lib/appInfo";
 
 interface AppShellProps {
   activeTab: Tab;
@@ -25,22 +27,44 @@ export default function AppShell({
 }: AppShellProps) {
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-10 border-b border-white/30 bg-white/80 px-4 py-4 backdrop-blur-lg">
-        <div className="mx-auto max-w-md sm:max-w-lg">
-          <h1 className="text-xl font-bold tracking-tight text-violet-900">
-            Excuses, Excuses!
-          </h1>
-          <p className="text-sm text-violet-600/90">
-            Perfect messages for awkward moments
-          </p>
+      <header className="sticky top-0 z-10 border-b border-white/30 bg-white/85 px-4 py-3.5 backdrop-blur-lg">
+        <div className="mx-auto flex max-w-md items-center gap-3 sm:max-w-lg">
+          <Image
+            src="/favicon.svg"
+            alt=""
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 rounded-xl shadow-sm"
+            aria-hidden
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-lg font-bold tracking-tight text-violet-900">
+                {APP_NAME}
+              </h1>
+              <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700">
+                Beta
+              </span>
+            </div>
+            <p className="truncate text-xs text-violet-600/90">{APP_TAGLINE}</p>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-md flex-1 px-4 py-5 pb-28 sm:max-w-lg sm:py-6">
+      <main className="mx-auto w-full max-w-md flex-1 px-4 py-5 pb-32 sm:max-w-lg sm:py-6">
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-10 border-t border-white/40 bg-white/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-lg">
+      <footer className="fixed bottom-14 left-0 right-0 z-[5] pointer-events-none">
+        <p className="text-center text-[10px] text-slate-400">
+          v{APP_VERSION}
+        </p>
+      </footer>
+
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-10 border-t border-white/40 bg-white/92 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-lg"
+        aria-label="Main navigation"
+      >
         <div className="mx-auto max-w-md overflow-x-auto sm:max-w-lg [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex min-w-max">
             {TABS.map((tab) => {
@@ -50,12 +74,13 @@ export default function AppShell({
                   key={tab.id}
                   type="button"
                   onClick={() => onTabChange(tab.id)}
-                  className={`flex min-h-[56px] min-w-[64px] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-semibold transition-colors active:scale-95 sm:min-w-0 sm:text-[11px] ${
+                  className={`flex min-h-[56px] min-w-[64px] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-[10px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-600 active:scale-95 sm:min-w-0 sm:text-[11px] ${
                     isActive
                       ? "text-violet-700"
                       : "text-slate-500 hover:text-violet-600"
                   }`}
                   aria-current={isActive ? "page" : undefined}
+                  aria-label={tab.label}
                 >
                   <span
                     className={`flex h-8 w-8 items-center justify-center rounded-xl text-base transition-colors ${

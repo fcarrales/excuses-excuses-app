@@ -1,3 +1,5 @@
+import { APP_VERSION } from "@/lib/appInfo";
+import type { AppBackup } from "@/lib/backup";
 import type {
   AppSettings,
   HistoryEntry,
@@ -13,6 +15,17 @@ const SETTINGS_KEY = "excuses-settings";
 const ONBOARDING_KEY = "excuses-onboarding-dismissed";
 const PEOPLE_KEY = "excuses-saved-people";
 const STYLE_PRESETS_KEY = "excuses-style-presets";
+const INSTALL_DISMISSED_KEY = "excuses-install-dismissed";
+
+export const STORAGE_KEYS = [
+  HISTORY_KEY,
+  FAVORITES_KEY,
+  SETTINGS_KEY,
+  ONBOARDING_KEY,
+  PEOPLE_KEY,
+  STYLE_PRESETS_KEY,
+  INSTALL_DISMISSED_KEY,
+] as const;
 
 const DEFAULT_SETTINGS: AppSettings = {
   defaultLanguage: "english",
@@ -320,4 +333,97 @@ export function seedExampleStylePresets(): void {
     },
   ];
   safeWrite(STYLE_PRESETS_KEY, examples);
+}
+
+// ── Install prompt ────────────────────────────────────────────────────
+
+export function isInstallPromptDismissed(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(INSTALL_DISMISSED_KEY) === "true";
+}
+
+export function dismissInstallPrompt(): void {
+  if (!isBrowser()) return;
+  try {
+    localStorage.setItem(INSTALL_DISMISSED_KEY, "true");
+  } catch {
+    // ignore
+  }
+}
+
+// ── Backup / restore ──────────────────────────────────────────────────
+
+export function exportAllData(): AppBackup {
+  return {
+    backupVersion: "1",
+    appVersion: APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    settings: getSettings(),
+    history: getHistory(),
+    favorites: getFavorites(),
+    savedPeople: getSavedPeople(),
+    stylePresets: getStylePresets(),
+    onboardingDismissed: isOnboardingDismissed(),
+    installPromptDismissed: isInstallPromptDismissed(),
+  };
+}
+
+export function importAllData(
+  backup: AppBackup,
+): { success: true; counts: { history: number; favorites: number; people: number; presets: number } } | { success: false; error: string } {
+  if (!isBrowser()) {
+    return { success: false, error: "Import is only available in the browser." };
+  }
+
+  try {
+    const settings = normalizeSettings(backup.settings);
+    const history = (backup.history ?? []).filter(isValidHistoryEntry);
+    const favorites = (backup.favorites ?? []).filter(isValidHistoryEntry);
+    const people = (backup.savedPeople ?? []).filter(isValidPerson);
+    const presets = (backup.stylePresets ?? []).filter(isValidStylePreset);
+
+    safeWrite(SETTINGS_KEY, settings);
+    safeWrite(HISTORY_KEY, history.slice(0, 100));
+    safeWrite(FAVORITES_KEY, favorites);
+    safeWrite(PEOPLE_KEY, people);
+    safeWrite(STYLE_PRESETS_KEY, presets);
+
+    if (backup.onboardingDismissed) {
+      dismissOnboarding();
+    } else {
+      localStorage.removeItem(ONBOARDING_KEY);
+    }
+
+    if (backup.installPromptDismissed) {
+      dismissInstallPrompt();
+    } else {
+      localStorage.removeItem(INSTALL_DISMISSED_KEY);
+    }
+
+    return {
+      success: true,
+      counts: {
+        history: history.length,
+        favorites: favorites.length,
+        people: people.length,
+        presets: presets.length,
+      },
+    };
+  } catch {
+    return {
+      success: false,
+      error: "Could not restore backup. The file may be corrupted.",
+    };
+  }
+}
+
+export function clearAllAppData(): void {
+  if (!isBrowser()) return;
+  for (const key of STORAGE_KEYS) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  }
 }

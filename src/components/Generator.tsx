@@ -5,6 +5,7 @@ import OptionSelector from "@/components/OptionSelector";
 import ResultCard from "@/components/ResultCard";
 import WelcomeCard from "@/components/WelcomeCard";
 import DailyMessageCard from "@/components/DailyMessageCard";
+import InstallPrompt from "@/components/InstallPrompt";
 import {
   generateMessages,
   LANGUAGE_OPTIONS,
@@ -190,6 +191,7 @@ export default function Generator({
 
   return (
     <div className="space-y-6">
+      <InstallPrompt />
       <WelcomeCard />
 
       <DailyMessageCard language={language} onFavorite={onFavoriteToggle} />
