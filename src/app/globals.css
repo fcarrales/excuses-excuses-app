@@ -14,17 +14,27 @@
 
 body {
   background: linear-gradient(
-    135deg,
+    160deg,
     #ede9fe 0%,
-    #f5f3ff 25%,
-    #e0e7ff 50%,
-    #fae8ff 75%,
-    #ede9fe 100%
+    #f5f3ff 30%,
+    #e0e7ff 60%,
+    #fae8ff 100%
   );
   background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100vh;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 * {

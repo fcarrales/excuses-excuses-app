@@ -49,48 +49,55 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <h2 className="text-lg font-semibold text-violet-900">Settings</h2>
 
-      <section className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-sm space-y-6">
-        <OptionSelector
-          label="Default language"
-          options={LANGUAGE_OPTIONS}
-          value={language}
-          onChange={handleLanguageChange}
-          columns={3}
-        />
-
-        <OptionSelector
-          label="Default tone"
-          options={TONE_OPTIONS}
-          value={tone}
-          onChange={handleToneChange}
-          columns={3}
-        />
+      <section className="space-y-5 rounded-2xl border border-white/70 bg-white/90 p-5 shadow-md shadow-violet-100/30 backdrop-blur-sm">
+        <div>
+          <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-violet-600">
+            Defaults
+          </h3>
+          <div className="space-y-6">
+            <OptionSelector
+              label="Default language"
+              options={LANGUAGE_OPTIONS}
+              value={language}
+              onChange={handleLanguageChange}
+              columns={3}
+            />
+            <OptionSelector
+              label="Default tone"
+              options={TONE_OPTIONS}
+              value={tone}
+              onChange={handleToneChange}
+              columns={3}
+            />
+          </div>
+        </div>
       </section>
 
-      <section className="rounded-2xl border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-sm space-y-3">
-        <h3 className="text-sm font-semibold text-slate-700">Data</h3>
+      <section className="space-y-3 rounded-2xl border border-white/70 bg-white/90 p-5 shadow-md shadow-violet-100/30 backdrop-blur-sm">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-violet-600">
+          Your data
+        </h3>
+        <p className="text-sm text-slate-600">
+          Everything stays on your device. Nothing is sent to a server.
+        </p>
         <button
           type="button"
           onClick={handleClearHistory}
-          className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+          className="min-h-[44px] w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 active:scale-[0.98]"
         >
           Clear history
         </button>
         <button
           type="button"
           onClick={handleClearFavorites}
-          className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+          className="min-h-[44px] w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 active:scale-[0.98]"
         >
           Clear favorites
         </button>
       </section>
-
-      <p className="text-center text-xs text-slate-500">
-        All data is stored locally on your device. Nothing is sent to a server.
-      </p>
     </div>
   );
 }

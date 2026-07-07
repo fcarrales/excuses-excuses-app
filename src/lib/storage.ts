@@ -3,6 +3,7 @@ import type { AppSettings, HistoryEntry, Language, Tone } from "@/types";
 const HISTORY_KEY = "excuses-history";
 const FAVORITES_KEY = "excuses-favorites";
 const SETTINGS_KEY = "excuses-settings";
+const ONBOARDING_KEY = "excuses-onboarding-dismissed";
 
 const DEFAULT_SETTINGS: AppSettings = {
   defaultLanguage: "english",
@@ -115,4 +116,14 @@ export function updateDefaultLanguage(language: Language): void {
 
 export function updateDefaultTone(tone: Tone): void {
   saveSettings({ ...getSettings(), defaultTone: tone });
+}
+
+export function isOnboardingDismissed(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(ONBOARDING_KEY) === "true";
+}
+
+export function dismissOnboarding(): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(ONBOARDING_KEY, "true");
 }

@@ -1,3 +1,4 @@
+import { pickVariation } from "@/lib/messageVariations";
 import type {
   GeneratedMessage,
   GeneratorInput,
@@ -87,54 +88,136 @@ function greeting(recipient: Recipient, language: Language, tone: Tone): string 
 
 function weaveDetails(base: string, details: string | undefined, language: Language): string {
   if (!details?.trim()) return base;
-  const trimmed = details.trim();
+  const trimmed = details.trim().replace(/\s+/g, " ");
+  const punct = trimmed.match(/[.!?]$/) ? "" : ".";
 
   if (language === "spanish") {
-    return `${base} ${trimmed.endsWith(".") ? trimmed : `${trimmed}.`}`;
+    const connectors = ["", " La cosa es que ", " Solo para que sepas: "];
+    const connector = connectors[trimmed.length % connectors.length];
+    return `${base}${connector}${trimmed}${punct}`;
   }
   if (language === "spanglish") {
-    return `${base} ${trimmed.endsWith(".") ? trimmed : `${trimmed}.`}`;
+    return `${base} Btw: ${trimmed}${punct}`;
   }
-  return `${base} ${trimmed.endsWith(".") ? trimmed : `${trimmed}.`}`;
+  const connectors = ["", " Just so you know — ", " Quick note: "];
+  const connector = connectors[trimmed.length % connectors.length];
+  return `${base}${connector}${trimmed}${punct}`;
+}
+
+function lowercaseFirst(text: string): string {
+  if (!text) return text;
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
 function applyTone(message: string, tone: Tone, language: Language): string {
-  const tweaks: Record<Tone, Partial<Record<Language, (msg: string) => string>>> = {
-    casual: {},
-    professional: {
-      english: (m) => m.replace(/^Hey/g, "Hello").replace(/^Hi —/g, "Hello —"),
-      spanish: (m) => m.replace(/^Hey/g, "Hola").replace(/^Hola —/g, "Buenos días —"),
-      spanglish: (m) => m.replace(/^Hey/g, "Hi"),
-    },
-    funny: {
-      english: (m) => (m.includes("Sorry") ? m : `${m} (Life happens, right?)`),
-      spanish: (m) => (m.includes("Perdón") || m.includes("Disculpa") ? m : `${m} (La vida pasa, ¿no?)`),
-      spanglish: (m) => (m.includes("Sorry") || m.includes("Perdón") ? m : `${m} (Life pasa, ¿no?)`),
-    },
-    respectful: {
-      english: (m) => m.replace(/\.$/, ". Thank you for understanding."),
-      spanish: (m) => m.replace(/\.$/, ". Gracias por tu comprensión."),
-      spanglish: (m) => m.replace(/\.$/, ". Thanks por entender."),
-    },
-    soft: {
-      english: (m) => `I hope this is okay — ${m.charAt(0).toLowerCase()}${m.slice(1)}`,
-      spanish: (m) => `Espero que esté bien — ${m.charAt(0).toLowerCase()}${m.slice(1)}`,
-      spanglish: (m) => `Hope está bien — ${m.charAt(0).toLowerCase()}${m.slice(1)}`,
-    },
-    direct: {
-      english: (m) => m.replace(/I wanted to let you know/gi, "Heads up").replace(/Quería avisarte/gi, "Te aviso"),
-      spanish: (m) => m.replace(/Quería avisarte/gi, "Te aviso"),
-      spanglish: (m) => m.replace(/I wanted to let you know/gi, "Heads up"),
-    },
-    believable: {
-      english: (m) => m.replace(/approximately/gi, "about").replace(/approximately/gi, "about"),
-      spanish: (m) => m,
-      spanglish: (m) => m,
-    },
-  };
+  let msg = message;
 
-  const fn = tweaks[tone][language];
-  return fn ? fn(message) : message;
+  if (tone === "casual") {
+    if (language === "english") {
+      msg = msg
+        .replace(/\bI would like to\b/gi, "I wanna")
+        .replace(/\bI wanted to let you know\b/gi, "Just so you know")
+        .replace(/\bapproximately\b/gi, "about")
+        .replace(/\bPlease accept my\b/gi, "Sorry — my")
+        .replace(/\bI regret\b/gi, "Sorry");
+    } else if (language === "spanish") {
+      msg = msg
+        .replace(/\bQuería avisarte\b/gi, "Te cuento")
+        .replace(/\bMe gustaría\b/gi, "Quiero")
+        .replace(/\bLamento informarte\b/gi, "Perdón, pero");
+    } else {
+      msg = msg
+        .replace(/\bI would like to\b/gi, "I wanna")
+        .replace(/\bQuería avisarte\b/gi, "Te cuento");
+    }
+    return msg;
+  }
+
+  if (tone === "professional") {
+    if (language === "english") {
+      msg = msg
+        .replace(/^Hey/g, "Hello")
+        .replace(/^Hi —/g, "Hello —")
+        .replace(/\bwanna\b/gi, "would like to")
+        .replace(/\babout\b/gi, "approximately")
+        .replace(/\bSorry\b/g, "I apologize");
+    } else if (language === "spanish") {
+      msg = msg
+        .replace(/^Hey/g, "Hola")
+        .replace(/^Hola —/g, "Buenos días —")
+        .replace(/\bPerdón\b/g, "Disculpe");
+    } else {
+      msg = msg.replace(/^Hey/g, "Hi");
+    }
+    return msg;
+  }
+
+  if (tone === "funny") {
+    const suffixes: Record<Language, string> = {
+      english: " (Classic me, right? 😅)",
+      spanish: " (Típico, ¿no? 😅)",
+      spanglish: " (Classic me, ¿no? 😅)",
+    };
+    if (!msg.includes("😅") && !msg.includes("right?")) {
+      msg = msg.replace(/\.$/, "") + suffixes[language];
+    }
+    return msg;
+  }
+
+  if (tone === "respectful") {
+    const closings: Record<Language, string> = {
+      english: " Thank you for understanding.",
+      spanish: " Gracias por tu comprensión.",
+      spanglish: " Thanks por entender.",
+    };
+    if (!msg.includes("Thank") && !msg.includes("Gracias") && !msg.includes("Thanks")) {
+      msg = msg.replace(/[.!?]?$/, ".") + closings[language];
+    }
+    return msg;
+  }
+
+  if (tone === "soft") {
+    const prefixes: Record<Language, string> = {
+      english: "I hope this is okay — ",
+      spanish: "Espero que esté bien — ",
+      spanglish: "Hope está bien — ",
+    };
+    const body = msg.replace(/^(Hey|Hi|Hello|Hola)[,.]? —?\s*/i, "");
+    return prefixes[language] + lowercaseFirst(body);
+  }
+
+  if (tone === "direct") {
+    if (language === "english") {
+      msg = msg
+        .replace(/\bI wanted to let you know\b/gi, "Heads up")
+        .replace(/\bI would like to\b/gi, "I need to")
+        .replace(/\bJust a heads up — /gi, "")
+        .replace(/\bI hope this is okay — /gi, "");
+    } else if (language === "spanish") {
+      msg = msg
+        .replace(/\bQuería avisarte\b/gi, "Te aviso")
+        .replace(/\bMe gustaría\b/gi, "Necesito");
+    } else {
+      msg = msg
+        .replace(/\bI wanted to let you know\b/gi, "Heads up")
+        .replace(/\bQuería avisarte\b/gi, "Te aviso");
+    }
+    return msg;
+  }
+
+  if (tone === "believable") {
+    if (language === "english") {
+      msg = msg
+        .replace(/\bapproximately\b/gi, "about")
+        .replace(/Classic me, right\? 😅/g, "")
+        .replace(/\(Life happens, right\?\)/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+    return msg;
+  }
+
+  return msg;
 }
 
 const TEMPLATES: Record<Situation, Record<RecipientGroup, TemplateTriple>> = {
@@ -1010,74 +1093,81 @@ const TEMPLATES: Record<Situation, Record<RecipientGroup, TemplateTriple>> = {
   },
 };
 
+function cleanUserText(text: string): string {
+  return text.trim().replace(/\s+/g, " ").replace(/^["']|["']$/g, "");
+}
+
+function ensurePeriod(text: string): string {
+  return text.match(/[.!?]$/) ? text : `${text}.`;
+}
+
 function buildImproveMessages(
   details: string,
   recipient: Recipient,
   tone: Tone,
   language: Language,
 ): Record<MessageStyle, string> {
-  const group = recipientGroup(recipient);
+  const core = cleanUserText(details);
   const greet = greeting(recipient, language, tone);
-  const trimmed = details.trim();
+  const lower = lowercaseFirst(core);
 
   if (language === "spanish") {
     return {
-      short: applyTone(`${greet} — ${trimmed}`, tone, language),
+      short: applyTone(ensurePeriod(`${greet} — ${core}`), tone, language),
       natural: applyTone(
-        `${greet}. Quería decirlo de otra forma: ${trimmed}`,
+        ensurePeriod(`${greet}. Quería decirte que ${lower}`),
         tone,
         language,
       ),
       professional: applyTone(
-        `${greet}. Permíteme expresarlo con más claridad: ${trimmed}`,
+        ensurePeriod(`${greet}. Permíteme expresarlo así: ${core}`),
         tone,
         language,
       ),
     };
   }
+
   if (language === "spanglish") {
     return {
-      short: applyTone(`${greet} — ${trimmed}`, tone, language),
+      short: applyTone(ensurePeriod(`${greet} — ${core}`), tone, language),
       natural: applyTone(
-        `${greet}. Quería say it otra way: ${trimmed}`,
+        ensurePeriod(`${greet}. Quería decirte que ${lower}`),
         tone,
         language,
       ),
       professional: applyTone(
-        `${greet}. Let me express it más clearly: ${trimmed}`,
+        ensurePeriod(`${greet}. Let me put it this way: ${core}`),
         tone,
         language,
       ),
     };
   }
 
-  const prefix =
-    group === "formal"
-      ? `${greet} —`
-      : group === "family"
-        ? `${greet},`
-        : `${greet} —`;
-
   return {
-    short: applyTone(`${prefix} ${trimmed}`, tone, language),
+    short: applyTone(ensurePeriod(`${greet} — ${core}`), tone, language),
     natural: applyTone(
-      `${greet}. I wanted to say this a bit differently: ${trimmed}`,
+      ensurePeriod(`${greet}. Just wanted to say: ${lower}`),
       tone,
       language,
     ),
     professional: applyTone(
-      `${greet}. Allow me to express this more clearly: ${trimmed}`,
+      ensurePeriod(`${greet}. To be clear: ${core}`),
       tone,
       language,
     ),
   };
 }
 
+export function requiresImproveInput(situation: Situation, details?: string): boolean {
+  return situation === "improve" && !details?.trim();
+}
+
 function buildMessage(
   style: MessageStyle,
   input: GeneratorInput,
 ): string {
-  const { situation, recipient, tone, language, details } = input;
+  const { situation, recipient, tone, language, details, variationSeed = 0 } =
+    input;
   const group = recipientGroup(recipient);
   const greet = greeting(recipient, language, tone);
 
@@ -1085,8 +1175,15 @@ function buildMessage(
     return buildImproveMessages(details, recipient, tone, language)[style];
   }
 
-  const template = TEMPLATES[situation][group][style][language];
-  const withGreeting = `${greet}${group === "formal" || group === "neutral" ? " —" : ","} ${template.charAt(0).toLowerCase()}${template.slice(1)}`;
+  const variation = variationSeed > 0
+    ? pickVariation(situation, style, language, variationSeed)
+    : null;
+
+  const template = variation ?? TEMPLATES[situation][group][style][language];
+  const separator = group === "formal" || group === "neutral" ? " —" : ",";
+  const withGreeting = variation
+    ? `${greet}${separator} ${template}`
+    : `${greet}${separator} ${lowercaseFirst(template)}`;
   const withDetails = weaveDetails(withGreeting, details, language);
   return applyTone(withDetails, tone, language);
 }

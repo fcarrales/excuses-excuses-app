@@ -41,6 +41,7 @@ export interface GeneratorInput {
   tone: Tone;
   language: Language;
   details?: string;
+  variationSeed?: number;
 }
 
 export interface GeneratedMessage {

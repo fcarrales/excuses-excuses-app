@@ -6,6 +6,7 @@ interface OptionSelectorProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   columns?: 2 | 3 | 4;
+  helperText?: string;
 }
 
 export default function OptionSelector<T extends string>({
@@ -14,6 +15,7 @@ export default function OptionSelector<T extends string>({
   value,
   onChange,
   columns = 2,
+  helperText,
 }: OptionSelectorProps<T>) {
   const gridCols =
     columns === 4
@@ -33,10 +35,10 @@ export default function OptionSelector<T extends string>({
               key={option.value}
               type="button"
               onClick={() => onChange(option.value)}
-              className={`rounded-xl border px-3 py-3 text-left text-sm font-medium transition-all ${
+              className={`min-h-[44px] rounded-xl border px-3 py-3 text-left text-sm font-medium transition-all active:scale-[0.98] ${
                 isSelected
-                  ? "border-violet-500 bg-violet-50 text-violet-800 shadow-sm ring-1 ring-violet-500/30"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50/50"
+                  ? "border-violet-500 bg-violet-600 text-white shadow-md shadow-violet-500/30 ring-2 ring-violet-400/40"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-violet-300 hover:bg-violet-50/60"
               }`}
               aria-pressed={isSelected}
             >
@@ -45,6 +47,9 @@ export default function OptionSelector<T extends string>({
           );
         })}
       </div>
+      {helperText && (
+        <p className="text-xs text-slate-500">{helperText}</p>
+      )}
     </div>
   );
 }
