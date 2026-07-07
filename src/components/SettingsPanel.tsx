@@ -15,6 +15,7 @@ import FeatureHighlights from "@/components/FeatureHighlights";
 import FreeVsProSection from "@/components/FreeVsProSection";
 import ReleaseNotesSection from "@/components/ReleaseNotesSection";
 import ShareInviteSection from "@/components/ShareInviteSection";
+import PreReleaseChecklist from "@/components/PreReleaseChecklist";
 import {
   getSettings,
   isQAModeEnabled,
@@ -122,6 +123,9 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
         <FeatureHighlights />
         <FreeVsProSection />
         <ReleaseNotesSection />
+        <div className="border-t border-slate-100 pt-5">
+          <PreReleaseChecklist />
+        </div>
         <div className="border-t border-slate-100 pt-5">
           <ReadinessChecklist />
         </div>

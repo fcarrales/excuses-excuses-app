@@ -6,8 +6,19 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
-    version: "0.7.0-beta",
+    version: "0.8.0-beta",
     date: "Current",
+    highlights: [
+      "Environment config for app URL and feedback email",
+      "Deployment guide, Android packaging plan, and store listing draft",
+      "Privacy and safety policy drafts for external use",
+      "Pre-release checklist and /privacy / /safety pages",
+      "README and release-candidate prep polish",
+    ],
+  },
+  {
+    version: "0.7.0-beta",
+    date: "Jul 2026",
     highlights: [
       "Launch landing card and feature highlights for public beta sharing",
       "Screenshot Mode for clean marketing captures with demo data",

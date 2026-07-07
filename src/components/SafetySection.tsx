@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { SAFETY_SUMMARY } from "@/lib/legalContent";
+
 export default function SafetySection() {
   return (
     <section className="space-y-3" aria-labelledby="safety-heading">
@@ -7,18 +10,20 @@ export default function SafetySection() {
         id="safety-heading"
         className="text-xs font-bold uppercase tracking-wider text-violet-600"
       >
-        Safety guidelines
+        {SAFETY_SUMMARY.title}
       </h3>
+      <p className="text-sm text-slate-700">{SAFETY_SUMMARY.intro}</p>
       <ul className="list-inside list-disc space-y-2 text-sm leading-relaxed text-slate-700">
-        <li>Use the app to communicate respectfully and honestly.</li>
-        <li>Do not use it to impersonate people or organizations.</li>
-        <li>Do not use it to create fake proof, receipts, or doctor notes.</li>
-        <li>Do not use it for official documents or records.</li>
-        <li>
-          If the situation is serious, be honest and contact the right person
-          directly.
-        </li>
+        {SAFETY_SUMMARY.points.map((point) => (
+          <li key={point}>{point}</li>
+        ))}
       </ul>
+      <Link
+        href="/safety"
+        className="inline-block text-sm font-semibold text-violet-600 hover:text-violet-800"
+      >
+        Read full safety policy →
+      </Link>
     </section>
   );
 }

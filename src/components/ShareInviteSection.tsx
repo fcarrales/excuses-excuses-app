@@ -4,26 +4,34 @@ import { useState } from "react";
 import {
   APP_NAME,
   APP_TAGLINE,
-  APP_URL,
-  APP_URL_PLACEHOLDER,
   APP_VERSION,
-  FEEDBACK_EMAIL,
 } from "@/lib/appInfo";
+import {
+  APP_URL_PLACEHOLDER,
+  getFeedbackEmail,
+  getShareAppUrl,
+  hasPublicAppUrl,
+} from "@/lib/env";
 import { canNativeShare, copyToClipboard } from "@/lib/clipboard";
 import Toast from "@/components/Toast";
 
-function linkLine(): string {
-  const url = APP_URL.trim() || APP_URL_PLACEHOLDER;
-  return `Try it here: ${url}`;
-}
+type CopyKey = "invite" | "pitch" | "instructions";
 
-const BETA_INVITE = `I'm testing a new app called ${APP_NAME} It helps you write respectful messages for awkward moments. Try generating messages, saving favorites, and testing Spanish or Spanglish.`;
+export default function ShareInviteSection() {
+  const [toast, setToast] = useState("");
 
-const APP_PITCH = `${APP_NAME} — ${APP_TAGLINE}
+  const shareUrl = getShareAppUrl();
+  const feedbackEmail = getFeedbackEmail();
+  const hasUrl = hasPublicAppUrl();
+  const linkLine = `Try it here: ${shareUrl}`;
+
+  const betaInvite = `I'm testing a new app called ${APP_NAME} It helps you write respectful messages for awkward moments. Try generating messages, saving favorites, and testing Spanish or Spanglish.`;
+
+  const appPitch = `${APP_NAME} — ${APP_TAGLINE}
 
 A local message assistant for awkward social situations, work messages, and school messages. Get polished, ready-to-send texts in English, Spanish, or Spanglish. No account required — everything stays on your device.`;
 
-const TESTER_INSTRUCTIONS = `Beta tester instructions for ${APP_NAME} (v${APP_VERSION})
+  const testerInstructions = `Beta tester instructions for ${APP_NAME} (v${APP_VERSION})
 
 1. Generate a few messages (try Spanish and Spanglish)
 2. Save a favorite and add a saved person
@@ -31,20 +39,15 @@ const TESTER_INSTRUCTIONS = `Beta tester instructions for ${APP_NAME} (v${APP_VE
 4. Export a backup before clearing any data
 5. Test that risky requests (e.g. fake doctor note) are blocked
 6. Install as a PWA if your browser supports it
-7. Send feedback to ${FEEDBACK_EMAIL}
+7. Send feedback to ${feedbackEmail}
 
-${linkLine()}`;
+${linkLine}`;
 
-type CopyKey = "invite" | "pitch" | "instructions";
-
-const COPY_ITEMS: { key: CopyKey; label: string; text: string }[] = [
-  { key: "invite", label: "Copy beta invite", text: `${BETA_INVITE}\n\n${linkLine()}` },
-  { key: "pitch", label: "Copy app pitch", text: `${APP_PITCH}\n\n${linkLine()}` },
-  { key: "instructions", label: "Copy tester instructions", text: TESTER_INSTRUCTIONS },
-];
-
-export default function ShareInviteSection() {
-  const [toast, setToast] = useState("");
+  const copyItems: { key: CopyKey; label: string; text: string }[] = [
+    { key: "invite", label: "Copy beta invite", text: `${betaInvite}\n\n${linkLine}` },
+    { key: "pitch", label: "Copy app pitch", text: `${appPitch}\n\n${linkLine}` },
+    { key: "instructions", label: "Copy tester instructions", text: testerInstructions },
+  ];
 
   async function handleCopy(text: string, label: string) {
     const ok = await copyToClipboard(text);
@@ -52,7 +55,7 @@ export default function ShareInviteSection() {
   }
 
   async function handleShare() {
-    const text = `${BETA_INVITE}\n\n${linkLine()}`;
+    const text = `${betaInvite}\n\n${linkLine}`;
     if (canNativeShare()) {
       try {
         await navigator.share({ title: APP_NAME, text });
@@ -79,7 +82,7 @@ export default function ShareInviteSection() {
       </p>
 
       <div className="space-y-2">
-        {COPY_ITEMS.map((item) => (
+        {copyItems.map((item) => (
           <button
             key={item.key}
             type="button"
@@ -97,18 +100,19 @@ export default function ShareInviteSection() {
           {canNativeShare() ? "Share beta invite" : "Copy beta invite (share)"}
         </button>
         <a
-          href={`mailto:?subject=${encodeURIComponent(`${APP_NAME} beta invite`)}&body=${encodeURIComponent(`${BETA_INVITE}\n\n${linkLine()}`)}`}
+          href={`mailto:?subject=${encodeURIComponent(`${APP_NAME} beta invite`)}&body=${encodeURIComponent(`${betaInvite}\n\n${linkLine}`)}`}
           className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
         >
           Email beta invite
         </a>
       </div>
 
-      {!APP_URL && (
+      {!hasUrl && (
         <p className="text-xs text-amber-800">
           Add your deploy URL via{" "}
           <code className="rounded bg-amber-100 px-1">NEXT_PUBLIC_APP_URL</code>{" "}
-          — until then, copies use {APP_URL_PLACEHOLDER}.
+          in <code className="rounded bg-amber-100 px-1">.env.local</code> — until
+          then, copies use {APP_URL_PLACEHOLDER}.
         </p>
       )}
 

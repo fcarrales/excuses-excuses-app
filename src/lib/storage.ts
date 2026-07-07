@@ -31,6 +31,7 @@ const BETA_CHECKLIST_KEY = "excuses-beta-checklist";
 const LAUNCH_DISMISSED_KEY = "excuses-launch-dismissed";
 const SCREENSHOT_MODE_KEY = "excuses-screenshot-mode";
 const SMOKE_TEST_KEY = "excuses-smoke-test-checklist";
+const PRE_RELEASE_KEY = "excuses-pre-release-checklist";
 
 export const STORAGE_KEYS = [
   HISTORY_KEY,
@@ -47,6 +48,7 @@ export const STORAGE_KEYS = [
   LAUNCH_DISMISSED_KEY,
   SCREENSHOT_MODE_KEY,
   SMOKE_TEST_KEY,
+  PRE_RELEASE_KEY,
 ] as const;
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -749,4 +751,37 @@ export function setSmokeTestItem(id: SmokeTestId, checked: boolean): void {
   if (!isBrowser()) return;
   const current = getSmokeTestChecklist();
   safeWrite(SMOKE_TEST_KEY, { ...current, [id]: checked });
+}
+
+export type PreReleaseId =
+  | "install"
+  | "privacy"
+  | "safety"
+  | "backup"
+  | "share"
+  | "safetyBlock"
+  | "mobile";
+
+export function getPreReleaseChecklist(): Record<PreReleaseId, boolean> {
+  const defaults: Record<PreReleaseId, boolean> = {
+    install: false,
+    privacy: false,
+    safety: false,
+    backup: false,
+    share: false,
+    safetyBlock: false,
+    mobile: false,
+  };
+  if (!isBrowser()) return defaults;
+  const stored = safeParse<Partial<Record<PreReleaseId, boolean>>>(
+    localStorage.getItem(PRE_RELEASE_KEY),
+    {},
+  );
+  return { ...defaults, ...stored };
+}
+
+export function setPreReleaseItem(id: PreReleaseId, checked: boolean): void {
+  if (!isBrowser()) return;
+  const current = getPreReleaseChecklist();
+  safeWrite(PRE_RELEASE_KEY, { ...current, [id]: checked });
 }

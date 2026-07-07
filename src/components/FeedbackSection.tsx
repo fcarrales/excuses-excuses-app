@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { APP_VERSION, FEEDBACK_EMAIL } from "@/lib/appInfo";
+import { APP_VERSION } from "@/lib/appInfo";
+import { getFeedbackEmail } from "@/lib/env";
 import { copyToClipboard } from "@/lib/clipboard";
 import Toast from "@/components/Toast";
 
@@ -28,6 +29,7 @@ function buildFeedbackTemplate(): string {
 
 export default function FeedbackSection() {
   const [toast, setToast] = useState("");
+  const feedbackEmail = getFeedbackEmail();
 
   async function handleCopyTemplate() {
     const ok = await copyToClipboard(buildFeedbackTemplate());
@@ -43,7 +45,7 @@ export default function FeedbackSection() {
       `Excuses, Excuses! feedback (v${APP_VERSION})`,
     );
     const body = encodeURIComponent(buildFeedbackTemplate());
-    window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${feedbackEmail}?subject=${subject}&body=${body}`;
   }
 
   return (
@@ -57,7 +59,7 @@ export default function FeedbackSection() {
         </h3>
         <p className="text-sm text-slate-600">
           No data is sent automatically. Copy a template or open an email draft
-          with your report.
+          to <span className="font-medium">{feedbackEmail}</span>.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
