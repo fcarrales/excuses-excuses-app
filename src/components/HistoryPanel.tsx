@@ -87,6 +87,7 @@ export default function HistoryPanel({ onHistoryCleared }: HistoryPanelProps) {
               key={entry.id}
               entry={entry}
               onToggleFavorite={handleToggleFavorite}
+              showCoachChip
             />
           ))}
         </div>

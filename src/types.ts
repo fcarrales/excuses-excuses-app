@@ -50,6 +50,8 @@ export interface GeneratorInput {
   variationSeed?: number;
   personName?: string;
   personNotes?: string;
+  favoritePhrases?: string[];
+  avoidPhrases?: string[];
 }
 
 export interface GeneratorPrefill {
@@ -80,6 +82,18 @@ export interface AppSettings {
 
 export interface HistoryEntry extends GeneratedMessage {
   isFavorite: boolean;
+  coachScore?: number;
+}
+
+export interface StylePreset {
+  id: string;
+  name: string;
+  tone: Tone;
+  language: Language;
+  description?: string;
+  favoritePhrases?: string[];
+  avoidPhrases?: string[];
+  isDefault?: boolean;
 }
 
 export interface SavedPerson {

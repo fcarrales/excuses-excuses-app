@@ -1,6 +1,7 @@
 "use client";
 
 import OptionSelector from "@/components/OptionSelector";
+import StylePresetsPanel from "@/components/StylePresetsPanel";
 import {
   clearFavorites,
   clearHistory,
@@ -74,6 +75,10 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
             />
           </div>
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-white/70 bg-white/90 p-5 shadow-md shadow-violet-100/30 backdrop-blur-sm">
+        <StylePresetsPanel onChange={onSettingsChange} />
       </section>
 
       <section className="space-y-3 rounded-2xl border border-white/70 bg-white/90 p-5 shadow-md shadow-violet-100/30 backdrop-blur-sm">

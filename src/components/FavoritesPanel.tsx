@@ -66,6 +66,7 @@ export default function FavoritesPanel() {
               key={entry.id}
               entry={entry}
               onToggleFavorite={handleToggleFavorite}
+              showCoachChip
             />
           ))}
         </div>

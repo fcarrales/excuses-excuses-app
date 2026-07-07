@@ -3,6 +3,7 @@ import type {
   HistoryEntry,
   Language,
   SavedPerson,
+  StylePreset,
   Tone,
 } from "@/types";
 
@@ -11,6 +12,7 @@ const FAVORITES_KEY = "excuses-favorites";
 const SETTINGS_KEY = "excuses-settings";
 const ONBOARDING_KEY = "excuses-onboarding-dismissed";
 const PEOPLE_KEY = "excuses-saved-people";
+const STYLE_PRESETS_KEY = "excuses-style-presets";
 
 const DEFAULT_SETTINGS: AppSettings = {
   defaultLanguage: "english",
@@ -43,6 +45,17 @@ function safeWrite(key: string, data: unknown): void {
   } catch {
     // storage full or unavailable
   }
+}
+
+function isValidStylePreset(item: unknown): item is StylePreset {
+  if (!item || typeof item !== "object") return false;
+  const p = item as Record<string, unknown>;
+  return (
+    typeof p.id === "string" &&
+    typeof p.name === "string" &&
+    typeof p.tone === "string" &&
+    typeof p.language === "string"
+  );
 }
 
 function isValidPerson(item: unknown): item is SavedPerson {
@@ -223,4 +236,88 @@ export function deletePerson(id: string): void {
 
 export function getSavedPerson(id: string): SavedPerson | undefined {
   return getSavedPeople().find((p) => p.id === id);
+}
+
+// ── Style Presets ─────────────────────────────────────────────────────
+
+export function getStylePresets(): StylePreset[] {
+  if (!isBrowser()) return [];
+  return safeParseArray<unknown>(localStorage.getItem(STYLE_PRESETS_KEY)).filter(
+    isValidStylePreset,
+  );
+}
+
+export function saveStylePreset(preset: StylePreset): void {
+  if (!isBrowser()) return;
+  const presets = getStylePresets();
+  const idx = presets.findIndex((p) => p.id === preset.id);
+  const updated =
+    idx >= 0
+      ? presets.map((p) => (p.id === preset.id ? preset : p))
+      : [preset, ...presets];
+  safeWrite(STYLE_PRESETS_KEY, updated);
+}
+
+export function deleteStylePreset(id: string): void {
+  if (!isBrowser()) return;
+  safeWrite(
+    STYLE_PRESETS_KEY,
+    getStylePresets().filter((p) => p.id !== id),
+  );
+}
+
+export function setDefaultStylePreset(id: string): void {
+  if (!isBrowser()) return;
+  const updated = getStylePresets().map((p) => ({
+    ...p,
+    isDefault: p.id === id,
+  }));
+  safeWrite(STYLE_PRESETS_KEY, updated);
+}
+
+export function getDefaultStylePreset(): StylePreset | undefined {
+  return getStylePresets().find((p) => p.isDefault);
+}
+
+export function seedExampleStylePresets(): void {
+  if (!isBrowser() || getStylePresets().length > 0) return;
+  const examples: StylePreset[] = [
+    {
+      id: "preset-professional-short",
+      name: "Professional and short",
+      tone: "professional",
+      language: "english",
+      description: "Clean and to the point",
+      favoritePhrases: ["Thank you for understanding."],
+      avoidPhrases: ["lol", "sorry not sorry"],
+      isDefault: true,
+    },
+    {
+      id: "preset-soft-respectful",
+      name: "Soft and respectful",
+      tone: "soft",
+      language: "english",
+      description: "Gentle without being vague",
+      favoritePhrases: ["Hope that works for you."],
+      avoidPhrases: ["whatever", "deal with it"],
+    },
+    {
+      id: "preset-casual-spanglish",
+      name: "Casual Spanglish",
+      tone: "casual",
+      language: "spanglish",
+      description: "Relaxed bilingual texting",
+      favoritePhrases: ["Let me know!"],
+      avoidPhrases: [],
+    },
+    {
+      id: "preset-direct-not-rude",
+      name: "Direct but not rude",
+      tone: "direct",
+      language: "english",
+      description: "Clear without extra fluff",
+      avoidPhrases: ["I guess", "maybe", "kind of"],
+    },
+  ];
+  safeWrite(STYLE_PRESETS_KEY, examples);
 }

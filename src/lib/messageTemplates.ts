@@ -1,4 +1,9 @@
 import { pickVariation } from "@/lib/messageVariations";
+import {
+  applyAvoidPhrases,
+  applyFavoritePhrase,
+} from "@/lib/messageRewrites";
+import { analyzeMessage } from "@/lib/messageCoach";
 import type {
   GeneratedMessage,
   GeneratorInput,
@@ -1252,7 +1257,9 @@ function buildMessage(
     : `${greet}${separator} ${lowercaseFirst(template)}`;
   const withDetails = weaveDetails(withGreeting, details, language);
   const toned = applyTone(withDetails, tone, language);
-  return applyPersonNotes(toned, personNotes, language);
+  const withNotes = applyPersonNotes(toned, personNotes, language);
+  const withAvoid = applyAvoidPhrases(withNotes, input.avoidPhrases);
+  return applyFavoritePhrase(withAvoid, input.favoritePhrases, language);
 }
 
 const STYLE_LABELS: Record<MessageStyle, string> = {
@@ -1265,18 +1272,23 @@ export function generateMessages(input: GeneratorInput): GeneratedMessage[] {
   const styles: MessageStyle[] = ["short", "natural", "professional"];
   const now = Date.now();
 
-  return styles.map((style, index) => ({
-    id: `${now}-${index}`,
-    label: style,
-    message: buildMessage(style, input),
-    situation: input.situation,
-    recipient: input.recipient,
-    tone: input.tone,
-    language: input.language,
-    details: input.details,
-    createdAt: now + index,
-    isFavorite: false,
-  }));
+  return styles.map((style, index) => {
+    const message = buildMessage(style, input);
+    const coach = analyzeMessage(message, input.tone, input.language);
+    return {
+      id: `${now}-${index}`,
+      label: style,
+      message,
+      situation: input.situation,
+      recipient: input.recipient,
+      tone: input.tone,
+      language: input.language,
+      details: input.details,
+      createdAt: now + index,
+      isFavorite: false,
+      coachScore: coach.overallScore,
+    };
+  });
 }
 
 export function getStyleLabel(style: MessageStyle): string {

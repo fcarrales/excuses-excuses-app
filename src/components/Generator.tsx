@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import OptionSelector from "@/components/OptionSelector";
 import ResultCard from "@/components/ResultCard";
 import WelcomeCard from "@/components/WelcomeCard";
+import DailyMessageCard from "@/components/DailyMessageCard";
 import {
   generateMessages,
   LANGUAGE_OPTIONS,
@@ -16,8 +17,11 @@ import { QUICK_MODES } from "@/lib/quickModes";
 import { detectRiskyContent, getSafetyResponse } from "@/lib/safety";
 import {
   addToHistory,
+  getDefaultStylePreset,
   getSavedPeople,
   getSettings,
+  getStylePresets,
+  seedExampleStylePresets,
   toggleFavorite,
 } from "@/lib/storage";
 import type {
@@ -39,6 +43,10 @@ export default function Generator({
   onFavoriteToggle,
   initialPrefill,
 }: GeneratorProps) {
+  seedExampleStylePresets();
+  const defaultPreset = getDefaultStylePreset();
+  const settings = getSettings();
+
   const [situation, setSituation] = useState<Situation>(
     () => initialPrefill?.situation ?? "running-late",
   );
@@ -46,13 +54,19 @@ export default function Generator({
     () => initialPrefill?.recipient ?? "friend",
   );
   const [tone, setTone] = useState<Tone>(
-    () => initialPrefill?.tone ?? getSettings().defaultTone,
+    () => initialPrefill?.tone ?? defaultPreset?.tone ?? settings.defaultTone,
   );
   const [language, setLanguage] = useState<Language>(
-    () => initialPrefill?.language ?? getSettings().defaultLanguage,
+    () =>
+      initialPrefill?.language ??
+      defaultPreset?.language ??
+      settings.defaultLanguage,
   );
   const [details, setDetails] = useState(() => initialPrefill?.details ?? "");
   const [selectedPersonId, setSelectedPersonId] = useState<string>("");
+  const [selectedPresetId, setSelectedPresetId] = useState(
+    () => defaultPreset?.id ?? "",
+  );
   const [activeQuickMode, setActiveQuickMode] = useState<string | null>(null);
   const [results, setResults] = useState<HistoryEntry[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -64,7 +78,9 @@ export default function Generator({
   } | null>(null);
 
   const savedPeople = getSavedPeople();
+  const stylePresets = getStylePresets();
   const selectedPerson = savedPeople.find((p) => p.id === selectedPersonId);
+  const selectedPreset = stylePresets.find((p) => p.id === selectedPresetId);
 
   const applySavedPerson = useCallback((personId: string) => {
     setSelectedPersonId(personId);
@@ -85,6 +101,16 @@ export default function Generator({
     setRecipient(mode.recipient);
     setTone(mode.tone);
     setSelectedPersonId("");
+  }, []);
+
+  const applyStylePreset = useCallback((presetId: string) => {
+    setSelectedPresetId(presetId);
+    if (!presetId) return;
+    const preset = getStylePresets().find((p) => p.id === presetId);
+    if (!preset) return;
+    setTone(preset.tone);
+    setLanguage(preset.language);
+    setActiveQuickMode(null);
   }, []);
 
   const personName = selectedPerson?.name;
@@ -122,6 +148,8 @@ export default function Generator({
       variationSeed: seed,
       personName,
       personNotes,
+      favoritePhrases: selectedPreset?.favoritePhrases,
+      avoidPhrases: selectedPreset?.avoidPhrases,
     });
 
     const entries: HistoryEntry[] = generated.map((msg: GeneratedMessage) => ({
@@ -164,6 +192,8 @@ export default function Generator({
     <div className="space-y-6">
       <WelcomeCard />
 
+      <DailyMessageCard language={language} onFavorite={onFavoriteToggle} />
+
       <section className="space-y-2 text-center">
         <h2 className="text-2xl font-bold tracking-tight text-violet-900">
           What do you need help saying?
@@ -195,6 +225,34 @@ export default function Generator({
       </section>
 
       <section className="space-y-6 rounded-2xl border border-white/70 bg-white/90 p-5 shadow-md shadow-violet-100/30 backdrop-blur-sm">
+        {stylePresets.length > 0 && (
+          <div className="space-y-2">
+            <label
+              htmlFor="style-preset"
+              className="text-sm font-semibold text-slate-700"
+            >
+              Style preset
+            </label>
+            <select
+              id="style-preset"
+              value={selectedPresetId}
+              onChange={(e) => applyStylePreset(e.target.value)}
+              className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+            >
+              <option value="">None — choose manually</option>
+              {stylePresets.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                  {p.isDefault ? " (default)" : ""}
+                </option>
+              ))}
+            </select>
+            {selectedPreset?.description && (
+              <p className="text-xs text-violet-600">{selectedPreset.description}</p>
+            )}
+          </div>
+        )}
+
         {savedPeople.length > 0 && (
           <div className="space-y-2">
             <label
