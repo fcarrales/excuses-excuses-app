@@ -28,6 +28,9 @@ const QA_MODE_KEY = "excuses-qa-mode";
 const BACKUP_STATUS_KEY = "excuses-backup-status";
 const DEMO_LOADED_KEY = "excuses-demo-loaded";
 const BETA_CHECKLIST_KEY = "excuses-beta-checklist";
+const LAUNCH_DISMISSED_KEY = "excuses-launch-dismissed";
+const SCREENSHOT_MODE_KEY = "excuses-screenshot-mode";
+const SMOKE_TEST_KEY = "excuses-smoke-test-checklist";
 
 export const STORAGE_KEYS = [
   HISTORY_KEY,
@@ -41,6 +44,9 @@ export const STORAGE_KEYS = [
   BACKUP_STATUS_KEY,
   DEMO_LOADED_KEY,
   BETA_CHECKLIST_KEY,
+  LAUNCH_DISMISSED_KEY,
+  SCREENSHOT_MODE_KEY,
+  SMOKE_TEST_KEY,
 ] as const;
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -674,4 +680,73 @@ export function setBetaChecklistItem(
   if (!isBrowser()) return;
   const current = getBetaChecklist();
   safeWrite(BETA_CHECKLIST_KEY, { ...current, [id]: checked });
+}
+
+export function isLaunchCardDismissed(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(LAUNCH_DISMISSED_KEY) === "true";
+}
+
+export function dismissLaunchCard(): void {
+  if (!isBrowser()) return;
+  localStorage.setItem(LAUNCH_DISMISSED_KEY, "true");
+}
+
+export function isScreenshotModeEnabled(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(SCREENSHOT_MODE_KEY) === "true";
+}
+
+export function setScreenshotModeEnabled(enabled: boolean): void {
+  if (!isBrowser()) return;
+  if (enabled) {
+    localStorage.setItem(SCREENSHOT_MODE_KEY, "true");
+    if (!isDemoDataLoaded()) {
+      loadDemoData();
+    }
+  } else {
+    localStorage.removeItem(SCREENSHOT_MODE_KEY);
+  }
+  window.dispatchEvent(new CustomEvent("excuses-screenshot-change"));
+}
+
+export type SmokeTestId =
+  | "generate"
+  | "copy"
+  | "share"
+  | "favorite"
+  | "person"
+  | "pack"
+  | "preset"
+  | "export"
+  | "import"
+  | "safety"
+  | "pwa";
+
+export function getSmokeTestChecklist(): Record<SmokeTestId, boolean> {
+  const defaults: Record<SmokeTestId, boolean> = {
+    generate: false,
+    copy: false,
+    share: false,
+    favorite: false,
+    person: false,
+    pack: false,
+    preset: false,
+    export: false,
+    import: false,
+    safety: false,
+    pwa: false,
+  };
+  if (!isBrowser()) return defaults;
+  const stored = safeParse<Partial<Record<SmokeTestId, boolean>>>(
+    localStorage.getItem(SMOKE_TEST_KEY),
+    {},
+  );
+  return { ...defaults, ...stored };
+}
+
+export function setSmokeTestItem(id: SmokeTestId, checked: boolean): void {
+  if (!isBrowser()) return;
+  const current = getSmokeTestChecklist();
+  safeWrite(SMOKE_TEST_KEY, { ...current, [id]: checked });
 }

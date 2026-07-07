@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import OptionSelector from "@/components/OptionSelector";
 import ResultCard from "@/components/ResultCard";
-import WelcomeCard from "@/components/WelcomeCard";
+import LaunchCard from "@/components/LaunchCard";
 import DailyMessageCard from "@/components/DailyMessageCard";
 import InstallPrompt from "@/components/InstallPrompt";
 import {
@@ -192,8 +192,7 @@ export default function Generator({
   return (
     <div className="space-y-6">
       <InstallPrompt />
-      <WelcomeCard />
-
+      <LaunchCard />
       <DailyMessageCard language={language} onFavorite={onFavoriteToggle} />
 
       <section className="space-y-2 text-center">
@@ -201,7 +200,7 @@ export default function Generator({
           What do you need help saying?
         </h2>
         <p className="text-sm text-slate-600">
-          Pick a situation, choose your tone, and get ready-to-send messages.
+          Your message assistant for awkward moments — polite replies in seconds.
         </p>
       </section>
 

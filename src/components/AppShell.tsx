@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import type { Tab } from "@/types";
 import { APP_NAME, APP_TAGLINE, APP_VERSION } from "@/lib/appInfo";
-import { isQAModeEnabled } from "@/lib/storage";
+import { isQAModeEnabled, isScreenshotModeEnabled } from "@/lib/storage";
 
 interface AppShellProps {
   activeTab: Tab;
@@ -27,14 +27,26 @@ export default function AppShell({
   children,
 }: AppShellProps) {
   const [qaMode, setQaMode] = useState(() => isQAModeEnabled());
+  const [screenshotMode, setScreenshotMode] = useState(() =>
+    isScreenshotModeEnabled(),
+  );
 
   useEffect(() => {
     function onQaChange() {
       setQaMode(isQAModeEnabled());
     }
+    function onScreenshotChange() {
+      setScreenshotMode(isScreenshotModeEnabled());
+    }
     window.addEventListener("excuses-qa-change", onQaChange);
-    return () => window.removeEventListener("excuses-qa-change", onQaChange);
+    window.addEventListener("excuses-screenshot-change", onScreenshotChange);
+    return () => {
+      window.removeEventListener("excuses-qa-change", onQaChange);
+      window.removeEventListener("excuses-screenshot-change", onScreenshotChange);
+    };
   }, []);
+
+  const showQaBadge = qaMode && !screenshotMode;
 
   return (
     <div className="flex min-h-full flex-col">
@@ -56,7 +68,12 @@ export default function AppShell({
               <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700">
                 Beta
               </span>
-              {qaMode && (
+              {screenshotMode && (
+                <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-800">
+                  Screenshot
+                </span>
+              )}
+              {showQaBadge && (
                 <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
                   QA
                 </span>
@@ -74,7 +91,10 @@ export default function AppShell({
       <footer className="fixed bottom-14 left-0 right-0 z-[5] pointer-events-none">
         <p className="text-center text-[10px] text-slate-400">
           v{APP_VERSION}
-          {qaMode && activeTab === "settings" && (
+          {screenshotMode && activeTab === "settings" && (
+            <span className="ml-1.5 text-sky-600">· Screenshot</span>
+          )}
+          {showQaBadge && activeTab === "settings" && (
             <span className="ml-1.5 text-amber-600">· QA</span>
           )}
         </p>

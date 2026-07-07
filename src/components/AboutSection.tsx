@@ -27,9 +27,9 @@ export default function AboutSection() {
         <div>
           <p className="font-medium text-slate-800">What this app does</p>
           <p className="mt-1 leading-relaxed">
-            Helps you write ready-to-send messages for awkward moments — running
-            late, canceling plans, apologizing, and more. Everything runs on
-            your device.
+            A local message assistant for awkward social situations, work
+            messages, and school messages. Get polished, ready-to-send texts in
+            English, Spanish, or Spanglish — everything stays on your device.
           </p>
         </div>
         <div>
@@ -41,13 +41,13 @@ export default function AboutSection() {
           </ul>
         </div>
         <p className="rounded-xl bg-violet-50 px-3 py-2.5 text-xs leading-relaxed text-violet-900">
-          <strong>Safety note:</strong> This app helps write respectful messages.
-          It does not create fake proof, fake documents, or official-looking
-          records.
+          <strong>Safety note:</strong> This app helps write respectful
+          messages. It refuses requests for fake proof, fake documents, or
+          official-looking records.
         </p>
         <p className="text-xs text-slate-500">
-          You can install this app from your browser menu if your device
-          supports it (Share → Add to Home Screen on iOS, Install app in Chrome).
+          Install from your browser menu when supported (Share → Add to Home
+          Screen on iOS, Install app in Chrome or Edge).
         </p>
       </div>
     </section>

@@ -18,9 +18,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const pageTitle = `${APP_NAME} — ${APP_TAGLINE}`;
+const pageDescription =
+  "A local message assistant for awkward moments. Get respectful, ready-to-send texts in English, Spanish, or Spanglish. No account required.";
+
 export const metadata: Metadata = {
-  title: APP_NAME,
-  description: APP_TAGLINE,
+  title: pageTitle,
+  description: pageDescription,
   applicationName: APP_NAME,
   appleWebApp: {
     capable: true,
@@ -28,10 +32,25 @@ export const metadata: Metadata = {
     title: "Excuses",
   },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
     apple: [{ url: "/apple-touch-icon.svg", type: "image/svg+xml" }],
   },
   manifest: "/manifest.webmanifest",
+  openGraph: {
+    title: pageTitle,
+    description: pageDescription,
+    siteName: APP_NAME,
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: pageTitle,
+    description: pageDescription,
+  },
 };
 
 export const viewport: Viewport = {

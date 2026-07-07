@@ -6,6 +6,8 @@ import {
   setBetaChecklistItem,
   type BetaChecklistId,
 } from "@/lib/storage";
+import ScreenshotGuide from "@/components/ScreenshotGuide";
+import SmokeTestChecklist from "@/components/SmokeTestChecklist";
 
 const CHECKLIST: { id: BetaChecklistId; label: string }[] = [
   { id: "generate", label: "Generate a message" },
@@ -120,6 +122,10 @@ export default function BetaTesterGuide() {
           </li>
         </ul>
       </div>
+
+      <SmokeTestChecklist />
+
+      <ScreenshotGuide />
     </section>
   );
 }

@@ -9,10 +9,16 @@ import SafetySection from "@/components/SafetySection";
 import FeedbackSection from "@/components/FeedbackSection";
 import BetaTesterGuide from "@/components/BetaTesterGuide";
 import QAModePanel from "@/components/QAModePanel";
+import ScreenshotModePanel from "@/components/ScreenshotModePanel";
 import ReadinessChecklist from "@/components/ReadinessChecklist";
+import FeatureHighlights from "@/components/FeatureHighlights";
+import FreeVsProSection from "@/components/FreeVsProSection";
+import ReleaseNotesSection from "@/components/ReleaseNotesSection";
+import ShareInviteSection from "@/components/ShareInviteSection";
 import {
   getSettings,
   isQAModeEnabled,
+  isScreenshotModeEnabled,
   updateDefaultLanguage,
   updateDefaultTone,
 } from "@/lib/storage";
@@ -30,6 +36,9 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
   );
   const [tone, setTone] = useState<Tone>(() => getSettings().defaultTone);
   const [qaMode, setQaMode] = useState(() => isQAModeEnabled());
+  const [screenshotMode, setScreenshotMode] = useState(() =>
+    isScreenshotModeEnabled(),
+  );
 
   function handleLanguageChange(value: Language) {
     setLanguage(value);
@@ -45,6 +54,11 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
 
   function handleQaChange() {
     setQaMode(isQAModeEnabled());
+    onSettingsChange();
+  }
+
+  function handleScreenshotChange() {
+    setScreenshotMode(isScreenshotModeEnabled());
     onSettingsChange();
   }
 
@@ -79,8 +93,14 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
       </section>
 
       <section className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 backdrop-blur-sm sm:p-5">
-        <QAModePanel onChange={handleQaChange} />
+        <ScreenshotModePanel onChange={handleScreenshotChange} />
       </section>
+
+      {!screenshotMode && (
+        <section className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 backdrop-blur-sm sm:p-5">
+          <QAModePanel onChange={handleQaChange} />
+        </section>
+      )}
 
       <section className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 backdrop-blur-sm sm:p-5">
         <StylePresetsPanel onChange={onSettingsChange} />
@@ -89,13 +109,20 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
       <section className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 backdrop-blur-sm sm:p-5">
         <DataBackupSection
           onDataChange={onSettingsChange}
-          showDemoTools={!qaMode}
+          showDemoTools={!qaMode && !screenshotMode}
         />
       </section>
 
       <section className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 backdrop-blur-sm sm:p-5">
+        <ShareInviteSection />
+      </section>
+
+      <section className="space-y-5 rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 backdrop-blur-sm sm:p-5">
         <AboutSection />
-        <div className="mt-5 border-t border-slate-100 pt-5">
+        <FeatureHighlights />
+        <FreeVsProSection />
+        <ReleaseNotesSection />
+        <div className="border-t border-slate-100 pt-5">
           <ReadinessChecklist />
         </div>
       </section>
