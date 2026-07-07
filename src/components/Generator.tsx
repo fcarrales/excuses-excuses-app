@@ -12,10 +12,17 @@ import {
   SITUATION_OPTIONS,
   TONE_OPTIONS,
 } from "@/lib/messageTemplates";
+import { QUICK_MODES } from "@/lib/quickModes";
 import { detectRiskyContent, getSafetyResponse } from "@/lib/safety";
-import { addToHistory, getSettings, toggleFavorite } from "@/lib/storage";
+import {
+  addToHistory,
+  getSavedPeople,
+  getSettings,
+  toggleFavorite,
+} from "@/lib/storage";
 import type {
   GeneratedMessage,
+  GeneratorPrefill,
   HistoryEntry,
   Language,
   Recipient,
@@ -25,16 +32,28 @@ import type {
 
 interface GeneratorProps {
   onFavoriteToggle: () => void;
+  initialPrefill?: GeneratorPrefill | null;
 }
 
-export default function Generator({ onFavoriteToggle }: GeneratorProps) {
-  const [situation, setSituation] = useState<Situation>("running-late");
-  const [recipient, setRecipient] = useState<Recipient>("friend");
-  const [tone, setTone] = useState<Tone>(() => getSettings().defaultTone);
-  const [language, setLanguage] = useState<Language>(
-    () => getSettings().defaultLanguage,
+export default function Generator({
+  onFavoriteToggle,
+  initialPrefill,
+}: GeneratorProps) {
+  const [situation, setSituation] = useState<Situation>(
+    () => initialPrefill?.situation ?? "running-late",
   );
-  const [details, setDetails] = useState("");
+  const [recipient, setRecipient] = useState<Recipient>(
+    () => initialPrefill?.recipient ?? "friend",
+  );
+  const [tone, setTone] = useState<Tone>(
+    () => initialPrefill?.tone ?? getSettings().defaultTone,
+  );
+  const [language, setLanguage] = useState<Language>(
+    () => initialPrefill?.language ?? getSettings().defaultLanguage,
+  );
+  const [details, setDetails] = useState(() => initialPrefill?.details ?? "");
+  const [selectedPersonId, setSelectedPersonId] = useState<string>("");
+  const [activeQuickMode, setActiveQuickMode] = useState<string | null>(null);
   const [results, setResults] = useState<HistoryEntry[]>([]);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [variationSeed, setVariationSeed] = useState(0);
@@ -44,50 +63,77 @@ export default function Generator({ onFavoriteToggle }: GeneratorProps) {
     safeExample: string;
   } | null>(null);
 
-  const runGenerate = useCallback(
-    (seed: number) => {
-      setSafetyBlock(null);
-      setImprovePrompt(false);
+  const savedPeople = getSavedPeople();
+  const selectedPerson = savedPeople.find((p) => p.id === selectedPersonId);
 
-      if (requiresImproveInput(situation, details)) {
-        setImprovePrompt(true);
-        setResults([]);
-        setHasGenerated(false);
-        return;
-      }
+  const applySavedPerson = useCallback((personId: string) => {
+    setSelectedPersonId(personId);
+    if (!personId) return;
+    const person = getSavedPeople().find((p) => p.id === personId);
+    if (!person) return;
+    setRecipient(person.relationship);
+    setTone(person.defaultTone);
+    setLanguage(person.defaultLanguage);
+    setActiveQuickMode(null);
+  }, []);
 
-      if (details.trim() && detectRiskyContent(details)) {
-        const response = getSafetyResponse(language);
-        setSafetyBlock({
-          warning: response.warning,
-          safeExample: response.safeExample,
-        });
-        setResults([]);
-        setHasGenerated(true);
-        return;
-      }
+  const applyQuickMode = useCallback((modeId: string) => {
+    const mode = QUICK_MODES.find((m) => m.id === modeId);
+    if (!mode) return;
+    setActiveQuickMode(modeId);
+    setSituation(mode.situation);
+    setRecipient(mode.recipient);
+    setTone(mode.tone);
+    setSelectedPersonId("");
+  }, []);
 
-      const generated = generateMessages({
-        situation,
-        recipient,
-        tone,
-        language,
-        details: details.trim() || undefined,
-        variationSeed: seed,
+  const personName = selectedPerson?.name;
+  const personNotes = selectedPerson?.notes;
+
+  function runGenerate(seed: number) {
+    setSafetyBlock(null);
+    setImprovePrompt(false);
+
+    if (requiresImproveInput(situation, details)) {
+      setImprovePrompt(true);
+      setResults([]);
+      setHasGenerated(false);
+      return;
+    }
+
+    const textToCheck = [details, personNotes].filter(Boolean).join(" ");
+    if (textToCheck.trim() && detectRiskyContent(textToCheck)) {
+      const response = getSafetyResponse(language);
+      setSafetyBlock({
+        warning: response.warning,
+        safeExample: response.safeExample,
       });
-
-      const entries: HistoryEntry[] = generated.map((msg: GeneratedMessage) => ({
-        ...msg,
-        isFavorite: false,
-      }));
-
-      entries.forEach((entry) => addToHistory(entry));
-      setResults(entries);
+      setResults([]);
       setHasGenerated(true);
-      setVariationSeed(seed);
-    },
-    [situation, recipient, tone, language, details],
-  );
+      return;
+    }
+
+    const generated = generateMessages({
+      situation,
+      recipient,
+      tone,
+      language,
+      details: details.trim() || undefined,
+      variationSeed: seed,
+      personName,
+      personNotes,
+    });
+
+    const entries: HistoryEntry[] = generated.map((msg: GeneratedMessage) => ({
+      ...msg,
+      isFavorite: false,
+    }));
+
+    entries.forEach((entry) => addToHistory(entry));
+    setResults(entries);
+    setHasGenerated(true);
+    setVariationSeed(seed);
+  }
 
   function handleGenerate() {
     runGenerate(0);
@@ -127,7 +173,58 @@ export default function Generator({ onFavoriteToggle }: GeneratorProps) {
         </p>
       </section>
 
+      <section className="space-y-3">
+        <h3 className="text-sm font-semibold text-slate-700">Quick modes</h3>
+        <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {QUICK_MODES.map((mode) => (
+            <button
+              key={mode.id}
+              type="button"
+              onClick={() => applyQuickMode(mode.id)}
+              className={`flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-all active:scale-95 ${
+                activeQuickMode === mode.id
+                  ? "border-violet-500 bg-violet-600 text-white"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-violet-300"
+              }`}
+            >
+              <span aria-hidden>{mode.icon}</span>
+              {mode.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="space-y-6 rounded-2xl border border-white/70 bg-white/90 p-5 shadow-md shadow-violet-100/30 backdrop-blur-sm">
+        {savedPeople.length > 0 && (
+          <div className="space-y-2">
+            <label
+              htmlFor="saved-person"
+              className="text-sm font-semibold text-slate-700"
+            >
+              Use saved person
+            </label>
+            <select
+              id="saved-person"
+              value={selectedPersonId}
+              onChange={(e) => applySavedPerson(e.target.value)}
+              className="min-h-[44px] w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+            >
+              <option value="">None — choose manually</option>
+              {savedPeople.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({RECIPIENT_OPTIONS.find((r) => r.value === p.relationship)?.label})
+                </option>
+              ))}
+            </select>
+            {selectedPerson && (
+              <p className="text-xs text-violet-600">
+                Using {selectedPerson.name}&apos;s defaults
+                {selectedPerson.notes ? ` — ${selectedPerson.notes}` : ""}
+              </p>
+            )}
+          </div>
+        )}
+
         <OptionSelector
           label="Situation"
           options={SITUATION_OPTIONS}
@@ -135,6 +232,7 @@ export default function Generator({ onFavoriteToggle }: GeneratorProps) {
           onChange={(v) => {
             setSituation(v);
             setImprovePrompt(false);
+            setActiveQuickMode(null);
           }}
         />
 
@@ -142,7 +240,10 @@ export default function Generator({ onFavoriteToggle }: GeneratorProps) {
           label="Who is this for?"
           options={RECIPIENT_OPTIONS}
           value={recipient}
-          onChange={setRecipient}
+          onChange={(v) => {
+            setRecipient(v);
+            setActiveQuickMode(null);
+          }}
           columns={4}
         />
 
@@ -150,7 +251,10 @@ export default function Generator({ onFavoriteToggle }: GeneratorProps) {
           label="Tone"
           options={TONE_OPTIONS}
           value={tone}
-          onChange={setTone}
+          onChange={(v) => {
+            setTone(v);
+            setActiveQuickMode(null);
+          }}
           columns={3}
         />
 

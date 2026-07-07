@@ -5,6 +5,7 @@ import type { HistoryEntry } from "@/types";
 import { getStyleLabel } from "@/lib/messageTemplates";
 import { canNativeShare, copyToClipboard, shareMessage } from "@/lib/clipboard";
 import Toast from "@/components/Toast";
+import MessageMetadata from "@/components/MessageMetadata";
 
 interface ResultCardProps {
   entry: HistoryEntry;
@@ -68,7 +69,8 @@ export default function ResultCard({ entry, onToggleFavorite }: ResultCardProps)
           </div>
         </div>
         <div className="p-4">
-          <p className="mb-4 whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800">
+          <MessageMetadata entry={entry} />
+          <p className="mb-4 mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800">
             {entry.message}
           </p>
           <div className="flex gap-2">

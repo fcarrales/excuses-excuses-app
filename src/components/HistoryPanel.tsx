@@ -1,10 +1,16 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import ResultCard from "@/components/ResultCard";
 import EmptyState from "@/components/EmptyState";
+import FilterChips from "@/components/FilterChips";
+import SearchInput from "@/components/SearchInput";
+import {
+  filterHistory,
+  HISTORY_FILTER_OPTIONS,
+} from "@/lib/messageFilters";
 import { clearHistory, getHistory, toggleFavorite } from "@/lib/storage";
-import type { HistoryEntry } from "@/types";
-import { useState } from "react";
+import type { HistoryEntry, HistoryFilter } from "@/types";
 
 interface HistoryPanelProps {
   onHistoryCleared: () => void;
@@ -12,6 +18,13 @@ interface HistoryPanelProps {
 
 export default function HistoryPanel({ onHistoryCleared }: HistoryPanelProps) {
   const [history, setHistory] = useState(() => getHistory());
+  const [filter, setFilter] = useState<HistoryFilter>("all");
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(
+    () => filterHistory(history, filter, search),
+    [history, filter, search],
+  );
 
   function handleClearHistory() {
     if (
@@ -49,20 +62,35 @@ export default function HistoryPanel({ onHistoryCleared }: HistoryPanelProps) {
         <button
           type="button"
           onClick={handleClearHistory}
-          className="shrink-0 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+          className="min-h-[44px] shrink-0 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
         >
-          Clear history
+          Clear
         </button>
       </div>
-      <div className="space-y-4">
-        {history.map((entry) => (
-          <ResultCard
-            key={entry.id}
-            entry={entry}
-            onToggleFavorite={handleToggleFavorite}
-          />
-        ))}
-      </div>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Search history…" />
+
+      <FilterChips
+        options={HISTORY_FILTER_OPTIONS}
+        value={filter}
+        onChange={setFilter}
+      />
+
+      {filtered.length === 0 ? (
+        <p className="py-8 text-center text-sm text-slate-500">
+          No messages match your filter.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {filtered.map((entry) => (
+            <ResultCard
+              key={entry.id}
+              entry={entry}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

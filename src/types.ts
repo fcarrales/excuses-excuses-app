@@ -1,4 +1,10 @@
-export type Tab = "generator" | "favorites" | "history" | "settings";
+export type Tab =
+  | "generator"
+  | "people"
+  | "packs"
+  | "favorites"
+  | "history"
+  | "settings";
 
 export type Situation =
   | "running-late"
@@ -42,6 +48,16 @@ export interface GeneratorInput {
   language: Language;
   details?: string;
   variationSeed?: number;
+  personName?: string;
+  personNotes?: string;
+}
+
+export interface GeneratorPrefill {
+  situation: Situation;
+  recipient: Recipient;
+  tone: Tone;
+  language: Language;
+  details?: string;
 }
 
 export interface GeneratedMessage {
@@ -65,3 +81,30 @@ export interface AppSettings {
 export interface HistoryEntry extends GeneratedMessage {
   isFavorite: boolean;
 }
+
+export interface SavedPerson {
+  id: string;
+  name: string;
+  relationship: Recipient;
+  defaultTone: Tone;
+  defaultLanguage: Language;
+  notes?: string;
+}
+
+export type FavoriteFilter =
+  | "all"
+  | "work"
+  | "school"
+  | "family"
+  | "dating"
+  | "apologies"
+  | "other";
+
+export type HistoryFilter =
+  | "all"
+  | "today"
+  | "older"
+  | "favorites"
+  | "english"
+  | "spanish"
+  | "spanglish";

@@ -67,9 +67,28 @@ function recipientGroup(recipient: Recipient): RecipientGroup {
   return "neutral";
 }
 
-function greeting(recipient: Recipient, language: Language, tone: Tone): string {
+function greeting(
+  recipient: Recipient,
+  language: Language,
+  tone: Tone,
+  personName?: string,
+): string {
   const formal = recipientGroup(recipient) === "formal";
   const family = recipientGroup(recipient) === "family";
+  const name = personName?.trim();
+
+  if (name) {
+    if (language === "spanish") {
+      if (formal) return tone === "professional" ? `Buenos días, ${name}` : `Hola, ${name}`;
+      return `Hola ${name}`;
+    }
+    if (language === "spanglish") {
+      if (formal) return `Hi ${name}`;
+      return `Hey ${name}`;
+    }
+    if (formal) return tone === "professional" ? `Hello ${name}` : `Hi ${name}`;
+    return `Hey ${name}`;
+  }
 
   if (language === "spanish") {
     if (formal) return tone === "professional" ? "Buenos días" : "Hola";
@@ -102,6 +121,43 @@ function weaveDetails(base: string, details: string | undefined, language: Langu
   const connectors = ["", " Just so you know — ", " Quick note: "];
   const connector = connectors[trimmed.length % connectors.length];
   return `${base}${connector}${trimmed}${punct}`;
+}
+
+function applyPersonNotes(
+  message: string,
+  notes: string | undefined,
+  language: Language,
+): string {
+  if (!notes?.trim()) return message;
+  const lower = notes.toLowerCase();
+  let msg = message;
+
+  if (
+    lower.includes("short") ||
+    lower.includes("brief") ||
+    lower.includes("corto")
+  ) {
+    const match = msg.match(/^[^.!?]+[.!?]?/);
+    msg = match ? match[0] : msg;
+    if (!msg.match(/[.!?]$/)) msg += ".";
+  }
+
+  if (lower.includes("respectful") || lower.includes("respetuoso")) {
+    const closings: Record<Language, string> = {
+      english: " Thank you for understanding.",
+      spanish: " Gracias por tu comprensión.",
+      spanglish: " Thanks por entender.",
+    };
+    if (
+      !msg.includes("Thank") &&
+      !msg.includes("Gracias") &&
+      !msg.includes("Thanks")
+    ) {
+      msg = msg.replace(/[.!?]?$/, ".") + closings[language];
+    }
+  }
+
+  return msg;
 }
 
 function lowercaseFirst(text: string): string {
@@ -1106,9 +1162,10 @@ function buildImproveMessages(
   recipient: Recipient,
   tone: Tone,
   language: Language,
+  personName?: string,
 ): Record<MessageStyle, string> {
   const core = cleanUserText(details);
-  const greet = greeting(recipient, language, tone);
+  const greet = greeting(recipient, language, tone, personName);
   const lower = lowercaseFirst(core);
 
   if (language === "spanish") {
@@ -1166,13 +1223,22 @@ function buildMessage(
   style: MessageStyle,
   input: GeneratorInput,
 ): string {
-  const { situation, recipient, tone, language, details, variationSeed = 0 } =
-    input;
+  const {
+    situation,
+    recipient,
+    tone,
+    language,
+    details,
+    variationSeed = 0,
+    personName,
+    personNotes,
+  } = input;
   const group = recipientGroup(recipient);
-  const greet = greeting(recipient, language, tone);
+  const greet = greeting(recipient, language, tone, personName);
 
   if (situation === "improve" && details?.trim()) {
-    return buildImproveMessages(details, recipient, tone, language)[style];
+    const improved = buildImproveMessages(details, recipient, tone, language, personName)[style];
+    return applyPersonNotes(improved, personNotes, language);
   }
 
   const variation = variationSeed > 0
@@ -1185,7 +1251,8 @@ function buildMessage(
     ? `${greet}${separator} ${template}`
     : `${greet}${separator} ${lowercaseFirst(template)}`;
   const withDetails = weaveDetails(withGreeting, details, language);
-  return applyTone(withDetails, tone, language);
+  const toned = applyTone(withDetails, tone, language);
+  return applyPersonNotes(toned, personNotes, language);
 }
 
 const STYLE_LABELS: Record<MessageStyle, string> = {
