@@ -98,7 +98,7 @@ export default function PeoplePanel() {
         <h2 className="text-lg font-semibold text-violet-900">
           {editingId ? "Edit person" : "Add person"}
         </h2>
-        <div className="space-y-4 rounded-2xl border border-white/70 bg-white/90 p-5 shadow-md shadow-violet-100/30">
+        <div className="space-y-4 rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 sm:p-5">
           <div className="space-y-2">
             <label htmlFor="person-name" className="text-sm font-semibold text-slate-700">
               Name
@@ -187,7 +187,7 @@ export default function PeoplePanel() {
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={handleCancel}

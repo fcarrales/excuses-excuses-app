@@ -1,5 +1,13 @@
 import { APP_VERSION } from "@/lib/appInfo";
+import type { BackupStatusRecord } from "@/lib/backupStatus";
 import type { AppBackup } from "@/lib/backup";
+import {
+  DEMO_FAVORITES,
+  DEMO_HISTORY,
+  DEMO_PEOPLE,
+  DEMO_PRESETS,
+  isDemoId,
+} from "@/lib/demoData";
 import type {
   AppSettings,
   HistoryEntry,
@@ -16,6 +24,10 @@ const ONBOARDING_KEY = "excuses-onboarding-dismissed";
 const PEOPLE_KEY = "excuses-saved-people";
 const STYLE_PRESETS_KEY = "excuses-style-presets";
 const INSTALL_DISMISSED_KEY = "excuses-install-dismissed";
+const QA_MODE_KEY = "excuses-qa-mode";
+const BACKUP_STATUS_KEY = "excuses-backup-status";
+const DEMO_LOADED_KEY = "excuses-demo-loaded";
+const BETA_CHECKLIST_KEY = "excuses-beta-checklist";
 
 export const STORAGE_KEYS = [
   HISTORY_KEY,
@@ -25,6 +37,10 @@ export const STORAGE_KEYS = [
   PEOPLE_KEY,
   STYLE_PRESETS_KEY,
   INSTALL_DISMISSED_KEY,
+  QA_MODE_KEY,
+  BACKUP_STATUS_KEY,
+  DEMO_LOADED_KEY,
+  BETA_CHECKLIST_KEY,
 ] as const;
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -426,4 +442,236 @@ export function clearAllAppData(): void {
       // ignore
     }
   }
+}
+
+export function isQAModeEnabled(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(QA_MODE_KEY) === "true";
+}
+
+export function setQAModeEnabled(enabled: boolean): void {
+  if (!isBrowser()) return;
+  if (enabled) {
+    localStorage.setItem(QA_MODE_KEY, "true");
+  } else {
+    localStorage.removeItem(QA_MODE_KEY);
+  }
+  window.dispatchEvent(new CustomEvent("excuses-qa-change"));
+}
+
+export interface QaStats {
+  localStorageAvailable: boolean;
+  favoritesCount: number;
+  historyCount: number;
+  peopleCount: number;
+  presetsCount: number;
+  settingsSaved: boolean;
+  onboardingDismissed: boolean;
+  installDismissed: boolean;
+  demoLoaded: boolean;
+}
+
+export function getQaStats(): QaStats {
+  if (!isBrowser()) {
+    return {
+      localStorageAvailable: false,
+      favoritesCount: 0,
+      historyCount: 0,
+      peopleCount: 0,
+      presetsCount: 0,
+      settingsSaved: false,
+      onboardingDismissed: false,
+      installDismissed: false,
+      demoLoaded: false,
+    };
+  }
+
+  let localStorageAvailable = true;
+  try {
+    localStorage.setItem("__excuses_test__", "1");
+    localStorage.removeItem("__excuses_test__");
+  } catch {
+    localStorageAvailable = false;
+  }
+
+  return {
+    localStorageAvailable,
+    favoritesCount: getFavorites().length,
+    historyCount: getHistory().length,
+    peopleCount: getSavedPeople().length,
+    presetsCount: getStylePresets().length,
+    settingsSaved: localStorage.getItem(SETTINGS_KEY) !== null,
+    onboardingDismissed: isOnboardingDismissed(),
+    installDismissed: isInstallPromptDismissed(),
+    demoLoaded: isDemoDataLoaded(),
+  };
+}
+
+export function getBackupStatus(): BackupStatusRecord {
+  if (!isBrowser()) return {};
+  return safeParse<BackupStatusRecord>(
+    localStorage.getItem(BACKUP_STATUS_KEY),
+    {},
+  );
+}
+
+export function recordBackupExport(): void {
+  if (!isBrowser()) return;
+  const prev = getBackupStatus();
+  safeWrite(BACKUP_STATUS_KEY, {
+    ...prev,
+    lastExportAt: new Date().toISOString(),
+    lastError: undefined,
+  });
+}
+
+export function recordBackupImport(
+  counts: {
+    history: number;
+    favorites: number;
+    people: number;
+    presets: number;
+  },
+  empty: boolean,
+): void {
+  if (!isBrowser()) return;
+  const prev = getBackupStatus();
+  safeWrite(BACKUP_STATUS_KEY, {
+    ...prev,
+    lastImportAt: new Date().toISOString(),
+    lastImportCounts: counts,
+    lastError: empty ? "Last import was empty — no data restored." : undefined,
+  });
+}
+
+export function recordBackupError(message: string): void {
+  if (!isBrowser()) return;
+  const prev = getBackupStatus();
+  safeWrite(BACKUP_STATUS_KEY, {
+    ...prev,
+    lastError: message,
+  });
+}
+
+export function isDemoDataLoaded(): boolean {
+  if (!isBrowser()) return false;
+  return localStorage.getItem(DEMO_LOADED_KEY) === "true";
+}
+
+export function loadDemoData(): {
+  people: number;
+  favorites: number;
+  history: number;
+  presets: number;
+} {
+  if (!isBrowser()) {
+    return { people: 0, favorites: 0, history: 0, presets: 0 };
+  }
+
+  const people = mergeById(getSavedPeople(), DEMO_PEOPLE);
+  safeWrite(PEOPLE_KEY, people);
+
+  const favorites = mergeById(
+    getFavorites().filter((f) => !isDemoId(f.id)),
+    DEMO_FAVORITES,
+  );
+  safeWrite(FAVORITES_KEY, favorites);
+
+  const history = mergeById(
+    getHistory().filter((h) => !isDemoId(h.id)),
+    DEMO_HISTORY,
+  );
+  safeWrite(HISTORY_KEY, history.slice(0, 100));
+
+  const presets = mergeById(
+    getStylePresets().filter((p) => !isDemoId(p.id)),
+    DEMO_PRESETS,
+  );
+  safeWrite(STYLE_PRESETS_KEY, presets);
+
+  localStorage.setItem(DEMO_LOADED_KEY, "true");
+
+  return {
+    people: DEMO_PEOPLE.length,
+    favorites: DEMO_FAVORITES.length,
+    history: DEMO_HISTORY.length,
+    presets: DEMO_PRESETS.length,
+  };
+}
+
+export function clearDemoData(): void {
+  if (!isBrowser()) return;
+
+  safeWrite(
+    PEOPLE_KEY,
+    getSavedPeople().filter((p) => !isDemoId(p.id)),
+  );
+  safeWrite(
+    FAVORITES_KEY,
+    getFavorites().filter((f) => !isDemoId(f.id)),
+  );
+  safeWrite(
+    HISTORY_KEY,
+    getHistory().filter((h) => !isDemoId(h.id)),
+  );
+  safeWrite(
+    STYLE_PRESETS_KEY,
+    getStylePresets().filter((p) => !isDemoId(p.id)),
+  );
+  localStorage.removeItem(DEMO_LOADED_KEY);
+}
+
+function mergeById<T extends { id: string }>(existing: T[], incoming: T[]): T[] {
+  const map = new Map<string, T>();
+  for (const item of existing) {
+    map.set(item.id, item);
+  }
+  for (const item of incoming) {
+    map.set(item.id, item);
+  }
+  return Array.from(map.values());
+}
+
+export type BetaChecklistId =
+  | "generate"
+  | "spanish"
+  | "spanglish"
+  | "favorite"
+  | "person"
+  | "pack"
+  | "preset"
+  | "export"
+  | "import"
+  | "safety"
+  | "install";
+
+export function getBetaChecklist(): Record<BetaChecklistId, boolean> {
+  const defaults: Record<BetaChecklistId, boolean> = {
+    generate: false,
+    spanish: false,
+    spanglish: false,
+    favorite: false,
+    person: false,
+    pack: false,
+    preset: false,
+    export: false,
+    import: false,
+    safety: false,
+    install: false,
+  };
+  if (!isBrowser()) return defaults;
+  const stored = safeParse<Partial<Record<BetaChecklistId, boolean>>>(
+    localStorage.getItem(BETA_CHECKLIST_KEY),
+    {},
+  );
+  return { ...defaults, ...stored };
+}
+
+export function setBetaChecklistItem(
+  id: BetaChecklistId,
+  checked: boolean,
+): void {
+  if (!isBrowser()) return;
+  const current = getBetaChecklist();
+  safeWrite(BETA_CHECKLIST_KEY, { ...current, [id]: checked });
 }

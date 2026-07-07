@@ -66,11 +66,11 @@ export default function DailyMessageCard({
           </span>
         </div>
         <p className="text-sm leading-relaxed text-slate-800">{daily.message}</p>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
             onClick={handleCopy}
-            className="min-h-[40px] flex-1 rounded-xl bg-amber-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-amber-700 active:scale-[0.98]"
+            className="min-h-[44px] flex-1 rounded-xl bg-amber-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-amber-700 active:scale-[0.98]"
           >
             {copied ? "Copied!" : "Copy"}
           </button>
@@ -78,7 +78,7 @@ export default function DailyMessageCard({
             type="button"
             onClick={handleFavorite}
             disabled={favorited}
-            className="min-h-[40px] flex-1 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-800 transition-all hover:bg-amber-50 active:scale-[0.98] disabled:opacity-60"
+            className="min-h-[44px] flex-1 rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-800 transition-all hover:bg-amber-50 active:scale-[0.98] disabled:opacity-60"
           >
             {favorited ? "Saved ★" : "Favorite"}
           </button>

@@ -25,7 +25,7 @@ export default function MessagePacksPanel({
             key={pack.id}
             type="button"
             onClick={() => onSelectPack(pack.prefill)}
-            className="w-full rounded-2xl border border-slate-200/60 bg-white p-4 text-left shadow-sm transition-all hover:border-violet-300 hover:shadow-md active:scale-[0.99]"
+            className="w-full rounded-2xl border border-slate-200/60 bg-white p-4 text-left shadow-sm transition-all hover:border-violet-300 hover:shadow-md active:scale-[0.99] sm:p-5"
           >
             <div className="flex items-start gap-3">
               <span

@@ -150,14 +150,14 @@ export default function ResultCard({
                 key={action.id}
                 type="button"
                 onClick={() => handleRewrite(action.id)}
-                className="min-h-[36px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 transition-all hover:border-violet-300 hover:bg-violet-50 active:scale-95"
+                className="min-h-[40px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-[11px] font-semibold text-slate-700 transition-all hover:border-violet-300 hover:bg-violet-50 active:scale-95 sm:min-h-[36px] sm:py-1.5"
               >
                 {action.label}
               </button>
             ))}
           </div>
 
-          <div className="flex gap-2 pt-1">
+          <div className="flex flex-col gap-2 pt-1 sm:flex-row">
             <button
               type="button"
               onClick={handleCopy}

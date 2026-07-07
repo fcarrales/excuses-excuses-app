@@ -73,18 +73,18 @@ export default function InstallPrompt() {
           <p className="mt-0.5 text-xs text-slate-600">
             Add Excuses, Excuses! to your home screen for quick access.
           </p>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={handleInstall}
-              className="min-h-[40px] rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 active:scale-[0.98]"
+              className="min-h-[44px] flex-1 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 active:scale-[0.98]"
             >
               Install app
             </button>
             <button
               type="button"
               onClick={handleDismiss}
-              className="min-h-[40px] rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400"
+              className="min-h-[44px] flex-1 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-400 sm:flex-none"
               aria-label="Dismiss install prompt"
             >
               Not now

@@ -18,6 +18,8 @@ const RISKY_PATTERNS: RegExp[] = [
   /fake\s+note/i,
   /fake\s+letter/i,
   /fake\s+certificate/i,
+  /official\s+document/i,
+  /cover\s+story/i,
 ];
 
 export interface SafetyResponse {

@@ -113,7 +113,7 @@ function scoreRisk(message: string): { score: number; tips: string[] } {
   if (detectRiskyContent(message)) {
     return {
       score: 15,
-      tips: ["Avoid language that sounds like fake proof"],
+      tips: ["Avoid risky or official-sounding language"],
     };
   }
   tips.push("No risky or official-sounding language");
