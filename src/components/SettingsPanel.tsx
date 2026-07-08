@@ -29,9 +29,13 @@ import { useState } from "react";
 
 interface SettingsPanelProps {
   onSettingsChange: () => void;
+  feedbackScrollTrigger?: number;
 }
 
-export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) {
+export default function SettingsPanel({
+  onSettingsChange,
+  feedbackScrollTrigger = 0,
+}: SettingsPanelProps) {
   const [language, setLanguage] = useState<Language>(
     () => getSettings().defaultLanguage,
   );
@@ -140,7 +144,7 @@ export default function SettingsPanel({ onSettingsChange }: SettingsPanelProps) 
       </section>
 
       <section className="rounded-2xl border border-white/70 bg-white/90 p-4 shadow-md shadow-violet-100/30 backdrop-blur-sm sm:p-5">
-        <FeedbackSection />
+        <FeedbackSection scrollTrigger={feedbackScrollTrigger} />
       </section>
     </div>
   );

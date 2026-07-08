@@ -9,6 +9,7 @@ import { isQAModeEnabled, isScreenshotModeEnabled } from "@/lib/storage";
 interface AppShellProps {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  onOpenFeedback?: () => void;
   children: ReactNode;
 }
 
@@ -24,6 +25,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 export default function AppShell({
   activeTab,
   onTabChange,
+  onOpenFeedback,
   children,
 }: AppShellProps) {
   const [qaMode, setQaMode] = useState(() => isQAModeEnabled());
@@ -81,6 +83,15 @@ export default function AppShell({
             </div>
             <p className="truncate text-xs text-violet-600/90">{APP_TAGLINE}</p>
           </div>
+          {onOpenFeedback && (
+            <button
+              type="button"
+              onClick={onOpenFeedback}
+              className="shrink-0 min-h-[40px] rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition-colors hover:bg-violet-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 active:scale-[0.98]"
+            >
+              Feedback
+            </button>
+          )}
         </div>
       </header>
 

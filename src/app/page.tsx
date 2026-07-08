@@ -16,9 +16,15 @@ export default function Home() {
   const [generatorPrefill, setGeneratorPrefill] =
     useState<GeneratorPrefill | null>(null);
   const [prefillKey, setPrefillKey] = useState(0);
+  const [feedbackScrollTrigger, setFeedbackScrollTrigger] = useState(0);
 
   function handleDataChange() {
     setRefreshKey((k) => k + 1);
+  }
+
+  function handleOpenFeedback() {
+    setActiveTab("settings");
+    setFeedbackScrollTrigger((k) => k + 1);
   }
 
   function handleSelectPack(prefill: GeneratorPrefill) {
@@ -28,7 +34,11 @@ export default function Home() {
   }
 
   return (
-    <AppShell activeTab={activeTab} onTabChange={setActiveTab}>
+    <AppShell
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onOpenFeedback={handleOpenFeedback}
+    >
       {activeTab === "generator" && (
         <Generator
           key={prefillKey}
@@ -50,7 +60,10 @@ export default function Home() {
         />
       )}
       {activeTab === "settings" && (
-        <SettingsPanel onSettingsChange={handleDataChange} />
+        <SettingsPanel
+          onSettingsChange={handleDataChange}
+          feedbackScrollTrigger={feedbackScrollTrigger}
+        />
       )}
     </AppShell>
   );
